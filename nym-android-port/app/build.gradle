@@ -3,9 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+//apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
+
 android {
     namespace 'com.kaeonx.nymandroidport'
     compileSdk 32
+    ndkVersion "25.1.8937393"  // This is how the NDK is detected
 
     defaultConfig {
         applicationId "com.kaeonx.nymandroidport"
@@ -35,8 +38,30 @@ android {
     }
 }
 
-dependencies {
+//println "projectDir is $project.projectDir"
+//cargo {
+//    // directory containing Cargo.toml, relative to $project.projectDir
+//    module = "../../NymAndroidPortRust"
+//    libname = "rustcode"  // Cargo.toml's [package] name
+//    targets = [
+//        "x86_64",  // for Android TODO (determine by trial-error)
+////        "linux-x86-64"  // for unit testing on laptop
+//    ]
+//    profile = "debug"  // or release (cargo --debug vs cargo --release)
+//}
+//
+//cargo {
+//    // directory containing Cargo.toml, relative to $project.projectDir
+//    module = "../../NymAndroidPortRust2"
+//    libname = "rustcode2"  // Cargo.toml's [package] name
+//    targets = [
+//        "x86_64",  // for Android TODO (determine by trial-error)
+////        "linux-x86-64"  // for unit testing on laptop
+//    ]
+//    profile = "debug"  // or release (cargo --debug vs cargo --release)
+//}
 
+dependencies {
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'
