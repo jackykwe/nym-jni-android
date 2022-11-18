@@ -17,8 +17,7 @@ private const val TAG = "mainActivity"
 class MainActivity : AppCompatActivity() {
 
     init {
-        System.loadLibrary("rustcode")
-        System.loadLibrary("rustcode2")
+        System.loadLibrary("sphinx_jni")
     }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -44,8 +43,12 @@ class MainActivity : AppCompatActivity() {
                 .setAction("Action", null).show()
         }
 
-        Log.i(TAG, prizeForRust1("Rust Crab for Rust 1"))
-        Log.i(TAG, prizeForRust2("Rusty Cog for Rust 2"))
+        val key = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (i + 1).toByte() }
+        val iv = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (STREAM_CIPHER_KEY_SIZE - i).toByte() }
+        Log.i(TAG, "key is [${key.joinToString()}]")
+        Log.i(TAG, "iv is [${iv.joinToString()}]")
+        val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
+        Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -66,7 +69,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 }
