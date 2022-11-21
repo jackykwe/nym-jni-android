@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 jni = "0.20.0"
-sphinx = { git = "https://github.com/nymtech/nym", rev = "b7aa84cd5a5589b4921feb6a4633a4a2de530d14" }
+nym-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
 
 [lib]
 crate_type = ["cdylib"]
