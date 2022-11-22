@@ -1,7 +1,7 @@
 # This is a configuration file for the bacon tool
 # More info at https://github.com/Canop/bacon
 
-default_job = "check"
+default_job = "clippy"
 
 [jobs]
 
@@ -15,7 +15,15 @@ need_stdout = false
 watch = ["tests", "benches", "examples"]
 
 [jobs.clippy]
-command = ["cargo", "clippy", "--color", "always"]
+command = [
+    "cargo", "clippy",
+    "--color", "always",
+    "--",
+    "-W", "clippy::pedantic",
+    "-W", "clippy::nursery",
+    "-W", "clippy::unwrap_used",
+    "-W", "clippy::expect_used"
+]
 need_stdout = false
 
 [jobs.clippy-all]
@@ -47,6 +55,11 @@ on_success = "back" # so that we don't open the browser at each change
 command = ["cargo", "run", "--color", "always"]
 need_stdout = true
 
+[jobs.build]
+command = ["cargo", "build", "--color", "always"]
+watch = [".cargo"]
+need_stdout = true
+
 # You may define here keybindings that would be specific to
 # a project, for example a shortcut to launch a specific job.
 # Shortcuts to internal functions (scrolling, toggling, etc.)
@@ -58,3 +71,4 @@ c = "job:clippy"
 d = "job:doc-open"
 t = "job:test"
 r = "job:run"
+b = "job:build"
