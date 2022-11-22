@@ -2,22 +2,25 @@ package com.kaeonx.nymandroidport
 
 import android.os.Bundle
 import android.util.Log
-import com.google.android.material.snackbar.Snackbar
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
+import com.google.android.material.snackbar.Snackbar
 import com.kaeonx.nymandroidport.databinding.ActivityMainBinding
+import java.io.File
+import kotlin.io.path.Path
 
 private const val TAG = "mainActivity"
+private const val NYM_DIR = ".nym"
 
 class MainActivity : AppCompatActivity() {
 
     init {
-        System.loadLibrary("sphinx_jni")
+        System.loadLibrary("nym_jni")
     }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -43,12 +46,19 @@ class MainActivity : AppCompatActivity() {
                 .setAction("Action", null).show()
         }
 
-        val key = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (i + 1).toByte() }
-        val iv = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (STREAM_CIPHER_KEY_SIZE - i).toByte() }
-        Log.i(TAG, "key is [${key.joinToString()}]")
-        Log.i(TAG, "iv is [${iv.joinToString()}]")
-        val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
-        Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
+//        val key = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (i + 1).toByte() }
+//        val iv = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (STREAM_CIPHER_KEY_SIZE - i).toByte() }
+//        Log.i(TAG, "key is [${key.joinToString()}]")
+//        Log.i(TAG, "iv is [${iv.joinToString()}]")
+//        val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
+//        Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
+
+        val baseDirectory = File(applicationContext.filesDir, NYM_DIR)
+        baseDirectory.mkdirs()
+
+        // This doesn't actually open the file, merely does Path manipulation
+        val file = File(applicationContext.filesDir, Path(NYM_DIR).resolve("temp.txt").toString())
+        Log.i(TAG, init(file.absolutePath))  // Rust code will write to temp.txt
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
