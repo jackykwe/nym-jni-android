@@ -1,97 +1,55 @@
+use std::fs::File;
+use std::io::{BufWriter, Write};
+use std::ptr::null_mut;
+
 use jni::objects::{JClass, JString};
-// use jni::sys::{jbyteArray, jsize};
 use jni::sys::jstring;
 use jni::JNIEnv;
-// use std::ptr::null_mut;
-// use sphinx::crypto::STREAM_CIPHER_KEY_SIZE;
-// use std::ptr::null_mut;
 
 mod utils;
 
 #[no_mangle]
 pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_initImpl(
     env: JNIEnv,
-    _: JClass,
-    testPath: JString,
+    class: JClass,
+    test_path: JString,
 ) -> jstring {
-    let testPath: String = env
-        .get_string(testPath)
-        .expect("Couldn't get testPath from Kotlin")
-        .into();
-    let output = env
-        .new_string(format!("Wow, I got {}", testPath))
-        .expect("Rust: Unable to create new string");
-    output.into_raw()
+    call_fallible_or_else!(
+        null_mut,
+        Java_com_kaeonx_nymandroidport_NymHandlerKt_initImpl_fallible,
+        env,
+        class,
+        test_path
+    )
 }
 
-// #[no_mangle]
-// #[allow(clippy::expect_used)]
-// pub extern "C" fn Java_com_kaeonx_nymandroidport_SphinxHandlerKt_generatePseudorandomBytesImpl(
-//     env: JNIEnv,
-//     _: JClass,
-//     key: jbyteArray, // this method will check if len == STREAM_CIPHER_KEY_SIZE during try_into()
-//     iv: jbyteArray,  // this method will check if len == STREAM_CIPHER_KEY_SIZE during try_into()
-//     length: jsize,
-// ) -> jbyteArray {
-//     let key = if let Ok(vec) = env.convert_byte_array(key) {
-//         vec
-//     } else {
-//         env.throw("Rust: Unable to get key array from Kotlin")
-//             .expect("Rust: Unable to throw Kotlin Exception");
-//         return null_mut();
-//     };
-//     // Vec<u8>::try_into() delegates to [T; N]::try_from(), which performs size check on N
-//     // https://doc.rust-lang.org/rust-by-example/conversion/try_from_try_into.html
-//     // https://doc.rust-lang.org/std/primitive.array.html#impl-TryFrom%3CVec%3CT%2C%20A%3E%3E-for-%5BT%3B%20N%5D
-//     let key: [u8; STREAM_CIPHER_KEY_SIZE] = match key.try_into() {
-//         Ok(arr) => arr,
-//         Err(vec) => {
-//             env.throw(format!(
-//                 "key has invalid length: expected {}, got {}",
-//                 STREAM_CIPHER_KEY_SIZE,
-//                 vec.len()
-//             ))
-//             .expect("Rust: Unable to throw Kotlin Exception");
-//             return null_mut();
-//         }
-//     };
+#[allow(non_snake_case)]
+fn Java_com_kaeonx_nymandroidport_NymHandlerKt_initImpl_fallible(
+    env: JNIEnv,
+    _: JClass,
+    test_path: JString,
+) -> Result<jstring, String> {
+    let test_path: String = env
+        .get_string(test_path)
+        .map(Into::into)
+        .map_err(|_| String::from("Rust: Unable to get testPath from Kotlin"))?;
 
-//     let iv = if let Ok(vec) = env.convert_byte_array(iv) {
-//         vec
-//     } else {
-//         env.throw("Rust: Unable to get iv array from Kotlin")
-//             .expect("Rust: Unable to throw Kotlin Exception");
-//         return null_mut();
-//     };
-//     let iv: [u8; STREAM_CIPHER_KEY_SIZE] = match iv.try_into() {
-//         Ok(arr) => arr,
-//         Err(vec) => {
-//             env.throw(format!(
-//                 "iv has invalid length: expected {}, got {}",
-//                 STREAM_CIPHER_KEY_SIZE,
-//                 vec.len()
-//             ))
-//             .expect("Rust: Unable to throw Kotlin Exception");
-//             return null_mut();
-//         }
-//     };
+    let file = File::create(test_path.clone()).map_err(|err| {
+        format!(
+            "Rust: Unable to open file {} in write mode ({})",
+            test_path, err
+        )
+    })?;
+    // BufWriter to buffer repeated writes, reduces number of syscalls
+    let mut writer = BufWriter::new(file);
+    writeln!(writer, "package com.kaeonx.nymandroidport")
+        .map_err(|_| format!("Rust: Unable to write to file {}", test_path))?;
+    writeln!(writer).map_err(|_| format!("Rust: Unable to write to file {}", test_path))?;
+    writeln!(writer, "// Writing to Android storage from Rust!")
+        .map_err(|_| format!("Rust: Unable to write to file {}", test_path))?;
+    writeln!(writer).map_err(|_| format!("Rust: Unable to write to file {}", test_path))?;
 
-//     let length = if let Ok(res) = length.try_into() {
-//         res
-//     } else {
-//         env.throw("Rust: Numerical out of bounds from jsize (Kotlin) to usize (Rust)")
-//             .expect("Rust: Unable to throw Kotlin Exception");
-//         return null_mut();
-//     };
-
-//     let result = sphinx::crypto::generate_pseudorandom_bytes(&key, &iv, length);
-//     match env.byte_array_from_slice(&result) {
-//         Ok(res) => res,
-//         Err(e) => {
-//             // uses Display trait from e's usage of #[derive(thiserror::Error)]
-//             env.throw(format!("Rust: Unable to create jbyteArray ({})", e))
-//                 .expect("Rust: Unable to throw Kotlin Exception");
-//             null_mut()
-//         }
-//     }
-// }
+    env.new_string(format!("Rust: Successfully wrote to {}!", test_path))
+        .map(JString::into_raw)
+        .map_err(|err| format!("Rust: Unable to create jstring ({})", err))
+}
