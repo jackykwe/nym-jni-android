@@ -1,20 +1,11 @@
 [target.x86_64-linux-android]
 linker = "/home/jacky/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android31-clang"
-# linker = "/home/jacky/Android/Sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android30-clang"
 
 [target.aarch64-linux-android]
 linker = "/home/jacky/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang"
-# linker = "/home/jacky/Android/Sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
 
 [env]
 # must specify due to ring: https://github.com/briansmith/ring/blob/main/BUILDING.md#cross-compiling
 "CC_x86_64-linux-android" = "/home/jacky/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android31-clang"
-# "CC_x86_64-linux-android" = "/home/jacky/Android/Sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android30-clang"
-# "CC_aarch64-linux-android" = "/home/jacky/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang"
-
-# must specify due to ring: https://github.com/briansmith/ring/blob/main/BUILDING.md#cross-compiling
+# # must specify due to ring: https://github.com/briansmith/ring/blob/main/BUILDING.md#cross-compiling
 "AR_x86_64_linux_android" = "/home/jacky/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-# "AR_x86_64_linux_android" = "/home/jacky/Android/Sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-ar"
-# "AR_aarch64_linux_android" = "/home/jacky/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-
-OPENSSL_DIR = "/usr"

@@ -8,6 +8,9 @@ edition = "2021"
 [dependencies]
 jni = "0.20.0"
 nym-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+# https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
+# OpenSSL, which is not suitable for cross-compilation.
+openssl = { version = "0.10", features = ["vendored"] }
 
 [lib]
 crate_type = ["cdylib"]
