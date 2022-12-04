@@ -10,7 +10,12 @@ jni = "0.20.0"
 nym-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
 # https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
 # OpenSSL, which is not suitable for cross-compilation.
-openssl = { version = "0.10", features = ["vendored"] }
+openssl = { version = "0.10.42", features = ["vendored"] }
+log = "0.4.17"
+android_logger = { version = "0.11.1", optional = true }
+
+[features]
+debug_logs = ["dep:android_logger"]
 
 [lib]
 crate_type = ["cdylib"]

@@ -24,7 +24,7 @@
 /// `class_or_object` (of type `JClass` or `JObject`), and may take any number of additional
 /// arguments. This function is expected to return a type `Result<_, String>`.
 /// - `env`: a `JNIEnv`, a standard for JNI functions
-/// - `class_or_object`, a `JClass` or `JObjetc`, a standard for JNI functions
+/// - `class_or_object`, a `JClass` or `JObject`, a standard for JNI functions
 /// - `arg1` to `argN`: any number of arguments of any type additionally expected by `func_name`.
 ///
 /// # Returns
@@ -39,14 +39,14 @@
 /// ```
 /// expands into
 /// ```
-/// match func_name(arg1, arg2, ..., argN) {
+/// match func_name(env, class_or_object, arg1, arg2, ..., argN) {
 ///     Ok(res) => res,
 ///     Err(str) => {
 ///         env.throw(str)
 ///              .expect("Rust: Unable to throw Kotlin Exception");
 ///         or
 ///     }
-/// };
+/// }
 /// ```
 #[macro_export]
 macro_rules! call_fallible_or {
@@ -88,7 +88,7 @@ macro_rules! call_fallible_or {
 /// `class_or_object` (of type `JClass` or `JObject`), and may take any number of additional
 /// arguments. This function is expected to return a type `Result<_, String>`.
 /// - `env`: a `JNIEnv`, a standard for JNI functions
-/// - `class_or_object`, a `JClass` or `JObjetc`, a standard for JNI functions
+/// - `class_or_object`, a `JClass` or `JObject`, a standard for JNI functions
 /// - `arg1` to `argN`: any number of arguments of any type additionally expected by `func_name`.
 ///
 /// # Returns
@@ -103,14 +103,14 @@ macro_rules! call_fallible_or {
 /// ```
 /// expands into
 /// ```
-/// match func_name(arg1, arg2, ..., argN) {
+/// match func_name(env, class_or_object, arg1, arg2, ..., argN) {
 ///     Ok(res) => res,
 ///     Err(str) => {
 ///         env.throw(str)
 ///              .expect("Rust: Unable to throw Kotlin Exception");
 ///         or_else_fn()
 ///     }
-/// };
+/// }
 /// ```
 #[macro_export]
 macro_rules! call_fallible_or_else {
@@ -122,6 +122,56 @@ macro_rules! call_fallible_or_else {
                     .expect("Rust: Unable to throw Kotlin Exception");
                 $or_else_fn()
             }
+        }
+    };
+}
+
+/// # Motivation
+/// When Rust functions take an error branch, we'd like to raise a JVM exception. However, the act
+/// of raising a JVM exception can itself fail, and the code required to handle that case is
+/// repetitive. This macro abstracts this common code away. A macro is used because of the need to
+/// handle `func_name` functions with varying number of arguments. The structure of this macro is
+/// inspired from Rust's `Result::or` method.
+///
+/// # Signature and behaviour
+/// ```
+/// call_fallible!(func_name, env, class_or_object, arg1, arg2, ..., argN);
+/// ```
+/// This macro calls `func_name` with the arguments `arg1` to `argN`.
+/// - On success, this macro simply returns.
+/// - On fail, attempts to throw a JVM exception through `env`.
+///   - On success, returns.
+///   - On failure, panics.
+///
+/// # Arguments
+/// - `func_name`: a function whose first argument is `env` (of type `JNIEnv`), second argument is
+/// `class_or_object` (of type `JClass` or `JObject`), and may take any number of additional
+/// arguments. This function is expected to return a type `Result<_, String>`.
+/// - `env`: a `JNIEnv`, a standard for JNI functions
+/// - `class_or_object`, a `JClass` or `JObject`, a standard for JNI functions
+/// - `arg1` to `argN`: any number of arguments of any type additionally expected by `func_name`.
+///
+/// # Returns
+/// Nothing. Used for `func_name` functions with only side effects.
+///
+/// # Panics
+/// Iff the `func_name` fails AND this macro fails to raise a JVM exception through `env`.
+///
+/// # Example
+/// ```
+/// call_fallible!(func_name, env, class_or_object, arg1, arg2, ..., argN);
+/// ```
+/// expands into
+/// ```
+/// if let Err(str) = func_name(env, class_or_object, arg1, arg2, ..., argN) {
+///     env.throw(str).expect("Rust: Unable to throw Kotlin Exception");
+/// };
+/// ```
+#[macro_export]
+macro_rules! call_fallible {
+    ($or:expr, $func_name:ident, $env:expr, $class_or_object:expr, $( $arg:expr ),*) => {
+        if let Err(str) = $func_name($env, $class_or_object, $( $arg ),*) {
+            $env.throw(str).expect("Rust: Unable to throw Kotlin Exception");
         }
     };
 }
