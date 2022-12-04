@@ -12,7 +12,6 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.kaeonx.nymandroidport.databinding.ActivityMainBinding
 import java.io.File
-import kotlin.io.path.Path
 
 private const val TAG = "mainActivity"
 private const val NYM_DIR = ".nym"
@@ -20,6 +19,9 @@ private const val NYM_DIR = ".nym"
 class MainActivity : AppCompatActivity() {
 
     init {
+        // Use this to identify the device's ABI.
+        Log.i(TAG, "This device's ABI is ${android.os.Build.SUPPORTED_ABIS[0]}.")
+
         System.loadLibrary("nym_jni")
     }
 
@@ -28,9 +30,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Use this to identify the device's ABI.
-        Log.i(TAG, "This device's ABI is ${android.os.Build.SUPPORTED_ABIS[0]}.")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -57,8 +56,11 @@ class MainActivity : AppCompatActivity() {
         baseDirectory.mkdirs()
 
         // This doesn't actually open the file, merely does Path manipulation
-        val file = File(applicationContext.filesDir, Path(NYM_DIR).resolve("temp.txt").toString())
-        Log.i(TAG, init(file.absolutePath))  // Rust code will write to temp.txt
+        topLevelInit()  // sets up logging on Rust side
+        Log.i(
+            TAG,
+            nymInit(baseDirectory.absolutePath, "client1")
+        )  // Rust code will write to temp.txt
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
