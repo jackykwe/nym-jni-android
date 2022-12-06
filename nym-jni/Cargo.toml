@@ -8,11 +8,17 @@ edition = "2021"
 [dependencies]
 jni = "0.20.0"
 nym-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+client-core = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+network-defaults = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+config = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+serde = "1.0.148"
 # https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
 # OpenSSL, which is not suitable for cross-compilation.
 openssl = { version = "0.10.42", features = ["vendored"] }
+
 log = "0.4.17"
 android_logger = { version = "0.11.1", optional = true }
+futures = "0.3.25"
 
 [features]
 debug_logs = ["dep:android_logger"]

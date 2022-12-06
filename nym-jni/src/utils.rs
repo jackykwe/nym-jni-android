@@ -1,3 +1,10 @@
+use jni::{
+    objects::{JObject, JString},
+    signature::{Primitive, ReturnType},
+    sys::jint,
+    JNIEnv,
+};
+
 /// # Motivation
 /// When Rust functions take an error branch, we'd like to raise a JVM exception. However, the act
 /// of raising a JVM exception can itself fail, and the code required to handle that case is
@@ -169,9 +176,73 @@ macro_rules! call_fallible_or_else {
 /// ```
 #[macro_export]
 macro_rules! call_fallible {
-    ($or:expr, $func_name:ident, $env:expr, $class_or_object:expr, $( $arg:expr ),*) => {
+    ($func_name:ident, $env:expr, $class_or_object:expr, $( $arg:expr ),*) => {
         if let Err(str) = $func_name($env, $class_or_object, $( $arg ),*) {
             $env.throw(str).expect("Rust: Unable to throw Kotlin Exception");
         }
     };
+}
+
+pub fn get_non_nullable_string_fallible(
+    env: JNIEnv,
+    source: JString,
+    err_field_name: &str,
+) -> Result<String, String> {
+    env.get_string(source).map(Into::into).map_err(|err| {
+        format!(
+            "Rust: Unable to get {} from Kotlin ({})",
+            err_field_name, err
+        )
+    })
+}
+
+pub fn get_nullable_string_fallible(
+    env: JNIEnv,
+    source: JString,
+    err_field_name: &str,
+) -> Result<Option<String>, String> {
+    if source.is_null() {
+        return Ok(None); // null was passed from Kotlin, so return None
+    }
+    get_non_nullable_string_fallible(env, source, err_field_name).map(|val| Some(val))
+}
+
+pub fn get_nullable_integer_fallible(
+    env: JNIEnv,
+    source: JObject,
+    err_field_name: &str,
+) -> Result<Option<jint>, String> {
+    if source.is_null() {
+        return Ok(None); // null was passed from Kotlin, so return None
+    }
+
+    let method_id = env
+        .get_method_id("java/lang/Integer", "intValue", "()I")
+        .map_err(|err| {
+            format!(
+                "Unable to get java/lang/Integer's intValue method ID from Kotlin ({})",
+                err
+            )
+        })?;
+
+    env.call_method_unchecked(
+        source,
+        method_id,
+        ReturnType::Primitive(Primitive::Int),
+        &[],
+    )
+    .map_err(|err| {
+        format!(
+            "Unable to get {}'s value from Kotlin ({})",
+            err_field_name, err
+        )
+    })?
+    .i()
+    .map(|val| Some(val))
+    .map_err(|err| {
+        format!(
+            "Unable to convert {}'s value to i32 ({})",
+            err_field_name, err
+        )
+    })
 }
