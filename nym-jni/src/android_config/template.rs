@@ -3,7 +3,8 @@
 
 // Note to nym-jni maintainers: must manually synchronise with nym-client
 
-pub(crate) fn config_template() -> &'static str {
+#[allow(clippy::module_name_repetitions)]
+pub fn config_template() -> &'static str {
     // While using normal toml marshalling would have been way simpler with less overhead,
     // I think it's useful to have comments attached to the saved config file to explain behaviour of
     // particular fields.

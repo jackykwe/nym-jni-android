@@ -2330,13 +2330,13 @@ dependencies = [
  "android_logger",
  "client-core",
  "config",
- "futures",
  "jni",
  "log",
  "network-defaults",
  "nym-client",
  "openssl",
  "serde",
+ "tokio",
 ]
 
 [[package]]

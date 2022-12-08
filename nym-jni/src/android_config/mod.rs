@@ -1,7 +1,8 @@
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-// use crate::client::config::template::config_template;
+// Note to nym-jni maintainers: must manually synchronise with nym-client
+
 use client_core::config::Config as BaseConfig;
 pub use client_core::config::MISSING_VALUE;
 use config::defaults::DEFAULT_WEBSOCKET_LISTENING_PORT;
@@ -22,6 +23,7 @@ pub enum SocketType {
 }
 
 impl SocketType {
+    #[allow(dead_code)] // TODO: Remove after full implementation
     pub fn from_string<S: Into<String>>(val: S) -> Self {
         let mut upper = val.into();
         upper.make_ascii_uppercase();
@@ -46,26 +48,24 @@ impl NymConfig for AndroidConfig {
         config_template()
     }
 
+    #[allow(clippy::expect_used)] // nym also uses expect
     fn default_root_directory() -> PathBuf {
         PathBuf::from(
-            std::env::var("ANDROIDCONFIG_STORAGE_ABS_PATH").expect(&format!(
-                "Failed to get {}. Is the environment variable not set?",
-                STORAGE_ABS_PATH_ENV_VAR_NAME
-            )),
+            std::env::var(STORAGE_ABS_PATH_ENV_VAR_NAME).unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get {}. Is the environment variable not set?",
+                    STORAGE_ABS_PATH_ENV_VAR_NAME
+                )
+            }),
         )
         .join(".nym")
         .join("clients")
-        // dirs::home_dir()
-        //     .expect("Failed to evaluate $HOME value")
-        //     .join(".nym")
-        //     .join("clients")
     }
 
     fn try_default_root_directory() -> Option<PathBuf> {
-        std::env::var("ANDROIDCONFIG_STORAGE_ABS_PATH")
+        std::env::var(STORAGE_ABS_PATH_ENV_VAR_NAME)
             .ok()
             .map(|path| PathBuf::from(path).join(".nym").join("clients"))
-        // dirs::home_dir().map(|path| path.join(".nym").join("clients"))
     }
 
     fn root_directory(&self) -> PathBuf {
@@ -84,6 +84,7 @@ impl NymConfig for AndroidConfig {
 }
 
 impl AndroidConfig {
+    #[allow(clippy::default_trait_access)] // I avoid reformatting nym code as far as possible
     pub fn new<S: Into<String>>(id: S) -> Self {
         AndroidConfig {
             base: BaseConfig::new(id),
@@ -114,9 +115,13 @@ impl AndroidConfig {
         &mut self.base
     }
 
+    #[allow(dead_code)] // TODO: Remove after full implementation
+
     pub fn get_socket_type(&self) -> SocketType {
         self.socket.socket_type
     }
+
+    #[allow(dead_code)] // TODO: Remove after full implementation
 
     pub fn get_listening_port(&self) -> u16 {
         self.socket.listening_port

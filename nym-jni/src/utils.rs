@@ -5,6 +5,8 @@ use jni::{
     JNIEnv,
 };
 
+// TODO interface improvement: Error.throw_as_java (thiserror & anyhow, instead of using String as the error type)
+
 /// # Motivation
 /// When Rust functions take an error branch, we'd like to raise a JVM exception. However, the act
 /// of raising a JVM exception can itself fail, and the code required to handle that case is
@@ -204,7 +206,7 @@ pub fn get_nullable_string_fallible(
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
-    get_non_nullable_string_fallible(env, source, err_field_name).map(|val| Some(val))
+    get_non_nullable_string_fallible(env, source, err_field_name).map(Some)
 }
 
 pub fn get_nullable_integer_fallible(
@@ -238,7 +240,7 @@ pub fn get_nullable_integer_fallible(
         )
     })?
     .i()
-    .map(|val| Some(val))
+    .map(Some)
     .map_err(|err| {
         format!(
             "Unable to convert {}'s value to i32 ({})",

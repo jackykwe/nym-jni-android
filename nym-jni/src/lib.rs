@@ -1,21 +1,18 @@
 // Requires manual sync with nym-client
 
+use std::path::PathBuf;
+
 use client_core::config::GatewayEndpoint;
 use client_core::error::ClientCoreError;
 use config::NymConfig;
-use futures::executor::block_on;
 use jni::objects::{JClass, JObject, JString};
-use jni::sys::{jbyteArray, jstring};
 use jni::JNIEnv;
-use std::fs::File;
-use std::io::{BufWriter, Write};
-use std::path::PathBuf;
-use std::ptr::null_mut;
 
-mod android_config; // renamed from config to android_config to avoid name clash
+mod android_config; // renamed from config to android_config to avoid name clash with config (crate dependency)
 mod utils;
 
 use android_config::{AndroidConfig, SocketType};
+use network_defaults::setup_env;
 use utils::{
     get_non_nullable_string_fallible, get_nullable_integer_fallible, get_nullable_string_fallible,
 };
@@ -23,11 +20,35 @@ use utils::{
 use crate::android_config::STORAGE_ABS_PATH_ENV_VAR_NAME;
 
 #[no_mangle]
-#[allow(clippy::missing_const_for_fn)] // nursery warning inapplicable here
-pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl() {
-    // Consider tracing crate, used by nym-client, if the necessity arises.
+pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl(
+    env: JNIEnv,
+    class: JClass,
+    config_env_file: JString, // Path pointing to an env file that configures the client.
+) {
+    call_fallible!(
+        Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl_fallible,
+        env,
+        class,
+        config_env_file
+    );
+}
+
+#[allow(non_snake_case)]
+fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl_fallible(
+    env: JNIEnv,
+    _: JClass,
+    config_env_file: JString, // Path pointing to an env file that configures the client.
+) -> Result<(), String> {
+    let config_env_file = get_nullable_string_fallible(env, config_env_file, "config_env_file")?;
+    let config_env_file = config_env_file.map(PathBuf::from);
+
+    // TODO Consider tracing crate, used by nym-client, if the necessity arises.
+    // TODO @ Saturday: reminder to Daniel for some template code
     #[cfg(feature = "debug_logs")]
     android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Trace));
+
+    setup_env(config_env_file); // config_env_file can be provided as an additional argument
+    Ok(())
 }
 
 #[no_mangle]
@@ -44,7 +65,6 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl(
     fastmode: bool,
     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
 ) {
-    log::info!("Info logging, this works.");
     call_fallible!(
         Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible,
         env,
@@ -57,10 +77,11 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl(
         disable_socket,
         port,
         fastmode
-    )
+    );
 }
 
 #[allow(non_snake_case)]
+#[allow(clippy::too_many_arguments)]
 fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     env: JNIEnv,
     _: JClass,
@@ -76,7 +97,6 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
 ) -> Result<(), String> {
     let storage_abs_path =
         get_non_nullable_string_fallible(env, storage_abs_path, "storage_abs_path")?;
-    std::env::set_var(STORAGE_ABS_PATH_ENV_VAR_NAME, &storage_abs_path);
     let id = &get_non_nullable_string_fallible(env, id, "id")?;
     let gateway = get_nullable_string_fallible(env, gateway, "gateway")?;
     let validators = get_nullable_string_fallible(env, validators, "validators")?;
@@ -88,18 +108,15 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
         })?),
     };
 
-    log::info!("storage_abs_path is {}", storage_abs_path);
-
-    let file_path = PathBuf::from(storage_abs_path);
-    // let file_path = file_path.join(format!("{}.txt", id));
-    let file_path = file_path.join(format!("{}.txt", id));
-    let file = File::create(file_path.clone()).map_err(|err| {
-        format!(
-            "Rust: Unable to open file {} in write mode ({})",
-            file_path.to_string_lossy(),
-            err
-        )
-    })?;
+    // TODO: Instead of environment variables, consider top level static mutable variables?
+    // TODO: If proceeding with env var strategy, KEY NAMING: make it unique (line number pair?)
+    // TODO: topLevelInit() to setup singletons, then all other methods use singletons
+    // Hack to pass this to AndroidConfig's NymConfig(trait)::default_root_directory() method
+    // That trait method takes no arguments, and I cannot change the implementation of the NymConfig
+    // trait. Environment variables are just another form of arguments to functions, so I'm using
+    // that facility to pass this value to the default_root_directory() function at runtime.
+    // This line must be executed before creation of any AndroidConfig structs.
+    std::env::set_var(STORAGE_ABS_PATH_ENV_VAR_NAME, &storage_abs_path);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// START: nym_client::commands::init::execute()
@@ -160,17 +177,21 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// END: nym_client::commands::override_config()
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
     let gateway = setup_gateway(id, register_gateway, user_chosen_gateway_id, &config);
-    // using futures::executor::block_on() instead of .await
-    let gateway =
-        block_on(gateway).map_err(|err| format!("Failed to setup gateway\nError: {err}"))?;
+    // using tokio's block_on() instead of direct .await
+    // TODO: futures::executor::block_on() does not work; not sure why
+    let gateway = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|err| format!("Failed to setup tokio runtime ({})", err))?
+        .block_on(gateway)
+        .map_err(|err| format!("Failed to setup gateway\nError: {err}"))?;
     config.get_base_mut().with_gateway_endpoint(gateway);
 
     let config_save_location = config.get_config_file_save_location();
     config
         .save_to_file(None)
-        .expect("Failed to save the config file");
+        .map_err(|err| format!("Failed to save the config file ({})", err))?;
 
     log::info!("Saved configuration file to {:?}", config_save_location);
     log::info!("Using gateway: {}", config.get_base().get_gateway_id());
@@ -185,31 +206,6 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     // Useless, prints to stdout but not visible from Android
     // client_core::init::show_address(config.get_base())
     //     .map_err(|err| format!("Failed to show address\nError: {err}"))?;
-
-    // writeln!(writer, "package com.kaeonx.nymandroidport").map_err(|_| {
-    //     format!(
-    //         "Rust: Unable to write to file {}",
-    //         file_path.to_string_lossy()
-    //     )
-    // })?;
-    // writeln!(writer).map_err(|_| {
-    //     format!(
-    //         "Rust: Unable to write to file {}",
-    //         file_path.to_string_lossy()
-    //     )
-    // })?;
-    // writeln!(writer, "// Writing to Android storage from Rust!").map_err(|_| {
-    //     format!(
-    //         "Rust: Unable to write to file {}",
-    //         file_path.to_string_lossy()
-    //     )
-    // })?;
-    // writeln!(writer).map_err(|_| {
-    //     format!(
-    //         "Rust: Unable to write to file {}",
-    //         file_path.to_string_lossy()
-    //     )
-    // })?;
 
     Ok(())
 }
@@ -226,7 +222,10 @@ async fn setup_gateway(
     if register {
         // Get the gateway details by querying the validator-api. Either pick one at random or use
         // the chosen one if it's among the available ones.
-        log::info!("Configuring gateway");
+        log::info!(
+            "Configuring gateway {:?}",
+            config.get_base().get_validator_api_endpoints()
+        );
         let gateway = client_core::init::query_gateway_details(
             config.get_base().get_validator_api_endpoints(),
             user_chosen_gateway_id,

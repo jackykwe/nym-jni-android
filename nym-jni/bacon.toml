@@ -20,7 +20,7 @@ command = [
     "--color", "always",
     "--",
     "-W", "clippy::pedantic",
-    "-W", "clippy::nursery",
+    # "-W", "clippy::nursery",  // disabled because it's too aggressive and sometimes unhelpful
     "-W", "clippy::unwrap_used",
     "-W", "clippy::expect_used"
 ]
