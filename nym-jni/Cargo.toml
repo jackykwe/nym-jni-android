@@ -7,18 +7,21 @@ edition = "2021"
 
 [dependencies]
 jni = "0.20.0"
-nym-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-client-core = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-network-defaults = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-config = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+nym-client = { path = "/home/jacky/Documents/part-ii/dissertation/nym/clients/native" }
+client-core = { path = "/home/jacky/Documents/part-ii/dissertation/nym/clients/client-core" }
+network-defaults = { path = "/home/jacky/Documents/part-ii/dissertation/nym/common/network-defaults" }
+config = { path = "/home/jacky/Documents/part-ii/dissertation/nym/common/config" }
+gateway-client = { path = "/home/jacky/Documents/part-ii/dissertation/nym/common/client-libs/gateway-client" }
 serde = "1.0.148"
 # https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
 # OpenSSL, which is not suitable for cross-compilation.
 openssl = { version = "0.10.42", features = ["vendored"] }
 
 log = "0.4.17"
+futures = "0.3.25"
 android_logger = { version = "0.11.1", optional = true }
-tokio = "1.22.0"  # necessary for async functions to execute properly
+tokio = { version = "1.23.0", features = ["full"] }  # necessary for async functions to execute properly on aarch64
+rand = { version = "0.7.3", features = ["wasm-bindgen"] }
 
 [features]
 debug_logs = ["dep:android_logger"]

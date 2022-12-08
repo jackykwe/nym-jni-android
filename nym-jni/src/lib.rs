@@ -7,12 +7,12 @@ use client_core::error::ClientCoreError;
 use config::NymConfig;
 use jni::objects::{JClass, JObject, JString};
 use jni::JNIEnv;
+use network_defaults::setup_env;
 
 mod android_config; // renamed from config to android_config to avoid name clash with config (crate dependency)
 mod utils;
 
 use android_config::{AndroidConfig, SocketType};
-use network_defaults::setup_env;
 use utils::{
     get_non_nullable_string_fallible, get_nullable_integer_fallible, get_nullable_string_fallible,
 };
@@ -31,6 +31,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl(
         class,
         config_env_file
     );
+    log::info!("topLevelInit OK");
 }
 
 #[allow(non_snake_case)]
@@ -39,16 +40,33 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl_fallible(
     _: JClass,
     config_env_file: JString, // Path pointing to an env file that configures the client.
 ) -> Result<(), String> {
-    let config_env_file = get_nullable_string_fallible(env, config_env_file, "config_env_file")?;
-    let config_env_file = config_env_file.map(PathBuf::from);
-
     // TODO Consider tracing crate, used by nym-client, if the necessity arises.
     // TODO @ Saturday: reminder to Daniel for some template code
     #[cfg(feature = "debug_logs")]
     android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Trace));
 
+    let config_env_file = get_nullable_string_fallible(env, config_env_file, "config_env_file")?;
+    let config_env_file = config_env_file.map(PathBuf::from);
+
     setup_env(config_env_file); // config_env_file can be provided as an additional argument
+
+    // let not_executed = small_async_fn_sanity_check("");
+    // let _ = tokio::runtime::Builder::new_current_thread()
+    //     .enable_all()
+    //     .build()
+    //     .map_err(|err| format!("Failed to setup tokio runtime ({})", err))?
+    //     .block_on(not_executed);
+
     Ok(())
+}
+
+async fn small_async_fn_sanity_check(s: &str) {
+    log::warn!("{}", s);
+    nested_small_async_fn_sanity_check("nested call...").await;
+}
+
+async fn nested_small_async_fn_sanity_check(s: &str) {
+    log::warn!("{}", s);
 }
 
 #[no_mangle]
@@ -78,6 +96,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl(
         port,
         fastmode
     );
+    log::info!("nymInit OK");
 }
 
 #[allow(non_snake_case)]
@@ -117,7 +136,6 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     // that facility to pass this value to the default_root_directory() function at runtime.
     // This line must be executed before creation of any AndroidConfig structs.
     std::env::set_var(STORAGE_ABS_PATH_ENV_VAR_NAME, &storage_abs_path);
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// START: nym_client::commands::init::execute()
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,35 +195,42 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// END: nym_client::commands::override_config()
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    log::info!("MARKER START");
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|err| format!("Failed to setup tokio runtime ({})", err))?
+        .block_on(small_async_fn_sanity_check("BLOCKING ON SAFSC"));
     let gateway = setup_gateway(id, register_gateway, user_chosen_gateway_id, &config);
-    // using tokio's block_on() instead of direct .await
-    // TODO: futures::executor::block_on() does not work; not sure why
+    // // using tokio's block_on() instead of direct .await
+    // // TODO-ing: both futures::executor::block_on() and tokio block_on() do not work for x86_64; not sure why
     let gateway = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .map_err(|err| format!("Failed to setup tokio runtime ({})", err))?
         .block_on(gateway)
         .map_err(|err| format!("Failed to setup gateway\nError: {err}"))?;
-    config.get_base_mut().with_gateway_endpoint(gateway);
+    log::info!("MARKER END");
+    // config.get_base_mut().with_gateway_endpoint(gateway);
 
-    let config_save_location = config.get_config_file_save_location();
-    config
-        .save_to_file(None)
-        .map_err(|err| format!("Failed to save the config file ({})", err))?;
+    // let config_save_location = config.get_config_file_save_location();
+    // config
+    //     .save_to_file(None)
+    //     .map_err(|err| format!("Failed to save the config file ({})", err))?;
 
-    log::info!("Saved configuration file to {:?}", config_save_location);
-    log::info!("Using gateway: {}", config.get_base().get_gateway_id());
-    log::debug!("Gateway id: {}", config.get_base().get_gateway_id());
-    log::debug!("Gateway owner: {}", config.get_base().get_gateway_owner());
-    log::debug!(
-        "Gateway listener: {}",
-        config.get_base().get_gateway_listener()
-    );
-    log::debug!("Client configuration completed.");
+    // log::info!("Saved configuration file to {:?}", config_save_location);
+    // log::info!("Using gateway: {}", config.get_base().get_gateway_id());
+    // log::debug!("Gateway id: {}", config.get_base().get_gateway_id());
+    // log::debug!("Gateway owner: {}", config.get_base().get_gateway_owner());
+    // log::debug!(
+    //     "Gateway listener: {}",
+    //     config.get_base().get_gateway_listener()
+    // );
+    // log::debug!("Client configuration completed.");
 
-    // Useless, prints to stdout but not visible from Android
-    // client_core::init::show_address(config.get_base())
-    //     .map_err(|err| format!("Failed to show address\nError: {err}"))?;
+    // // Useless, prints to stdout but not visible from Android
+    // // client_core::init::show_address(config.get_base())
+    // //     .map_err(|err| format!("Failed to show address\nError: {err}"))?;
 
     Ok(())
 }
@@ -215,11 +240,14 @@ async fn setup_gateway(
     register: bool,
     user_chosen_gateway_id: Option<&str>,
     config: &AndroidConfig,
-) -> Result<GatewayEndpoint, ClientCoreError> {
+    // ) -> Result<GatewayEndpoint, ClientCoreError> {
+) -> Result<(), ClientCoreError> {
+    log::info!("START");
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //// START: nym_client::commands::init::setup_gateway()
     ////////////////////////////////////////////////////////////////////////////////////////////////
     if register {
+        log::info!("Branch 1 taken");
         // Get the gateway details by querying the validator-api. Either pick one at random or use
         // the chosen one if it's among the available ones.
         log::info!(
@@ -233,38 +261,131 @@ async fn setup_gateway(
         .await?;
         log::debug!("Querying gateway gives: {}", gateway);
 
-        // Registering with gateway by setting up and writing shared keys to disk
+        // // Registering with gateway by setting up and writing shared keys to disk
         log::trace!("Registering gateway");
-        client_core::init::register_with_gateway_and_store_keys(gateway.clone(), config.get_base())
-            .await?;
-        log::debug!("Saved all generated keys");
+        // client_core::init::register_with_gateway_and_store_keys(gateway.clone(), config.get_base())
+        //     .await?;  // OFFENDING
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        let gateway_details = &gateway.clone(); // todo temp stack var
 
-        Ok(gateway.into())
+        let mut rng = rand::rngs::OsRng;
+        let mut key_manager = client_core::client::key_manager::KeyManager::new(&mut rng);
+
+        // let shared_keys =
+        // register_with_gateway(&gateway_details, key_manager.identity_keypair()).await?;
+        //?=======================================================================================//
+        let our_identity = key_manager.identity_keypair(); // todo temp stack var
+
+        let timeout = std::time::Duration::from_millis(1500);
+
+        // ! ================================================================================== ! //
+        // let mut gateway_client = gateway_client::GatewayClient::new_init(
+        //     gateway_details.clients_address(),
+        //     gateway_details.identity_key,
+        //     gateway_details.owner.clone(),
+        //     our_identity.clone(),
+        //     timeout,
+        //     #[cfg(not(target_arch = "wasm32"))]
+        //     None,
+        // );
+        use futures::channel::mpsc;
+        // // note: this packet_router is completely invalid in normal circumstances, but "works"
+        // // perfectly fine here, because it's not meant to be used
+        let (ack_tx, _) = mpsc::unbounded();
+        let (mix_tx, _) = mpsc::unbounded();
+        let packet_router = gateway_client::packet_router::PacketRouter::new(
+            ack_tx,
+            mix_tx,
+            #[cfg(not(target_arch = "wasm32"))]
+            None.clone(), // shutdown.clone(),
+        );
+
+        log::warn!("What's going on...");
+        gateway_details.clients_address();
+        gateway_details.identity_key;
+        gateway_details.owner.clone();
+        our_identity.clone();
+        gateway_client::socket_state::SocketState::NotConnected;
+        gateway_client::client::DEFAULT_RECONNECTION_ATTEMPTS;
+        gateway_client::client::DEFAULT_RECONNECTION_BACKOFF;
+
+        let mut gateway_client = gateway_client::GatewayClient {
+            authenticated: false,
+            disabled_credentials_mode: true,
+            bandwidth_remaining: 0,
+            gateway_address: gateway_details.clients_address(),
+            gateway_identity: gateway_details.identity_key,
+            gateway_owner: gateway_details.owner.clone(),
+            local_identity: our_identity.clone(),
+            shared_key: None,
+            connection: gateway_client::socket_state::SocketState::NotConnected,
+            packet_router,
+            response_timeout_duration: timeout,
+            bandwidth_controller: None,
+            should_reconnect_on_failure: false,
+            reconnection_attempts: gateway_client::client::DEFAULT_RECONNECTION_ATTEMPTS,
+            reconnection_backoff: gateway_client::client::DEFAULT_RECONNECTION_BACKOFF,
+            #[cfg(not(target_arch = "wasm32"))]
+            shutdown: None,
+        };
+        log::warn!("If this message appears, bless, it works");
+        // ! ================================================================================== ! //
+        // gateway_client
+        //     .establish_connection()
+        //     .await
+        //     .tap_err(|_| log::warn!("Failed to establish connection with gateway!"))?;
+        // let shared_keys = gateway_client
+        //     .perform_initial_authentication()
+        //     .await
+        //     .tap_err(|_| log::warn!("Failed to register with the gateway!"))?;
+        // let shared_keys = Ok(shared_keys);
+
+        //?=======================================================================================//
+
+        // key_manager.insert_gateway_shared_key(shared_keys);
+
+        // let pathfinder = ClientKeyPathfinder::new_from_config(config);
+        // Ok(key_manager
+        //     .store_keys(&pathfinder)
+        //     .tap_err(|err| log::error!("Failed to generate keys: {err}"))?)
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
+        log::debug!("Saved all generated keys");
+        // Ok(gateway.into())
     } else if user_chosen_gateway_id.is_some() {
+        log::info!("Branch 2 taken");
         // Just set the config, don't register or create any keys
         // This assumes that the user knows what they are doing, and that the existing keys are
         // valid for the gateway being used
         println!("Using gateway provided by user, keeping existing keys");
-        let gateway = client_core::init::query_gateway_details(
-            config.get_base().get_validator_api_endpoints(),
-            user_chosen_gateway_id,
-        )
-        .await?;
-        log::debug!("Querying gateway gives: {}", gateway);
-        Ok(gateway.into())
+        // let gateway = client_core::init::query_gateway_details(
+        //     config.get_base().get_validator_api_endpoints(),
+        //     user_chosen_gateway_id,
+        // )
+        // .await?;
+        // log::debug!("Querying gateway gives: {}", gateway);
+        // Ok(gateway.into())
     } else {
+        log::info!("Branch 3 taken");
         log::debug!("Not registering gateway, will reuse existing config and keys");
-        let existing_config = AndroidConfig::load_from_file(Some(id)).map_err(|err| {
-            log::error!(
-                "Unable to configure gateway: {err}. \n
-                Seems like the client was already initialized but it was not possible to read \
-                the existing configuration file. \n
-                CAUTION: Consider backing up your gateway keys and try force gateway registration, or \
-                removing the existing configuration and starting over."
-            );
-            ClientCoreError::CouldNotLoadExistingGatewayConfiguration(err)
-        })?;
+        // let existing_config = AndroidConfig::load_from_file(Some(id)).map_err(|err| {
+        //     log::error!(
+        //         "Unable to configure gateway: {err}. \n
+        //         Seems like the client was already initialized but it was not possible to read \
+        //         the existing configuration file. \n
+        //         CAUTION: Consider backing up your gateway keys and try force gateway registration, or \
+        //         removing the existing configuration and starting over."
+        //     );
+        //     ClientCoreError::CouldNotLoadExistingGatewayConfiguration(err)
+        // })?;
 
-        Ok(existing_config.get_base().get_gateway_endpoint().clone())
+        // Ok(existing_config.get_base().get_gateway_endpoint().clone())
     }
+
+    log::info!("Terminated");
+    Ok(())
 }
