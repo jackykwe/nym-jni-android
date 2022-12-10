@@ -11,10 +11,8 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.kaeonx.nymandroidport.databinding.ActivityMainBinding
-import java.io.File
 
 private const val TAG = "mainActivity"
-private const val NYM_DIR = ".nym"
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,7 +20,9 @@ class MainActivity : AppCompatActivity() {
         // Use this to identify the device's ABI.
         Log.i(TAG, "This device's ABI is ${android.os.Build.SUPPORTED_ABIS[0]}.")
 
+        Log.i(TAG, "Before load")
         System.loadLibrary("nym_jni")
+        Log.i(TAG, "After load")
     }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -45,22 +45,20 @@ class MainActivity : AppCompatActivity() {
                 .setAction("Action", null).show()
         }
 
-//        val key = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (i + 1).toByte() }
-//        val iv = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (STREAM_CIPHER_KEY_SIZE - i).toByte() }
-//        Log.i(TAG, "key is [${key.joinToString()}]")
-//        Log.i(TAG, "iv is [${iv.joinToString()}]")
-//        val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
-//        Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
+//            val key = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (i + 1).toByte() }
+//            val iv = ByteArray(STREAM_CIPHER_KEY_SIZE) { i -> (STREAM_CIPHER_KEY_SIZE - i).toByte() }
+//            Log.i(TAG, "key is [${key.joinToString()}]")
+//            Log.i(TAG, "iv is [${iv.joinToString()}]")
+//            val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
+//            Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
 
-        val baseDirectory = File(applicationContext.filesDir, NYM_DIR)
-        baseDirectory.mkdirs()
-
-        // This doesn't actually open the file, merely does Path manipulation
         topLevelInit()  // sets up logging on Rust side
-        Log.i(
-            TAG,
-            nymInit(baseDirectory.absolutePath, "client1")
-        )  // Rust code will write to temp.txt
+//        nymInit(applicationContext.filesDir.absolutePath, "client1")
+        var input: UInt? = null
+        input = input?.plus(1u)
+        Log.i(TAG, "Kotlin passing $input")
+        val result = test(input)
+        Log.i(TAG, "Kotlin received $result");
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
