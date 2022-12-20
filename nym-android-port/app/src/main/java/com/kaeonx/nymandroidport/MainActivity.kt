@@ -11,6 +11,8 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.kaeonx.nymandroidport.databinding.ActivityMainBinding
+import com.kaeonx.nymandroidport.jni.test
+import com.kaeonx.nymandroidport.jni.topLevelInit
 
 private const val TAG = "mainActivity"
 
@@ -54,11 +56,11 @@ class MainActivity : AppCompatActivity() {
 
         topLevelInit()  // sets up logging on Rust side
 //        nymInit(applicationContext.filesDir.absolutePath, "client1")
-        var input: UInt? = null
+        var input: UInt? = 42u
         input = input?.plus(1u)
         Log.i(TAG, "Kotlin passing $input")
         val result = test(input)
-        Log.i(TAG, "Kotlin received $result");
+        Log.i(TAG, "Kotlin received $result")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

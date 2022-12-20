@@ -1,4 +1,4 @@
-package com.kaeonx.nymandroidport
+package com.kaeonx.nymandroidport.jni
 
 internal fun test(arg: UInt?): UInt? = testImpl(arg)
 private external fun testImpl(arg: UInt?): UInt?
