@@ -16,7 +16,7 @@ mod android_instrumented_tests;
 mod utils;
 
 use android_config::{AndroidConfig, SocketType};
-use utils::{consume_kt_nullable_string_fallible, consume_kt_string_string_fallible};
+use utils::{consume_kt_nullable_string_fallible, consume_kt_string_fallible};
 
 use crate::android_config::STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE;
 use crate::utils::*;
@@ -29,21 +29,21 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVf
 ) -> jobject {
     call_fallible_or_else!(
         null_mut,
-        Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVfyTY_fallible,
+        Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible,
         env,
         class,
         arg
     )
 }
 
-pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVfyTY_fallible(
+pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
     env: JNIEnv,
     class: JClass,
     arg: JObject,
 ) -> Result<jobject, String> {
     let arg = consume_kt_nullable_uint_fallible(env, arg, "-")?;
     log::info!("Rust received arg::: {:?}", arg);
-    let result = produce_kt_nullable_uint_fallible(env, arg.map(|v| v.wrapping_add(1)), "-")?;
+    let result = produce_kt_nullable_uint_fallible(env, arg.map(|v| v.wrapping_add(1)))?;
     Ok(result)
 }
 
@@ -124,9 +124,8 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     fastmode: bool, // Mostly debug-related option to increase default traffic rate so that you would not need to modify config post init
                     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool, // Set this client to work in a enabled credentials mode that would attempt to use gateway with bandwidth credential requirement.
 ) -> Result<(), String> {
-    let storage_abs_path =
-        consume_kt_string_string_fallible(env, storage_abs_path, "storage_abs_path")?;
-    let id = &consume_kt_string_string_fallible(env, id, "id")?;
+    let storage_abs_path = consume_kt_string_fallible(env, storage_abs_path, "storage_abs_path")?;
+    let id = &consume_kt_string_fallible(env, id, "id")?;
     let gateway = consume_kt_nullable_string_fallible(env, gateway, "gateway")?;
     let validators = consume_kt_nullable_string_fallible(env, validators, "validators")?;
     let port = consume_kt_nullable_int_fallible(env, port, "port")?;
