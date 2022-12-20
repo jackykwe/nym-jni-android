@@ -76,6 +76,8 @@ pub fn produce_kt_nullable_boolean_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         z: super::produce_kt_bool(source),
@@ -103,8 +105,8 @@ pub fn produce_kt_nullable_boolean_fallible(
         )
     })?
     .l()
-    .map(|val| val.into_raw())
-    .map_err(|_| format!("Unexpected Exception"))
+    .map(JObject::into_raw)
+    .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin Char?
@@ -174,6 +176,8 @@ pub fn produce_kt_nullable_byte_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         b: super::produce_kt_byte(source),
@@ -191,8 +195,8 @@ pub fn produce_kt_nullable_byte_fallible(
     env.call_static_method_unchecked("java/lang/Byte", method_id, ReturnType::Object, &[source])
         .map_err(|err| format!("Unable to construct a java/lang/Byte from Rust ({})", err))?
         .l()
-        .map(|val| val.into_raw())
-        .map_err(|_| format!("Unexpected Exception"))
+        .map(JObject::into_raw)
+        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin UByte?
@@ -223,8 +227,7 @@ pub fn consume_kt_nullable_ubyte_fallible(
             )
         })?;
 
-    Ok(env
-        .get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Byte))
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Byte))
         .map_err(|err| {
             format!(
                 "Unable to get {}'s value from Kotlin ({})",
@@ -238,7 +241,7 @@ pub fn consume_kt_nullable_ubyte_fallible(
                 "Unable to convert {}'s value to i8 ({})",
                 err_field_name, err
             )
-        })?)
+        })
 }
 /// Prepares a Kotlin `UByte?` to be sent through JNI.
 ///
@@ -259,6 +262,8 @@ pub fn produce_kt_nullable_ubyte_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = JValue::Byte(super::produce_kt_ubyte(source));
 
@@ -336,6 +341,8 @@ pub fn produce_kt_nullable_short_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         s: super::produce_kt_short(source),
@@ -353,8 +360,8 @@ pub fn produce_kt_nullable_short_fallible(
     env.call_static_method_unchecked("java/lang/Short", method_id, ReturnType::Object, &[source])
         .map_err(|err| format!("Unable to construct a java/lang/Short from Rust ({})", err))?
         .l()
-        .map(|val| val.into_raw())
-        .map_err(|_| format!("Unexpected Exception"))
+        .map(JObject::into_raw)
+        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin UShort?
@@ -385,8 +392,7 @@ pub fn consume_kt_nullable_ushort_fallible(
             )
         })?;
 
-    Ok(env
-        .get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Short))
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Short))
         .map_err(|err| {
             format!(
                 "Unable to get {}'s value from Kotlin ({})",
@@ -400,7 +406,7 @@ pub fn consume_kt_nullable_ushort_fallible(
                 "Unable to convert {}'s value to i16 ({})",
                 err_field_name, err
             )
-        })?)
+        })
 }
 /// Prepares a Kotlin `UShort?` to be sent through JNI.
 ///
@@ -421,6 +427,8 @@ pub fn produce_kt_nullable_ushort_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = JValue::Short(super::produce_kt_ushort(source));
 
@@ -498,6 +506,8 @@ pub fn produce_kt_nullable_int_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         i: super::produce_kt_int(source),
@@ -525,8 +535,8 @@ pub fn produce_kt_nullable_int_fallible(
         )
     })?
     .l()
-    .map(|val| val.into_raw())
-    .map_err(|_| format!("Unexpected Exception"))
+    .map(JObject::into_raw)
+    .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin UInt?
@@ -557,8 +567,7 @@ pub fn consume_kt_nullable_uint_fallible(
             )
         })?;
 
-    Ok(env
-        .get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Int))
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Int))
         .map_err(|err| {
             format!(
                 "Unable to get {}'s value from Kotlin ({})",
@@ -572,7 +581,7 @@ pub fn consume_kt_nullable_uint_fallible(
                 "Unable to convert {}'s value to i32 ({})",
                 err_field_name, err
             )
-        })?)
+        })
 }
 /// Prepares a Kotlin `UInt?` to be sent through JNI.
 ///
@@ -593,6 +602,8 @@ pub fn produce_kt_nullable_uint_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = JValue::Int(super::produce_kt_uint(source));
 
@@ -670,6 +681,8 @@ pub fn produce_kt_nullable_long_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         j: super::produce_kt_long(source),
@@ -687,8 +700,8 @@ pub fn produce_kt_nullable_long_fallible(
     env.call_static_method_unchecked("java/lang/Long", method_id, ReturnType::Object, &[source])
         .map_err(|err| format!("Unable to construct a java/lang/Long from Rust ({})", err))?
         .l()
-        .map(|val| val.into_raw())
-        .map_err(|_| format!("Unexpected Exception"))
+        .map(JObject::into_raw)
+        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin ULong?
@@ -719,8 +732,7 @@ pub fn consume_kt_nullable_ulong_fallible(
             )
         })?;
 
-    Ok(env
-        .get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Long))
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Long))
         .map_err(|err| {
             format!(
                 "Unable to get {}'s value from Kotlin ({})",
@@ -734,7 +746,7 @@ pub fn consume_kt_nullable_ulong_fallible(
                 "Unable to convert {}'s value to i64 ({})",
                 err_field_name, err
             )
-        })?)
+        })
 }
 /// Prepares a Kotlin `ULong?` to be sent through JNI.
 ///
@@ -755,6 +767,8 @@ pub fn produce_kt_nullable_ulong_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = JValue::Long(super::produce_kt_ulong(source));
 
@@ -832,6 +846,8 @@ pub fn produce_kt_nullable_float_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         f: super::produce_kt_float(source),
@@ -849,8 +865,8 @@ pub fn produce_kt_nullable_float_fallible(
     env.call_static_method_unchecked("java/lang/Float", method_id, ReturnType::Object, &[source])
         .map_err(|err| format!("Unable to construct a java/lang/Float from Rust ({})", err))?
         .l()
-        .map(|val| val.into_raw())
-        .map_err(|_| format!("Unexpected Exception"))
+        .map(JObject::into_raw)
+        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin Double?
@@ -913,6 +929,8 @@ pub fn produce_kt_nullable_double_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     let source = jvalue {
         d: super::produce_kt_double(source),
@@ -930,8 +948,8 @@ pub fn produce_kt_nullable_double_fallible(
     env.call_static_method_unchecked("java/lang/Double", method_id, ReturnType::Object, &[source])
         .map_err(|err| format!("Unable to construct a java/lang/Double from Rust ({})", err))?
         .l()
-        .map(|val| val.into_raw())
-        .map_err(|_| format!("Unexpected Exception"))
+        .map(JObject::into_raw)
+        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin Void?: nothing to implement
@@ -963,6 +981,8 @@ pub fn produce_kt_nullable_string_fallible(
     if source.is_none() {
         return Ok(null_mut());
     }
+
+    #[allow(clippy::unwrap_used)]
     let source = source.unwrap(); // safe, never panics
     super::produce_kt_string_fallible(env, source, err_field_name)
 }

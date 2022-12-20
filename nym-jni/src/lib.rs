@@ -15,11 +15,15 @@ mod android_config; // renamed from config to android_config to avoid name clash
 mod android_instrumented_tests;
 mod utils;
 
-use android_config::{AndroidConfig, SocketType};
-use utils::{consume_kt_nullable_string_fallible, consume_kt_string_fallible};
-
-use crate::android_config::STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE;
-use crate::utils::*;
+use android_config::{
+    AndroidConfig, SocketType,
+    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
+};
+use utils::{
+    consume_kt_nullable_int_fallible, consume_kt_nullable_string_fallible,
+    consume_kt_nullable_uint_fallible, consume_kt_string_fallible,
+    produce_kt_nullable_uint_fallible,
+};
 
 #[no_mangle]
 pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVfyTY(

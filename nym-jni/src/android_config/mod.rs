@@ -3,15 +3,17 @@
 
 // Note to nym-jni maintainers: must manually synchronise with nym-client
 
+use std::path::PathBuf;
+
 use client_core::config::Config as BaseConfig;
-pub use client_core::config::MISSING_VALUE;
 use config::defaults::DEFAULT_WEBSOCKET_LISTENING_PORT;
 use config::NymConfig;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 mod template;
-use self::template::config_template;
+
+use template::config_template;
+
 pub const STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE:
     &str = "ANDROIDCONFIG_STORAGE_ABS_PATH";
 

@@ -1,6 +1,6 @@
 use jni::{
     objects::JString,
-    sys::{jboolean, jbyte, jchar, jdouble, jfloat, jint, jlong, jshort, jstring},
+    sys::{jboolean, jbyte, jdouble, jfloat, jint, jlong, jshort, jstring},
     JNIEnv,
 };
 
@@ -21,11 +21,7 @@ pub fn consume_kt_bool(source: jboolean) -> bool {
 /// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
 /// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
 pub fn produce_kt_bool(source: bool) -> jboolean {
-    if source {
-        1
-    } else {
-        0
-    }
+    source.into()
 }
 
 // Kotlin Char
@@ -70,7 +66,7 @@ pub fn produce_kt_byte(source: i8) -> jbyte {
 /// the underlying `Byte` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn consume_kt_ubyte(source: jbyte) -> u8 {
     u8::from_be_bytes(source.to_be_bytes())
 }
@@ -89,7 +85,7 @@ pub fn consume_kt_ubyte(source: jbyte) -> u8 {
 /// the underlying `Byte` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn produce_kt_ubyte(source: u8) -> jbyte {
     jbyte::from_be_bytes(source.to_be_bytes())
 }
@@ -128,7 +124,7 @@ pub fn produce_kt_short(source: i16) -> jshort {
 /// the underlying `Short` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn consume_kt_ushort(source: jshort) -> u16 {
     u16::from_be_bytes(source.to_be_bytes())
 }
@@ -147,7 +143,7 @@ pub fn consume_kt_ushort(source: jshort) -> u16 {
 /// the underlying `Short` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn produce_kt_ushort(source: u16) -> jshort {
     jshort::from_be_bytes(source.to_be_bytes())
 }
@@ -186,7 +182,7 @@ pub fn produce_kt_int(source: i32) -> jint {
 /// underlying `Int` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn consume_kt_uint(source: jint) -> u32 {
     u32::from_be_bytes(source.to_be_bytes())
 }
@@ -205,7 +201,7 @@ pub fn consume_kt_uint(source: jint) -> u32 {
 /// underlying `Int` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn produce_kt_uint(source: u32) -> jint {
     jint::from_be_bytes(source.to_be_bytes())
 }
@@ -244,7 +240,7 @@ pub fn produce_kt_long(source: i64) -> jlong {
 /// the underlying `Long` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn consume_kt_ulong(source: jlong) -> u64 {
     u64::from_be_bytes(source.to_be_bytes())
 }
@@ -263,7 +259,7 @@ pub fn consume_kt_ulong(source: jlong) -> u64 {
 /// the underlying `Long` value.
 ///
 /// # Reference
-/// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
+/// Strategy from <https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives>
 pub fn produce_kt_ulong(source: u64) -> jlong {
     jlong::from_be_bytes(source.to_be_bytes())
 }
@@ -333,7 +329,7 @@ pub fn produce_kt_string_fallible(
     err_field_name: &str,
 ) -> Result<jstring, String> {
     env.new_string(source)
-        .map(|val| val.into_raw())
+        .map(JString::into_raw)
         .map_err(|err| {
             format!(
                 "Rust: Unable to create {} from Rust ({})",

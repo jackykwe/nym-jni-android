@@ -1,11 +1,12 @@
 // Corresponds to SendingNullableToRustHelpers.kt
 
+use std::ptr::null_mut;
+
 use jni::{
     objects::{JClass, JObject, JString},
     sys::jstring,
     JNIEnv,
 };
-use std::ptr::null_mut;
 
 use crate::{
     call_fallible_or_else,
@@ -293,7 +294,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     arg: JObject,
 ) -> Result<jstring, String> {
     let arg = consume_kt_nullable_float_fallible(env, arg, "?")?;
-    let arg = arg.map(|v| v.to_bits());
+    let arg = arg.map(f32::to_bits);
     produce_kt_string_fallible(
         env,
         format!("Rust received 0b{:?} (Float?/Option<f32>)", arg),
@@ -322,7 +323,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     arg: JObject,
 ) -> Result<jstring, String> {
     let arg = consume_kt_nullable_double_fallible(env, arg, "?")?;
-    let arg = arg.map(|v| v.to_bits());
+    let arg = arg.map(f64::to_bits);
     produce_kt_string_fallible(
         env,
         format!("Rust received 0b{:?} (Double?/Option<f64>)", arg),

@@ -1,11 +1,12 @@
 // Corresponds to SendingNonNullableToRustHelpers.kt
 
+use std::ptr::null_mut;
+
 use jni::{
     objects::{JClass, JString},
     sys::{jboolean, jbyte, jdouble, jfloat, jint, jlong, jshort, jstring},
     JNIEnv,
 };
-use std::ptr::null_mut;
 
 use crate::{
     call_fallible_or_else,

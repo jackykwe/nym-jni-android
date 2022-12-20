@@ -1,7 +1,8 @@
 // Corresponds to PreRequisiteHelpers.kt
 
-use jni::{objects::JClass, sys::jstring, JNIEnv};
 use std::ptr::null_mut;
+
+use jni::{objects::JClass, sys::jstring, JNIEnv};
 
 use crate::{call_fallible_or_else, utils::produce_kt_string_fallible};
 
