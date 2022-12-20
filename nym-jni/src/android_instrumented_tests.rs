@@ -1,28 +1,5 @@
-// use jni::{objects::JClass, JNIEnv};
-
-// #[no_mangle]
-// pub extern "C" fn Java_com_kaeonx_nymandroidport_NymTestHandlerKt_testSendAndReceiveNonNullableBooleanImpl(
-//     env: JNIEnv,
-//     class: JClass,
-//     arg: bool,
-// ) -> bool {
-//     !arg
-// }
-
-// #[no_mangle]
-// pub extern "C" fn Java_com_kaeonx_nymandroidport_NymTestHandlerKt_testSendAndReceiveNonNullableByteImpl(
-//     env: JNIEnv,
-//     class: JClass,
-//     arg: bool,
-// ) -> bool {
-//     !arg
-// }
-
-// #[no_mangle]
-// pub extern "C" fn Java_com_kaeonx_nymandroidport_NymTestHandlerKt_testSendAndReceiveNonNullableCharImpl(
-//     env: JNIEnv,
-//     class: JClass,
-//     arg: bool,
-// ) -> bool {
-//     !arg
-// }
+mod pre_requisite;
+mod receiving_non_nullable_from_kotlin;
+mod receiving_nullable_from_kotlin;
+mod sending_non_nullable_to_kotlin;
+mod sending_nullable_to_kotlin;

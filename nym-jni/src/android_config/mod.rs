@@ -12,7 +12,7 @@ use std::path::PathBuf;
 
 mod template;
 use self::template::config_template;
-pub const STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE:
+pub const STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE:
     &str = "ANDROIDCONFIG_STORAGE_ABS_PATH";
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Serialize, Clone, Copy)]
@@ -51,10 +51,10 @@ impl NymConfig for AndroidConfig {
     #[allow(clippy::expect_used)] // nym also uses expect
     fn default_root_directory() -> PathBuf {
         PathBuf::from(
-            std::env::var(STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE).unwrap_or_else(|_| {
+            std::env::var(STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE).unwrap_or_else(|_| {
                 panic!(
                     "Failed to get {}. Is the environment variable not set?",
-                    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE
+                    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE
                 )
             }),
         )
@@ -64,7 +64,7 @@ impl NymConfig for AndroidConfig {
 
     fn try_default_root_directory() -> Option<PathBuf> {
         std::env::var(
-            STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
+            STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
         )
         .ok()
         .map(|path| PathBuf::from(path).join(".nym").join("clients"))

@@ -52,6 +52,18 @@
 /// ```
 #[macro_export]
 macro_rules! call_fallible_or {
+    // No argument case, added so that the macro can be called without a trailing comma inside the
+    // parentheses
+    ($or:expr, $func_name:ident, $env:expr, $class_or_object:expr) => {
+        match $func_name($env, $class_or_object) {
+            Ok(res) => res,
+            Err(str) => {
+                $env.throw(str)
+                    .expect("Rust: Unable to throw Kotlin Exception");
+                $or
+            }
+        }
+    };
     ($or:expr, $func_name:ident, $env:expr, $class_or_object:expr, $( $arg:expr ),*) => {
         match $func_name($env, $class_or_object, $( $arg ),*) {
             Ok(res) => res,
@@ -116,6 +128,18 @@ macro_rules! call_fallible_or {
 /// ```
 #[macro_export]
 macro_rules! call_fallible_or_else {
+    // No argument case, added so that the macro can be called without a trailing comma inside the
+    // parentheses
+    ($or_else_fn:expr, $func_name:ident, $env:expr, $class_or_object:expr) => {
+        match $func_name($env, $class_or_object) {
+            Ok(res) => res,
+            Err(str) => {
+                $env.throw(str)
+                    .expect("Rust: Unable to throw Kotlin Exception");
+                $or_else_fn()
+            }
+        }
+    };
     ($or_else_fn:expr, $func_name:ident, $env:expr, $class_or_object:expr, $( $arg:expr ),*) => {
         match $func_name($env, $class_or_object, $( $arg ),*) {
             Ok(res) => res,
@@ -171,6 +195,13 @@ macro_rules! call_fallible_or_else {
 /// ```
 #[macro_export]
 macro_rules! call_fallible {
+    // No argument case, added so that the macro can be called without a trailing comma inside the
+    // parentheses
+    ($func_name:ident, $env:expr, $class_or_object:expr) => {
+        if let Err(str) = $func_name($env, $class_or_object) {
+            $env.throw(str).expect("Rust: Unable to throw Kotlin Exception");
+        }
+    };
     ($func_name:ident, $env:expr, $class_or_object:expr, $( $arg:expr ),*) => {
         if let Err(str) = $func_name($env, $class_or_object, $( $arg ),*) {
             $env.throw(str).expect("Rust: Unable to throw Kotlin Exception");

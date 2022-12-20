@@ -18,7 +18,7 @@ mod utils;
 use android_config::{AndroidConfig, SocketType};
 use utils::{consume_kt_nullable_string_fallible, consume_kt_string_fallible};
 
-use crate::android_config::STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE;
+use crate::android_config::STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE;
 use crate::utils::*;
 
 #[no_mangle]
@@ -36,9 +36,10 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVf
     )
 }
 
-pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
+#[allow(non_snake_case)]
+fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
     env: JNIEnv,
-    class: JClass,
+    _: JClass,
     arg: JObject,
 ) -> Result<jobject, String> {
     let arg = consume_kt_nullable_uint_fallible(env, arg, "-")?;
@@ -48,13 +49,13 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl(
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl(
     env: JNIEnv,
     class: JClass,
     config_env_file: JString, // Path pointing to an env file that configures the client.
 ) {
     call_fallible!(
-        Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl_fallible,
+        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible,
         env,
         class,
         config_env_file
@@ -62,7 +63,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl(
 }
 
 #[allow(non_snake_case)]
-fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl_fallible(
+fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible(
     env: JNIEnv,
     _: JClass,
     config_env_file: JString, // Path pointing to an env file that configures the client.
@@ -81,7 +82,7 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_topLevelInitImpl_fallible(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl(
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl(
     env: JNIEnv,
     class: JClass,
     storage_abs_path: JString,
@@ -95,7 +96,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl(
     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
 ) {
     call_fallible!(
-        Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible,
+        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible,
         env,
         class,
         storage_abs_path,
@@ -111,7 +112,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl(
 
 #[allow(non_snake_case)]
 #[allow(clippy::too_many_arguments)]
-fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
+fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     env: JNIEnv,
     _: JClass,
     storage_abs_path: JString,
@@ -161,7 +162,7 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_nymInitImpl_fallible(
     // that facility to pass this value to the default_root_directory() function at runtime.
     // This line must be executed before creation of any AndroidConfig structs.
     std::env::set_var(
-        STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
+        STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
         &storage_abs_path,
     );
 
