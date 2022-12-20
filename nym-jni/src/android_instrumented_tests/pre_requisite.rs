@@ -2,7 +2,7 @@
 
 use std::ptr::null_mut;
 
-use jni::{objects::JClass, sys::jstring, JNIEnv};
+use jni::{errors::Error as JNIError, objects::JClass, sys::jstring, JNIEnv};
 
 use crate::{call_fallible_or_else, utils::produce_kt_string_fallible};
 
@@ -25,6 +25,6 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_Pre
 fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_PreRequisiteHelpersKt__1testReceivePreDeterminedStringImpl_fallible(
     env: JNIEnv,
     _: JClass,
-) -> Result<jstring, String> {
-    produce_kt_string_fallible(env, String::from(PRE_DETERMINED_STRING), "?")
+) -> Result<jstring, JNIError> {
+    produce_kt_string_fallible(env, String::from(PRE_DETERMINED_STRING))
 }

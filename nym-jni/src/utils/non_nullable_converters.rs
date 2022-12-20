@@ -1,4 +1,5 @@
 use jni::{
+    errors::Error as JNIError,
     objects::JString,
     sys::{jboolean, jbyte, jdouble, jfloat, jint, jlong, jshort, jstring},
     JNIEnv,
@@ -307,33 +308,13 @@ pub fn produce_kt_double(source: f64) -> jdouble {
 ///
 /// # Failure
 /// If the object passed from Kotlin is not a `String` (programmer error).
-pub fn consume_kt_string_fallible(
-    env: JNIEnv,
-    source: JString,
-    err_field_name: &str,
-) -> Result<String, String> {
-    env.get_string(source).map(Into::into).map_err(|err| {
-        format!(
-            "Rust: Unable to get {} from Kotlin ({})",
-            err_field_name, err
-        )
-    })
+pub fn consume_kt_string_fallible(env: JNIEnv, source: JString) -> Result<String, JNIError> {
+    env.get_string(source).map(Into::into)
 }
 /// Prepares a Kotlin `String` to be sent through JNI.
 ///
 /// # Failure
 /// If the JVM runs out of memory (as indicated in the JNI specification).
-pub fn produce_kt_string_fallible(
-    env: JNIEnv,
-    source: String,
-    err_field_name: &str,
-) -> Result<jstring, String> {
-    env.new_string(source)
-        .map(JString::into_raw)
-        .map_err(|err| {
-            format!(
-                "Rust: Unable to create {} from Rust ({})",
-                err_field_name, err
-            )
-        })
+pub fn produce_kt_string_fallible(env: JNIEnv, source: String) -> Result<jstring, JNIError> {
+    env.new_string(source).map(JString::into_raw)
 }

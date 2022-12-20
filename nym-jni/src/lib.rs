@@ -3,12 +3,16 @@
 use std::path::PathBuf;
 use std::ptr::null_mut;
 
+use anyhow::Context;
 use client_core::config::GatewayEndpoint;
 use client_core::error::ClientCoreError;
 use config::NymConfig;
-use jni::objects::{JClass, JObject, JString};
-use jni::sys::jobject;
-use jni::JNIEnv;
+use jni::{
+    errors::Error as JNIError,
+    objects::{JClass, JObject, JString},
+    sys::jobject,
+    JNIEnv,
+};
 use network_defaults::setup_env;
 
 mod android_config; // renamed from config to android_config to avoid name clash with config (crate dependency)
@@ -20,10 +24,11 @@ use android_config::{
     STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
 };
 use utils::{
-    consume_kt_nullable_int_fallible, consume_kt_nullable_string_fallible,
-    consume_kt_nullable_uint_fallible, consume_kt_string_fallible,
-    produce_kt_nullable_uint_fallible,
+    consume_kt_nullable_string_fallible, consume_kt_nullable_uint_fallible,
+    consume_kt_string_fallible, produce_kt_nullable_uint_fallible,
 };
+
+use crate::utils::consume_kt_nullable_ushort_fallible;
 
 #[no_mangle]
 pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVfyTY(
@@ -45,8 +50,8 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
     env: JNIEnv,
     _: JClass,
     arg: JObject,
-) -> Result<jobject, String> {
-    let arg = consume_kt_nullable_uint_fallible(env, arg, "-")?;
+) -> Result<jobject, JNIError> {
+    let arg = consume_kt_nullable_uint_fallible(env, arg)?;
     log::info!("Rust received arg::: {:?}", arg);
     let result = produce_kt_nullable_uint_fallible(env, arg.map(|v| v.wrapping_add(1)))?;
     Ok(result)
@@ -71,14 +76,13 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible(
     env: JNIEnv,
     _: JClass,
     config_env_file: JString, // Path pointing to an env file that configures the client.
-) -> Result<(), String> {
+) -> Result<(), JNIError> {
     // TODO Consider tracing crate, used by nym-client, if the necessity arises.
     // TODO @ Saturday: reminder to Daniel for some template code
     #[cfg(feature = "debug_logs")]
     android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Trace));
 
-    let config_env_file =
-        consume_kt_nullable_string_fallible(env, config_env_file, "config_env_file")?;
+    let config_env_file = consume_kt_nullable_string_fallible(env, config_env_file)?;
     let config_env_file = config_env_file.map(PathBuf::from);
 
     setup_env(config_env_file); // config_env_file can be provided as an additional argument
@@ -128,18 +132,12 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     port: JObject, // (Optional) Port for the socket (if applicable) to listen on in all subsequent runs
     fastmode: bool, // Mostly debug-related option to increase default traffic rate so that you would not need to modify config post init
                     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool, // Set this client to work in a enabled credentials mode that would attempt to use gateway with bandwidth credential requirement.
-) -> Result<(), String> {
-    let storage_abs_path = consume_kt_string_fallible(env, storage_abs_path, "storage_abs_path")?;
-    let id = &consume_kt_string_fallible(env, id, "id")?;
-    let gateway = consume_kt_nullable_string_fallible(env, gateway, "gateway")?;
-    let validators = consume_kt_nullable_string_fallible(env, validators, "validators")?;
-    let port = consume_kt_nullable_int_fallible(env, port, "port")?;
-    let port: Option<u16> = match port {
-        None => None,
-        Some(val) => Some(val.try_into().map_err(|err| {
-            format!("port out of range, expected 0-65535, got {} ({})", val, err)
-        })?),
-    };
+) -> Result<(), anyhow::Error> {
+    let storage_abs_path = consume_kt_string_fallible(env, storage_abs_path)?;
+    let id = &consume_kt_string_fallible(env, id)?;
+    let gateway = consume_kt_nullable_string_fallible(env, gateway)?;
+    let validators = consume_kt_nullable_string_fallible(env, validators)?;
+    let port = consume_kt_nullable_ushort_fallible(env, port)?;
 
     /*
     DONE-TODO: Instead of environment variables, consider top level static mutable variables?
@@ -206,7 +204,7 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
             .set_custom_validator_apis(config::parse_validators(&raw_validators));
     } else if std::env::var(network_defaults::var_names::CONFIGURED).is_ok() {
         let raw_validators = std::env::var(network_defaults::var_names::API_VALIDATOR)
-            .map_err(|err| format!("api validator not set ({})", err))?;
+            .with_context(|| String::from("api validator not set"))?; // modified to suit anyhow
         config
             .get_base_mut()
             .set_custom_validator_apis(config::parse_validators(&raw_validators));
@@ -237,15 +235,15 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     let gateway = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
-        .map_err(|err| format!("Failed to setup tokio runtime ({})", err))?
+        .with_context(|| String::from("Failed to setup tokio runtime"))?
         .block_on(gateway)
-        .map_err(|err| format!("Failed to setup gateway\nError: {err}"))?;
+        .with_context(|| String::from("Failed to setup gateway"))?;
     config.get_base_mut().with_gateway_endpoint(gateway);
 
     let config_save_location = config.get_config_file_save_location();
     config
         .save_to_file(None)
-        .map_err(|err| format!("Failed to save the config file ({})", err))?;
+        .with_context(|| String::from("Failed to save the config file"))?;
 
     log::info!("Saved configuration file to {:?}", config_save_location);
     log::info!("Using gateway: {}", config.get_base().get_gateway_id());

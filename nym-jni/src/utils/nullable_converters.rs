@@ -1,6 +1,7 @@
 use std::ptr::null_mut;
 
 use jni::{
+    errors::Error as JNIError,
     objects::{JObject, JString, JValue},
     signature::{Primitive, ReturnType},
     sys::{jobject, jstring, jvalue},
@@ -22,41 +23,21 @@ use jni::{
 pub fn consume_kt_nullable_boolean_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<bool>, String> {
+) -> Result<Option<bool>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Boolean", "booleanValue", "()Z")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Boolean's booleanValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Boolean", "booleanValue", "()Z")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Boolean),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .z()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to bool ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Boolean?` to be sent through JNI.
 ///
@@ -72,41 +53,28 @@ pub fn consume_kt_nullable_boolean_fallible(
 pub fn produce_kt_nullable_boolean_fallible(
     env: JNIEnv,
     source: Option<bool>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            // variable shadowing
+            let source = jvalue {
+                z: super::produce_kt_bool(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Boolean",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        z: super::produce_kt_bool(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Boolean's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked(
-        "java/lang/Boolean",
-        method_id,
-        ReturnType::Object,
-        &[source],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to construct a java/lang/Boolean from Rust ({})",
-            err
-        )
-    })?
-    .l()
-    .map(JObject::into_raw)
-    .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin Char?
@@ -127,41 +95,21 @@ pub fn produce_kt_nullable_boolean_fallible(
 pub fn consume_kt_nullable_byte_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<i8>, String> {
+) -> Result<Option<i8>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Byte", "byteValue", "()B")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Byte's byteValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Byte", "byteValue", "()B")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Byte),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .b()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to i8 ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Byte?` to be sent through JNI.
 ///
@@ -172,31 +120,27 @@ pub fn consume_kt_nullable_byte_fallible(
 pub fn produce_kt_nullable_byte_fallible(
     env: JNIEnv,
     source: Option<i8>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = jvalue {
+                b: super::produce_kt_byte(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Byte",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        b: super::produce_kt_byte(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Byte's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked("java/lang/Byte", method_id, ReturnType::Object, &[source])
-        .map_err(|err| format!("Unable to construct a java/lang/Byte from Rust ({})", err))?
-        .l()
-        .map(JObject::into_raw)
-        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin UByte?
@@ -212,36 +156,16 @@ pub fn produce_kt_nullable_byte_fallible(
 pub fn consume_kt_nullable_ubyte_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<u8>, String> {
+) -> Result<Option<u8>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let field_id = env
-        .get_field_id("kotlin/UByte", "data", "B")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/UByte's data field ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let field_id = env.get_field_id("kotlin/UByte", "data", "B")?;
 
-    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Byte))
-        .map_err(|err| {
-            format!(
-                "Unable to get {}'s value from Kotlin ({})",
-                err_field_name, err
-            )
-        })?
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Byte))?
         .b()
         .map(|val| Some(super::consume_kt_ubyte(val)))
-        .map_err(|err| {
-            format!(
-                "Unable to convert {}'s value to i8 ({})",
-                err_field_name, err
-            )
-        })
 }
 /// Prepares a Kotlin `UByte?` to be sent through JNI.
 ///
@@ -258,28 +182,18 @@ pub fn consume_kt_nullable_ubyte_fallible(
 pub fn produce_kt_nullable_ubyte_fallible(
     env: JNIEnv,
     source: Option<u8>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = JValue::Byte(super::produce_kt_ubyte(source));
+
+            let method_id = env.get_method_id("kotlin/UByte", "<init>", "(B)V")?;
+
+            env.new_object_unchecked("kotlin/UByte", method_id, &[source])
+                .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = JValue::Byte(super::produce_kt_ubyte(source));
-
-    let method_id = env
-        .get_method_id("kotlin/UByte", "<init>", "(B)V")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/UByte's constructor method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    Ok(env
-        .new_object_unchecked("kotlin/UByte", method_id, &[source])
-        .map_err(|err| format!("Unable to create a new kotlin/UByte from Rust ({})", err))?
-        .into_raw())
 }
 
 // Kotlin Short?
@@ -292,41 +206,21 @@ pub fn produce_kt_nullable_ubyte_fallible(
 pub fn consume_kt_nullable_short_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<i16>, String> {
+) -> Result<Option<i16>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Short", "shortValue", "()S")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Short's shortValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Short", "shortValue", "()S")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Short),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .s()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to i16 ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Short?` to be sent through JNI.
 ///
@@ -337,31 +231,27 @@ pub fn consume_kt_nullable_short_fallible(
 pub fn produce_kt_nullable_short_fallible(
     env: JNIEnv,
     source: Option<i16>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = jvalue {
+                s: super::produce_kt_short(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Short", "valueOf", "(S)Ljava/lang/Short;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Short",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        s: super::produce_kt_short(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Short", "valueOf", "(S)Ljava/lang/Short;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Short's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked("java/lang/Short", method_id, ReturnType::Object, &[source])
-        .map_err(|err| format!("Unable to construct a java/lang/Short from Rust ({})", err))?
-        .l()
-        .map(JObject::into_raw)
-        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin UShort?
@@ -377,36 +267,16 @@ pub fn produce_kt_nullable_short_fallible(
 pub fn consume_kt_nullable_ushort_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<u16>, String> {
+) -> Result<Option<u16>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let field_id = env
-        .get_field_id("kotlin/UShort", "data", "S")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/UShort's data field ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let field_id = env.get_field_id("kotlin/UShort", "data", "S")?;
 
-    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Short))
-        .map_err(|err| {
-            format!(
-                "Unable to get {}'s value from Kotlin ({})",
-                err_field_name, err
-            )
-        })?
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Short))?
         .s()
         .map(|val| Some(super::consume_kt_ushort(val)))
-        .map_err(|err| {
-            format!(
-                "Unable to convert {}'s value to i16 ({})",
-                err_field_name, err
-            )
-        })
 }
 /// Prepares a Kotlin `UShort?` to be sent through JNI.
 ///
@@ -423,28 +293,18 @@ pub fn consume_kt_nullable_ushort_fallible(
 pub fn produce_kt_nullable_ushort_fallible(
     env: JNIEnv,
     source: Option<u16>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = JValue::Short(super::produce_kt_ushort(source));
+
+            let method_id = env.get_method_id("kotlin/UShort", "<init>", "(S)V")?;
+
+            env.new_object_unchecked("kotlin/UShort", method_id, &[source])
+                .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = JValue::Short(super::produce_kt_ushort(source));
-
-    let method_id = env
-        .get_method_id("kotlin/UShort", "<init>", "(S)V")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/UShort's constructor method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    Ok(env
-        .new_object_unchecked("kotlin/UShort", method_id, &[source])
-        .map_err(|err| format!("Unable to create a new kotlin/UShort from Rust ({})", err))?
-        .into_raw())
 }
 
 // Kotlin Int?
@@ -457,41 +317,21 @@ pub fn produce_kt_nullable_ushort_fallible(
 pub fn consume_kt_nullable_int_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<i32>, String> {
+) -> Result<Option<i32>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Integer", "intValue", "()I")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Integer's intValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Integer", "intValue", "()I")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Int),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .i()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to i32 ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Int?` to be sent through JNI.
 ///
@@ -502,41 +342,27 @@ pub fn consume_kt_nullable_int_fallible(
 pub fn produce_kt_nullable_int_fallible(
     env: JNIEnv,
     source: Option<i32>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = jvalue {
+                i: super::produce_kt_int(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Integer",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        i: super::produce_kt_int(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Integer's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked(
-        "java/lang/Integer",
-        method_id,
-        ReturnType::Object,
-        &[source],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to construct a java/lang/Integer from Rust ({})",
-            err
-        )
-    })?
-    .l()
-    .map(JObject::into_raw)
-    .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin UInt?
@@ -552,36 +378,16 @@ pub fn produce_kt_nullable_int_fallible(
 pub fn consume_kt_nullable_uint_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<u32>, String> {
+) -> Result<Option<u32>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let field_id = env
-        .get_field_id("kotlin/UInt", "data", "I")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/UInt's data field ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let field_id = env.get_field_id("kotlin/UInt", "data", "I")?;
 
-    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Int))
-        .map_err(|err| {
-            format!(
-                "Unable to get {}'s value from Kotlin ({})",
-                err_field_name, err
-            )
-        })?
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Int))?
         .i()
         .map(|val| Some(super::consume_kt_uint(val)))
-        .map_err(|err| {
-            format!(
-                "Unable to convert {}'s value to i32 ({})",
-                err_field_name, err
-            )
-        })
 }
 /// Prepares a Kotlin `UInt?` to be sent through JNI.
 ///
@@ -598,28 +404,18 @@ pub fn consume_kt_nullable_uint_fallible(
 pub fn produce_kt_nullable_uint_fallible(
     env: JNIEnv,
     source: Option<u32>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = JValue::Int(super::produce_kt_uint(source));
+
+            let method_id = env.get_method_id("kotlin/UInt", "<init>", "(I)V")?;
+
+            env.new_object_unchecked("kotlin/UInt", method_id, &[source])
+                .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = JValue::Int(super::produce_kt_uint(source));
-
-    let method_id = env
-        .get_method_id("kotlin/UInt", "<init>", "(I)V")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/UInt's constructor method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    Ok(env
-        .new_object_unchecked("kotlin/UInt", method_id, &[source])
-        .map_err(|err| format!("Unable to create a new kotlin/UInt from Rust ({})", err))?
-        .into_raw())
 }
 
 // Kotlin Long?
@@ -632,41 +428,21 @@ pub fn produce_kt_nullable_uint_fallible(
 pub fn consume_kt_nullable_long_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<i64>, String> {
+) -> Result<Option<i64>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Long", "longValue", "()J")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Long's longValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Long", "longValue", "()J")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Long),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .j()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to i64 ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Long?` to be sent through JNI.
 ///
@@ -677,31 +453,27 @@ pub fn consume_kt_nullable_long_fallible(
 pub fn produce_kt_nullable_long_fallible(
     env: JNIEnv,
     source: Option<i64>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = jvalue {
+                j: super::produce_kt_long(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Long", "valueOf", "(J)Ljava/lang/Long;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Long",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        j: super::produce_kt_long(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Long", "valueOf", "(J)Ljava/lang/Long;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Long's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked("java/lang/Long", method_id, ReturnType::Object, &[source])
-        .map_err(|err| format!("Unable to construct a java/lang/Long from Rust ({})", err))?
-        .l()
-        .map(JObject::into_raw)
-        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin ULong?
@@ -717,36 +489,16 @@ pub fn produce_kt_nullable_long_fallible(
 pub fn consume_kt_nullable_ulong_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<u64>, String> {
+) -> Result<Option<u64>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let field_id = env
-        .get_field_id("kotlin/ULong", "data", "J")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/ULong's data field ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let field_id = env.get_field_id("kotlin/ULong", "data", "J")?;
 
-    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Long))
-        .map_err(|err| {
-            format!(
-                "Unable to get {}'s value from Kotlin ({})",
-                err_field_name, err
-            )
-        })?
+    env.get_field_unchecked(source, field_id, ReturnType::Primitive(Primitive::Long))?
         .j()
         .map(|val| Some(super::consume_kt_ulong(val)))
-        .map_err(|err| {
-            format!(
-                "Unable to convert {}'s value to i64 ({})",
-                err_field_name, err
-            )
-        })
 }
 /// Prepares a Kotlin `ULong?` to be sent through JNI.
 ///
@@ -763,28 +515,18 @@ pub fn consume_kt_nullable_ulong_fallible(
 pub fn produce_kt_nullable_ulong_fallible(
     env: JNIEnv,
     source: Option<u64>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = JValue::Long(super::produce_kt_ulong(source));
+
+            let method_id = env.get_method_id("kotlin/ULong", "<init>", "(J)V")?;
+
+            env.new_object_unchecked("kotlin/ULong", method_id, &[source])
+                .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = JValue::Long(super::produce_kt_ulong(source));
-
-    let method_id = env
-        .get_method_id("kotlin/ULong", "<init>", "(J)V")
-        .map_err(|err| {
-            format!(
-                "Unable to get kotlin/ULong's constructor method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    Ok(env
-        .new_object_unchecked("kotlin/ULong", method_id, &[source])
-        .map_err(|err| format!("Unable to create a new kotlin/ULong from Rust ({})", err))?
-        .into_raw())
 }
 
 // Kotlin Float?
@@ -797,41 +539,21 @@ pub fn produce_kt_nullable_ulong_fallible(
 pub fn consume_kt_nullable_float_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<f32>, String> {
+) -> Result<Option<f32>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Float", "floatValue", "()F")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Float's floatValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Float", "floatValue", "()F")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Float),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .f()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to f32 ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Float?` to be sent through JNI.
 ///
@@ -842,31 +564,27 @@ pub fn consume_kt_nullable_float_fallible(
 pub fn produce_kt_nullable_float_fallible(
     env: JNIEnv,
     source: Option<f32>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = jvalue {
+                f: super::produce_kt_float(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Float", "valueOf", "(F)Ljava/lang/Float;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Float",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        f: super::produce_kt_float(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Float", "valueOf", "(F)Ljava/lang/Float;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Float's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked("java/lang/Float", method_id, ReturnType::Object, &[source])
-        .map_err(|err| format!("Unable to construct a java/lang/Float from Rust ({})", err))?
-        .l()
-        .map(JObject::into_raw)
-        .map_err(|_| String::from("Unexpected Exception"))
 }
 
 // Kotlin Double?
@@ -880,41 +598,21 @@ pub fn produce_kt_nullable_float_fallible(
 pub fn consume_kt_nullable_double_fallible(
     env: JNIEnv,
     source: JObject,
-    err_field_name: &str,
-) -> Result<Option<f64>, String> {
+) -> Result<Option<f64>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
 
-    let method_id = env
-        .get_method_id("java/lang/Double", "doubleValue", "()D")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Double's doubleValue method ID from Kotlin ({})",
-                err
-            )
-        })?;
+    let method_id = env.get_method_id("java/lang/Double", "doubleValue", "()D")?;
 
     env.call_method_unchecked(
         source,
         method_id,
         ReturnType::Primitive(Primitive::Double),
         &[],
-    )
-    .map_err(|err| {
-        format!(
-            "Unable to get {}'s value from Kotlin ({})",
-            err_field_name, err
-        )
-    })?
+    )?
     .d()
     .map(Some)
-    .map_err(|err| {
-        format!(
-            "Unable to convert {}'s value to f64 ({})",
-            err_field_name, err
-        )
-    })
 }
 /// Prepares a Kotlin `Double?` to be sent through JNI.
 ///
@@ -925,33 +623,28 @@ pub fn consume_kt_nullable_double_fallible(
 pub fn produce_kt_nullable_double_fallible(
     env: JNIEnv,
     source: Option<f64>,
-) -> Result<jobject, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jobject, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => {
+            let source = jvalue {
+                d: super::produce_kt_double(source),
+            };
+
+            let method_id =
+                env.get_static_method_id("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;")?;
+
+            env.call_static_method_unchecked(
+                "java/lang/Double",
+                method_id,
+                ReturnType::Object,
+                &[source],
+            )?
+            .l()
+            .map(JObject::into_raw)
+        }
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    let source = jvalue {
-        d: super::produce_kt_double(source),
-    };
-
-    let method_id = env
-        .get_static_method_id("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;")
-        .map_err(|err| {
-            format!(
-                "Unable to get java/lang/Double's valueOf method ID from Kotlin ({})",
-                err
-            )
-        })?;
-
-    env.call_static_method_unchecked("java/lang/Double", method_id, ReturnType::Object, &[source])
-        .map_err(|err| format!("Unable to construct a java/lang/Double from Rust ({})", err))?
-        .l()
-        .map(JObject::into_raw)
-        .map_err(|_| String::from("Unexpected Exception"))
 }
-
 // Kotlin Void?: nothing to implement
 
 // Kotlin String?
@@ -962,12 +655,11 @@ pub fn produce_kt_nullable_double_fallible(
 pub fn consume_kt_nullable_string_fallible(
     env: JNIEnv,
     source: JString,
-    err_field_name: &str,
-) -> Result<Option<String>, String> {
+) -> Result<Option<String>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
-    super::consume_kt_string_fallible(env, source, err_field_name).map(Some)
+    super::consume_kt_string_fallible(env, source).map(Some)
 }
 /// Prepares a Kotlin `String?` to be sent through JNI.
 ///
@@ -976,13 +668,9 @@ pub fn consume_kt_nullable_string_fallible(
 pub fn produce_kt_nullable_string_fallible(
     env: JNIEnv,
     source: Option<String>,
-    err_field_name: &str,
-) -> Result<jstring, String> {
-    if source.is_none() {
-        return Ok(null_mut());
+) -> Result<jstring, JNIError> {
+    match source {
+        None => Ok(null_mut()),
+        Some(source) => super::produce_kt_string_fallible(env, source),
     }
-
-    #[allow(clippy::unwrap_used)]
-    let source = source.unwrap(); // safe, never panics
-    super::produce_kt_string_fallible(env, source, err_field_name)
 }

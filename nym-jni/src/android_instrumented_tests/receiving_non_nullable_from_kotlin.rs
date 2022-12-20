@@ -3,6 +3,7 @@
 use std::ptr::null_mut;
 
 use jni::{
+    errors::Error as JNIError,
     objects::{JClass, JString},
     sys::{jboolean, jbyte, jdouble, jfloat, jint, jlong, jshort, jstring},
     JNIEnv,
@@ -36,9 +37,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jboolean,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_bool(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (Boolean/bool)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (Boolean/bool)", arg))
 }
 
 #[no_mangle]
@@ -60,9 +61,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jbyte,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_byte(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (Byte/i8)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (Byte/i8)", arg))
 }
 
 #[no_mangle]
@@ -84,9 +85,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jbyte,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_ubyte(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (UByte/u8)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (UByte/u8)", arg))
 }
 
 #[no_mangle]
@@ -108,9 +109,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jshort,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_short(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (Short/i16)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (Short/i16)", arg))
 }
 
 #[no_mangle]
@@ -132,9 +133,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jshort,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_ushort(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (UShort/u16)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (UShort/u16)", arg))
 }
 
 #[no_mangle]
@@ -156,9 +157,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jint,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_int(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (Int/i32)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (Int/i32)", arg))
 }
 
 #[no_mangle]
@@ -180,9 +181,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jint,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_uint(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (UInt/u32)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (UInt/u32)", arg))
 }
 
 #[no_mangle]
@@ -204,9 +205,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jlong,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_long(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (Long/i64)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (Long/i64)", arg))
 }
 
 #[no_mangle]
@@ -228,9 +229,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jlong,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_ulong(arg);
-    produce_kt_string_fallible(env, format!("Rust received {} (ULong/u64)", arg), "?")
+    produce_kt_string_fallible(env, format!("Rust received {} (ULong/u64)", arg))
 }
 
 #[no_mangle]
@@ -252,12 +253,11 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jfloat,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_float(arg);
     produce_kt_string_fallible(
         env,
         format!("Rust received 0b{} (Float/f32)", arg.to_bits()),
-        "?",
     )
 }
 
@@ -280,12 +280,11 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: jdouble,
-) -> Result<jstring, String> {
+) -> Result<jstring, JNIError> {
     let arg = consume_kt_double(arg);
     produce_kt_string_fallible(
         env,
         format!("Rust received 0b{} (Double/f64)", arg.to_bits()),
-        "?",
     )
 }
 
@@ -308,8 +307,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     env: JNIEnv,
     _: JClass,
     arg: JString,
-) -> Result<jstring, String> {
-    let arg = consume_kt_string_fallible(env, arg, "?")?;
+) -> Result<jstring, JNIError> {
+    let arg = consume_kt_string_fallible(env, arg)?;
     let result = arg.to_uppercase();
     produce_kt_string_fallible(
         env,
@@ -317,6 +316,5 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
             "Rust received {}, returning {} (String/String)",
             arg, result
         ),
-        "?",
     )
 }
