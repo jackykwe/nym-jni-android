@@ -308,13 +308,13 @@ pub fn produce_kt_double(source: f64) -> jdouble {
 ///
 /// # Failure
 /// If the object passed from Kotlin is not a `String` (programmer error).
-pub fn consume_kt_string_fallible(env: JNIEnv, source: JString) -> Result<String, JNIError> {
+pub fn consume_kt_string(env: JNIEnv, source: JString) -> Result<String, JNIError> {
     env.get_string(source).map(Into::into)
 }
 /// Prepares a Kotlin `String` to be sent through JNI.
 ///
 /// # Failure
 /// If the JVM runs out of memory (as indicated in the JNI specification).
-pub fn produce_kt_string_fallible(env: JNIEnv, source: String) -> Result<jstring, JNIError> {
+pub fn produce_kt_string(env: JNIEnv, source: String) -> Result<jstring, JNIError> {
     env.new_string(source).map(JString::into_raw)
 }

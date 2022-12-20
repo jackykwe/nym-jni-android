@@ -4,7 +4,7 @@ use std::ptr::null_mut;
 
 use jni::{errors::Error as JNIError, objects::JClass, sys::jstring, JNIEnv};
 
-use crate::{call_fallible_or_else, utils::produce_kt_string_fallible};
+use crate::{call_fallible_or_else, utils::produce_kt_string};
 
 const PRE_DETERMINED_STRING: &str = "the brown fox jumps over the lazy dog";
 
@@ -26,5 +26,5 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_PreRequisiteHelper
     env: JNIEnv,
     _: JClass,
 ) -> Result<jstring, JNIError> {
-    produce_kt_string_fallible(env, String::from(PRE_DETERMINED_STRING))
+    produce_kt_string(env, String::from(PRE_DETERMINED_STRING))
 }

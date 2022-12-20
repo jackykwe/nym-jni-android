@@ -24,11 +24,9 @@ use android_config::{
     STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
 };
 use utils::{
-    consume_kt_nullable_string_fallible, consume_kt_nullable_uint_fallible,
-    consume_kt_string_fallible, produce_kt_nullable_uint_fallible,
+    consume_kt_nullable_string, consume_kt_nullable_uint, consume_kt_nullable_ushort,
+    consume_kt_string, produce_kt_nullable_uint,
 };
-
-use crate::utils::consume_kt_nullable_ushort_fallible;
 
 #[no_mangle]
 pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVfyTY(
@@ -51,9 +49,9 @@ fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
     _: JClass,
     arg: JObject,
 ) -> Result<jobject, JNIError> {
-    let arg = consume_kt_nullable_uint_fallible(env, arg)?;
+    let arg = consume_kt_nullable_uint(env, arg)?;
     log::info!("Rust received arg::: {:?}", arg);
-    let result = produce_kt_nullable_uint_fallible(env, arg.map(|v| v.wrapping_add(1)))?;
+    let result = produce_kt_nullable_uint(env, arg.map(|v| v.wrapping_add(1)))?;
     Ok(result)
 }
 
@@ -82,7 +80,7 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible(
     #[cfg(feature = "debug_logs")]
     android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Trace));
 
-    let config_env_file = consume_kt_nullable_string_fallible(env, config_env_file)?;
+    let config_env_file = consume_kt_nullable_string(env, config_env_file)?;
     let config_env_file = config_env_file.map(PathBuf::from);
 
     setup_env(config_env_file); // config_env_file can be provided as an additional argument
@@ -133,11 +131,11 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     fastmode: bool, // Mostly debug-related option to increase default traffic rate so that you would not need to modify config post init
                     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool, // Set this client to work in a enabled credentials mode that would attempt to use gateway with bandwidth credential requirement.
 ) -> Result<(), anyhow::Error> {
-    let storage_abs_path = consume_kt_string_fallible(env, storage_abs_path)?;
-    let id = &consume_kt_string_fallible(env, id)?;
-    let gateway = consume_kt_nullable_string_fallible(env, gateway)?;
-    let validators = consume_kt_nullable_string_fallible(env, validators)?;
-    let port = consume_kt_nullable_ushort_fallible(env, port)?;
+    let storage_abs_path = consume_kt_string(env, storage_abs_path)?;
+    let id = &consume_kt_string(env, id)?;
+    let gateway = consume_kt_nullable_string(env, gateway)?;
+    let validators = consume_kt_nullable_string(env, validators)?;
+    let port = consume_kt_nullable_ushort(env, port)?;
 
     /*
     DONE-TODO: Instead of environment variables, consider top level static mutable variables?

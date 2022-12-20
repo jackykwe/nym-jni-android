@@ -20,10 +20,7 @@ use jni::{
 /// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
 /// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
 /// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
-pub fn consume_kt_nullable_boolean_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<bool>, JNIError> {
+pub fn consume_kt_nullable_boolean(env: JNIEnv, source: JObject) -> Result<Option<bool>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -50,10 +47,7 @@ pub fn consume_kt_nullable_boolean_fallible(
 /// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
 /// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
 /// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
-pub fn produce_kt_nullable_boolean_fallible(
-    env: JNIEnv,
-    source: Option<bool>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_boolean(env: JNIEnv, source: Option<bool>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -92,10 +86,7 @@ pub fn produce_kt_nullable_boolean_fallible(
 /// While the Kotlin `Byte` type is represented as a primitive `byte` in JVM, the Kotlin `Byte?`
 /// type is represented as the boxed class `java/lang/Byte` in JVM. Therefore, in Rust, we call the
 /// JNI functions that call the `byteValue` method of the `java/lang/Byte` class instance.
-pub fn consume_kt_nullable_byte_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<i8>, JNIError> {
+pub fn consume_kt_nullable_byte(env: JNIEnv, source: JObject) -> Result<Option<i8>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -117,10 +108,7 @@ pub fn consume_kt_nullable_byte_fallible(
 /// While the Kotlin `Byte` type is represented as a primitive `byte` in JVM, the Kotlin `Byte?`
 /// type is represented as the boxed class `java/lang/Byte` in JVM. Therefore, in Rust, we call the
 /// JNI functions that create a new `java/lang/Byte` class instance.
-pub fn produce_kt_nullable_byte_fallible(
-    env: JNIEnv,
-    source: Option<i8>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_byte(env: JNIEnv, source: Option<i8>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -153,10 +141,7 @@ pub fn produce_kt_nullable_byte_fallible(
 /// NB: `UByte` is an inline class in Kotlin, so the nullable variant is represented in memory as a
 /// boxed `kotlin/UByte` class instance, and the non-nullable variant is represented in memory as
 /// the underlying `Byte` value.
-pub fn consume_kt_nullable_ubyte_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<u8>, JNIError> {
+pub fn consume_kt_nullable_ubyte(env: JNIEnv, source: JObject) -> Result<Option<u8>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -179,10 +164,7 @@ pub fn consume_kt_nullable_ubyte_fallible(
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `UByte` object (e.g. the JVM runs out of memory).
-pub fn produce_kt_nullable_ubyte_fallible(
-    env: JNIEnv,
-    source: Option<u8>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_ubyte(env: JNIEnv, source: Option<u8>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -203,10 +185,7 @@ pub fn produce_kt_nullable_ubyte_fallible(
 /// While the Kotlin `Short` type is represented as a primitive `short` in JVM, the Kotlin `Short?`
 /// type is represented as the boxed class `java/lang/Short` in JVM. Therefore, in Rust, we call the
 /// JNI functions that call the `shortValue` method of the `java/lang/Short` class instance.
-pub fn consume_kt_nullable_short_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<i16>, JNIError> {
+pub fn consume_kt_nullable_short(env: JNIEnv, source: JObject) -> Result<Option<i16>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -228,10 +207,7 @@ pub fn consume_kt_nullable_short_fallible(
 /// While the Kotlin `Short` type is represented as a primitive `short` in JVM, the Kotlin `Short?`
 /// type is represented as the boxed class `java/lang/Short` in JVM. Therefore, in Rust, we call the
 /// JNI functions that create a new `java/lang/Short` class instance.
-pub fn produce_kt_nullable_short_fallible(
-    env: JNIEnv,
-    source: Option<i16>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_short(env: JNIEnv, source: Option<i16>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -264,10 +240,7 @@ pub fn produce_kt_nullable_short_fallible(
 /// NB: `UShort` is an inline class in Kotlin, so the nullable variant is represented in memory as a
 /// boxed `kotlin/UShort` class instance, and the non-nullable variant is represented in memory as
 /// the underlying `Short` value.
-pub fn consume_kt_nullable_ushort_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<u16>, JNIError> {
+pub fn consume_kt_nullable_ushort(env: JNIEnv, source: JObject) -> Result<Option<u16>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -290,10 +263,7 @@ pub fn consume_kt_nullable_ushort_fallible(
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `UShort` object (e.g. the JVM runs out of memory).
-pub fn produce_kt_nullable_ushort_fallible(
-    env: JNIEnv,
-    source: Option<u16>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_ushort(env: JNIEnv, source: Option<u16>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -314,10 +284,7 @@ pub fn produce_kt_nullable_ushort_fallible(
 /// While the Kotlin `Int` type is represented as a primitive `int` in JVM, the Kotlin `Int?` type
 /// is represented as the boxed class `java/lang/Integer` in JVM. Therefore, in Rust, we call the
 /// JNI functions that call the `intValue` method of the `java/lang/Integer` class instance.
-pub fn consume_kt_nullable_int_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<i32>, JNIError> {
+pub fn consume_kt_nullable_int(env: JNIEnv, source: JObject) -> Result<Option<i32>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -339,10 +306,7 @@ pub fn consume_kt_nullable_int_fallible(
 /// While the Kotlin `Int` type is represented as a primitive `int` in JVM, the Kotlin `Int?` type
 /// is represented as the boxed class `java/lang/Integer` in JVM. Therefore, in Rust, we call the
 /// JNI functions that create a new `java/lang/Integer` class instance.
-pub fn produce_kt_nullable_int_fallible(
-    env: JNIEnv,
-    source: Option<i32>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_int(env: JNIEnv, source: Option<i32>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -375,10 +339,7 @@ pub fn produce_kt_nullable_int_fallible(
 /// NB: `UInt` is an inline class in Kotlin, so the nullable variant is represented in memory as a
 /// boxed `kotlin/UInt` class instance, and the non-nullable variant is represented in memory as the
 /// underlying `Int` value.
-pub fn consume_kt_nullable_uint_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<u32>, JNIError> {
+pub fn consume_kt_nullable_uint(env: JNIEnv, source: JObject) -> Result<Option<u32>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -401,10 +362,7 @@ pub fn consume_kt_nullable_uint_fallible(
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `UInt` object (e.g. the JVM runs out of memory).
-pub fn produce_kt_nullable_uint_fallible(
-    env: JNIEnv,
-    source: Option<u32>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_uint(env: JNIEnv, source: Option<u32>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -425,10 +383,7 @@ pub fn produce_kt_nullable_uint_fallible(
 /// While the Kotlin `Long` type is represented as a primitive `long` in JVM, the Kotlin `Long?`
 /// type is represented as the boxed class `java/lang/Long` in JVM. Therefore, in Rust, we call the
 /// JNI functions that call the `longValue` method of the `java/lang/Long` class instance.
-pub fn consume_kt_nullable_long_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<i64>, JNIError> {
+pub fn consume_kt_nullable_long(env: JNIEnv, source: JObject) -> Result<Option<i64>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -450,10 +405,7 @@ pub fn consume_kt_nullable_long_fallible(
 /// While the Kotlin `Long` type is represented as a primitive `long` in JVM, the Kotlin `Long?`
 /// type is represented as the boxed class `java/lang/Long` in JVM. Therefore, in Rust, we call the
 /// JNI functions that create a new `java/lang/Long` class instance.
-pub fn produce_kt_nullable_long_fallible(
-    env: JNIEnv,
-    source: Option<i64>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_long(env: JNIEnv, source: Option<i64>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -486,10 +438,7 @@ pub fn produce_kt_nullable_long_fallible(
 /// NB: `ULong` is an inline class in Kotlin, so the nullable variant is represented in memory as a
 /// boxed `kotlin/ULong` class instance, and the non-nullable variant is represented in memory as
 /// the underlying `Long` value.
-pub fn consume_kt_nullable_ulong_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<u64>, JNIError> {
+pub fn consume_kt_nullable_ulong(env: JNIEnv, source: JObject) -> Result<Option<u64>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -512,10 +461,7 @@ pub fn consume_kt_nullable_ulong_fallible(
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `ULong` object (e.g. the JVM runs out of memory).
-pub fn produce_kt_nullable_ulong_fallible(
-    env: JNIEnv,
-    source: Option<u64>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_ulong(env: JNIEnv, source: Option<u64>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -536,10 +482,7 @@ pub fn produce_kt_nullable_ulong_fallible(
 /// While the Kotlin `Float` type is represented as a primitive `float` in JVM, the Kotlin `Float?`
 /// type is represented as the boxed class `java/lang/Float` in JVM. Therefore, in Rust, we call the
 /// JNI functions that call the `floatValue` method of the `java/lang/Float` class instance.
-pub fn consume_kt_nullable_float_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<f32>, JNIError> {
+pub fn consume_kt_nullable_float(env: JNIEnv, source: JObject) -> Result<Option<f32>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -561,10 +504,7 @@ pub fn consume_kt_nullable_float_fallible(
 /// While the Kotlin `Float` type is represented as a primitive `float` in JVM, the Kotlin `Float?`
 /// type is represented as the boxed class `java/lang/Float` in JVM. Therefore, in Rust, we call the
 /// JNI functions that create a new `java/lang/Float` class instance.
-pub fn produce_kt_nullable_float_fallible(
-    env: JNIEnv,
-    source: Option<f32>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_float(env: JNIEnv, source: Option<f32>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -595,10 +535,7 @@ pub fn produce_kt_nullable_float_fallible(
 /// `Double?` type is represented as the boxed class `java/lang/Double` in JVM. Therefore, in Rust,
 /// we call the JNI functions that call the `intValue` method of the `java/lang/Double` class
 /// instance.
-pub fn consume_kt_nullable_double_fallible(
-    env: JNIEnv,
-    source: JObject,
-) -> Result<Option<f64>, JNIError> {
+pub fn consume_kt_nullable_double(env: JNIEnv, source: JObject) -> Result<Option<f64>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
@@ -620,10 +557,7 @@ pub fn consume_kt_nullable_double_fallible(
 /// While the Kotlin `Double` type is represented as a primitive `double` in JVM, the Kotlin
 /// `Double?` type is represented as the boxed class `java/lang/Double` in JVM. Therefore, in Rust,
 /// we call the JNI functions that create a new `java/lang/Double` class instance.
-pub fn produce_kt_nullable_double_fallible(
-    env: JNIEnv,
-    source: Option<f64>,
-) -> Result<jobject, JNIError> {
+pub fn produce_kt_nullable_double(env: JNIEnv, source: Option<f64>) -> Result<jobject, JNIError> {
     match source {
         None => Ok(null_mut()),
         Some(source) => {
@@ -652,25 +586,25 @@ pub fn produce_kt_nullable_double_fallible(
 ///
 /// # Failure
 /// If the object passed from Kotlin is not a `String` (programmer error).
-pub fn consume_kt_nullable_string_fallible(
+pub fn consume_kt_nullable_string(
     env: JNIEnv,
     source: JString,
 ) -> Result<Option<String>, JNIError> {
     if source.is_null() {
         return Ok(None); // null was passed from Kotlin, so return None
     }
-    super::consume_kt_string_fallible(env, source).map(Some)
+    super::consume_kt_string(env, source).map(Some)
 }
 /// Prepares a Kotlin `String?` to be sent through JNI.
 ///
 /// # Failure
 /// If the JVM runs out of memory (as indicated in the JNI specification).
-pub fn produce_kt_nullable_string_fallible(
+pub fn produce_kt_nullable_string(
     env: JNIEnv,
     source: Option<String>,
 ) -> Result<jstring, JNIError> {
     match source {
         None => Ok(null_mut()),
-        Some(source) => super::produce_kt_string_fallible(env, source),
+        Some(source) => super::produce_kt_string(env, source),
     }
 }

@@ -12,12 +12,10 @@ use jni::{
 use crate::{
     call_fallible_or_else,
     utils::{
-        produce_kt_nullable_boolean_fallible, produce_kt_nullable_byte_fallible,
-        produce_kt_nullable_double_fallible, produce_kt_nullable_float_fallible,
-        produce_kt_nullable_int_fallible, produce_kt_nullable_long_fallible,
-        produce_kt_nullable_short_fallible, produce_kt_nullable_string_fallible,
-        produce_kt_nullable_ubyte_fallible, produce_kt_nullable_uint_fallible,
-        produce_kt_nullable_ulong_fallible, produce_kt_nullable_ushort_fallible,
+        produce_kt_nullable_boolean, produce_kt_nullable_byte, produce_kt_nullable_double,
+        produce_kt_nullable_float, produce_kt_nullable_int, produce_kt_nullable_long,
+        produce_kt_nullable_short, produce_kt_nullable_string, produce_kt_nullable_ubyte,
+        produce_kt_nullable_uint, produce_kt_nullable_ulong, produce_kt_nullable_ushort,
     },
 };
 
@@ -40,7 +38,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_boolean_fallible(env, Some(true))
+    produce_kt_nullable_boolean(env, Some(true))
 }
 
 #[no_mangle]
@@ -60,7 +58,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_boolean_fallible(env, Some(false))
+    produce_kt_nullable_boolean(env, Some(false))
 }
 
 #[no_mangle]
@@ -80,7 +78,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_boolean_fallible(env, None)
+    produce_kt_nullable_boolean(env, None)
 }
 
 #[no_mangle]
@@ -100,7 +98,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_byte_fallible(env, Some(i8::MIN))
+    produce_kt_nullable_byte(env, Some(i8::MIN))
 }
 
 #[no_mangle]
@@ -120,7 +118,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_byte_fallible(env, Some(i8::MAX))
+    produce_kt_nullable_byte(env, Some(i8::MAX))
 }
 
 #[no_mangle]
@@ -140,7 +138,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_byte_fallible(env, None)
+    produce_kt_nullable_byte(env, None)
 }
 
 #[no_mangle]
@@ -160,7 +158,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ubyte_fallible(env, Some(u8::MIN))
+    produce_kt_nullable_ubyte(env, Some(u8::MIN))
 }
 
 #[no_mangle]
@@ -180,7 +178,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ubyte_fallible(env, Some(u8::MAX))
+    produce_kt_nullable_ubyte(env, Some(u8::MAX))
 }
 
 #[no_mangle]
@@ -200,7 +198,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ubyte_fallible(env, None)
+    produce_kt_nullable_ubyte(env, None)
 }
 
 #[no_mangle]
@@ -220,7 +218,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_short_fallible(env, Some(i16::MIN))
+    produce_kt_nullable_short(env, Some(i16::MIN))
 }
 
 #[no_mangle]
@@ -240,7 +238,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_short_fallible(env, Some(i16::MAX))
+    produce_kt_nullable_short(env, Some(i16::MAX))
 }
 
 #[no_mangle]
@@ -260,7 +258,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_short_fallible(env, None)
+    produce_kt_nullable_short(env, None)
 }
 
 #[no_mangle]
@@ -280,7 +278,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ushort_fallible(env, Some(u16::MIN))
+    produce_kt_nullable_ushort(env, Some(u16::MIN))
 }
 
 #[no_mangle]
@@ -300,7 +298,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ushort_fallible(env, Some(u16::MAX))
+    produce_kt_nullable_ushort(env, Some(u16::MAX))
 }
 
 #[no_mangle]
@@ -320,7 +318,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ushort_fallible(env, None)
+    produce_kt_nullable_ushort(env, None)
 }
 
 #[no_mangle]
@@ -340,7 +338,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_int_fallible(env, Some(i32::MIN))
+    produce_kt_nullable_int(env, Some(i32::MIN))
 }
 
 #[no_mangle]
@@ -360,7 +358,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_int_fallible(env, Some(i32::MAX))
+    produce_kt_nullable_int(env, Some(i32::MAX))
 }
 
 #[no_mangle]
@@ -380,7 +378,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_int_fallible(env, None)
+    produce_kt_nullable_int(env, None)
 }
 
 #[no_mangle]
@@ -400,7 +398,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_uint_fallible(env, Some(u32::MIN))
+    produce_kt_nullable_uint(env, Some(u32::MIN))
 }
 
 #[no_mangle]
@@ -420,7 +418,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_uint_fallible(env, Some(u32::MAX))
+    produce_kt_nullable_uint(env, Some(u32::MAX))
 }
 
 #[no_mangle]
@@ -440,7 +438,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_uint_fallible(env, None)
+    produce_kt_nullable_uint(env, None)
 }
 
 #[no_mangle]
@@ -460,7 +458,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_long_fallible(env, Some(i64::MIN))
+    produce_kt_nullable_long(env, Some(i64::MIN))
 }
 
 #[no_mangle]
@@ -480,7 +478,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_long_fallible(env, Some(i64::MAX))
+    produce_kt_nullable_long(env, Some(i64::MAX))
 }
 
 #[no_mangle]
@@ -500,7 +498,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_long_fallible(env, None)
+    produce_kt_nullable_long(env, None)
 }
 
 #[no_mangle]
@@ -520,7 +518,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ulong_fallible(env, Some(u64::MIN))
+    produce_kt_nullable_ulong(env, Some(u64::MIN))
 }
 
 #[no_mangle]
@@ -540,7 +538,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ulong_fallible(env, Some(u64::MAX))
+    produce_kt_nullable_ulong(env, Some(u64::MAX))
 }
 
 #[no_mangle]
@@ -560,7 +558,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_ulong_fallible(env, None)
+    produce_kt_nullable_ulong(env, None)
 }
 
 #[no_mangle]
@@ -584,7 +582,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     // (0x0...01). However, Rust's f32::MIN_POSITIVE only gives the smallest normal number.
     // There is no constant in Rust's f32 for the smallest subnormal number, so this has to be done
     // instead  (f32::from_bits())
-    produce_kt_nullable_float_fallible(env, Some(f32::from_bits(1)))
+    produce_kt_nullable_float(env, Some(f32::from_bits(1)))
 }
 
 #[no_mangle]
@@ -604,7 +602,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_float_fallible(env, Some(f32::MAX))
+    produce_kt_nullable_float(env, Some(f32::MAX))
 }
 
 #[no_mangle]
@@ -624,7 +622,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_float_fallible(env, Some(f32::NEG_INFINITY))
+    produce_kt_nullable_float(env, Some(f32::NEG_INFINITY))
 }
 
 #[no_mangle]
@@ -644,7 +642,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_float_fallible(env, Some(f32::INFINITY))
+    produce_kt_nullable_float(env, Some(f32::INFINITY))
 }
 
 #[no_mangle]
@@ -665,7 +663,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     _: JClass,
 ) -> Result<jobject, JNIError> {
     let nan_value = f32::NAN;
-    produce_kt_nullable_float_fallible(env, Some(nan_value))
+    produce_kt_nullable_float(env, Some(nan_value))
 }
 
 #[no_mangle]
@@ -685,7 +683,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_float_fallible(env, None)
+    produce_kt_nullable_float(env, None)
 }
 
 #[no_mangle]
@@ -709,7 +707,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     // (0x0...01). However, Rust's f64::MIN_POSITIVE only gives the smallest normal number.
     // There is no constant in Rust's f64 for the smallest subnormal number, so this has to be done
     // instead (f64::from_bits())
-    produce_kt_nullable_double_fallible(env, Some(f64::from_bits(1)))
+    produce_kt_nullable_double(env, Some(f64::from_bits(1)))
 }
 
 #[no_mangle]
@@ -729,7 +727,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_double_fallible(env, Some(f64::MAX))
+    produce_kt_nullable_double(env, Some(f64::MAX))
 }
 
 #[no_mangle]
@@ -749,7 +747,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_double_fallible(env, Some(f64::NEG_INFINITY))
+    produce_kt_nullable_double(env, Some(f64::NEG_INFINITY))
 }
 
 #[no_mangle]
@@ -769,7 +767,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_double_fallible(env, Some(f64::INFINITY))
+    produce_kt_nullable_double(env, Some(f64::INFINITY))
 }
 
 #[no_mangle]
@@ -790,7 +788,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     _: JClass,
 ) -> Result<jobject, JNIError> {
     let nan_value = f64::NAN;
-    produce_kt_nullable_double_fallible(env, Some(nan_value))
+    produce_kt_nullable_double(env, Some(nan_value))
 }
 
 #[no_mangle]
@@ -810,7 +808,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jobject, JNIError> {
-    produce_kt_nullable_double_fallible(env, None)
+    produce_kt_nullable_double(env, None)
 }
 
 #[no_mangle]
@@ -830,7 +828,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jstring, JNIError> {
-    produce_kt_nullable_string_fallible(env, Some(String::from(PRE_DETERMINED_STRING)))
+    produce_kt_nullable_string(env, Some(String::from(PRE_DETERMINED_STRING)))
 }
 
 #[no_mangle]
@@ -850,5 +848,5 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_ReceivingNullableF
     env: JNIEnv,
     _: JClass,
 ) -> Result<jstring, JNIError> {
-    produce_kt_nullable_string_fallible(env, None)
+    produce_kt_nullable_string(env, None)
 }

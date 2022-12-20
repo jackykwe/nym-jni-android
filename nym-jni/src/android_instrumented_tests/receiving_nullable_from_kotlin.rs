@@ -12,13 +12,11 @@ use jni::{
 use crate::{
     call_fallible_or_else,
     utils::{
-        consume_kt_nullable_boolean_fallible, consume_kt_nullable_byte_fallible,
-        consume_kt_nullable_double_fallible, consume_kt_nullable_float_fallible,
-        consume_kt_nullable_int_fallible, consume_kt_nullable_long_fallible,
-        consume_kt_nullable_short_fallible, consume_kt_nullable_string_fallible,
-        consume_kt_nullable_ubyte_fallible, consume_kt_nullable_uint_fallible,
-        consume_kt_nullable_ulong_fallible, consume_kt_nullable_ushort_fallible,
-        produce_kt_string_fallible,
+        consume_kt_nullable_boolean, consume_kt_nullable_byte, consume_kt_nullable_double,
+        consume_kt_nullable_float, consume_kt_nullable_int, consume_kt_nullable_long,
+        consume_kt_nullable_short, consume_kt_nullable_string, consume_kt_nullable_ubyte,
+        consume_kt_nullable_uint, consume_kt_nullable_ulong, consume_kt_nullable_ushort,
+        produce_kt_string,
     },
 };
 
@@ -42,8 +40,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_boolean_fallible(env, arg)?;
-    produce_kt_string_fallible(
+    let arg = consume_kt_nullable_boolean(env, arg)?;
+    produce_kt_string(
         env,
         format!("Rust received {:?} (Boolean?/Option<bool>)", arg),
     )
@@ -69,8 +67,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_byte_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (Byte?/Option<i8>)", arg))
+    let arg = consume_kt_nullable_byte(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (Byte?/Option<i8>)", arg))
 }
 
 #[no_mangle]
@@ -93,8 +91,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_ubyte_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (UByte?/Option<u8>)", arg))
+    let arg = consume_kt_nullable_ubyte(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (UByte?/Option<u8>)", arg))
 }
 
 #[no_mangle]
@@ -117,8 +115,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_short_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (Short?/Option<i16>)", arg))
+    let arg = consume_kt_nullable_short(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (Short?/Option<i16>)", arg))
 }
 
 #[no_mangle]
@@ -141,8 +139,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_ushort_fallible(env, arg)?;
-    produce_kt_string_fallible(
+    let arg = consume_kt_nullable_ushort(env, arg)?;
+    produce_kt_string(
         env,
         format!("Rust received {:?} (UShort?/Option<u16>)", arg),
     )
@@ -168,8 +166,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_int_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (Int?/Option<i32>)", arg))
+    let arg = consume_kt_nullable_int(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (Int?/Option<i32>)", arg))
 }
 
 #[no_mangle]
@@ -192,8 +190,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_uint_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (UInt?/Option<u32>)", arg))
+    let arg = consume_kt_nullable_uint(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (UInt?/Option<u32>)", arg))
 }
 
 #[no_mangle]
@@ -216,8 +214,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_long_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (Long?/Option<i64>)", arg))
+    let arg = consume_kt_nullable_long(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (Long?/Option<i64>)", arg))
 }
 
 #[no_mangle]
@@ -240,8 +238,8 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_ulong_fallible(env, arg)?;
-    produce_kt_string_fallible(env, format!("Rust received {:?} (ULong?/Option<u64>)", arg))
+    let arg = consume_kt_nullable_ulong(env, arg)?;
+    produce_kt_string(env, format!("Rust received {:?} (ULong?/Option<u64>)", arg))
 }
 
 #[no_mangle]
@@ -264,9 +262,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_float_fallible(env, arg)?;
+    let arg = consume_kt_nullable_float(env, arg)?;
     let arg = arg.map(f32::to_bits);
-    produce_kt_string_fallible(
+    produce_kt_string(
         env,
         format!("Rust received 0b{:?} (Float?/Option<f32>)", arg),
     )
@@ -292,9 +290,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JObject,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_double_fallible(env, arg)?;
+    let arg = consume_kt_nullable_double(env, arg)?;
     let arg = arg.map(f64::to_bits);
-    produce_kt_string_fallible(
+    produce_kt_string(
         env,
         format!("Rust received 0b{:?} (Double?/Option<f64>)", arg),
     )
@@ -320,9 +318,9 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNullableToR
     _: JClass,
     arg: JString,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_nullable_string_fallible(env, arg)?;
+    let arg = consume_kt_nullable_string(env, arg)?;
     let result = arg.as_ref().map(|v| v.to_uppercase());
-    produce_kt_string_fallible(
+    produce_kt_string(
         env,
         format!(
             "Rust received {:?}, returning {:?} (String?/Option<String>)",
