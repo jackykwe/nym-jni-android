@@ -5,9 +5,21 @@ use jni::{
 };
 
 // Kotlin Boolean
+/// Receives a Kotlin `Boolean` through JNI.
+///
+/// # Background
+/// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
+/// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
+/// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
 pub fn consume_kt_bool(source: jboolean) -> bool {
     source == 1
 }
+/// Prepares a Kotlin `Boolean` to be sent through JNI.
+///
+/// # Background
+/// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
+/// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
+/// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
 pub fn produce_kt_bool(source: bool) -> jboolean {
     if source {
         1
@@ -25,9 +37,19 @@ pub fn produce_kt_bool(source: bool) -> jboolean {
 // }
 
 // Kotlin Byte
+/// Receives a Kotlin `Byte` through JNI. Functionally, the identity function.
+///
+/// # Background
+/// This function exists only to make user code consistent when used with other interfacing
+/// functions like `produce_kt_ubyte()`.
 pub fn consume_kt_byte(source: jbyte) -> i8 {
     source
 }
+/// Prepares a Kotlin `Byte` to be sent through JNI. Functionally, the identity function.
+///
+/// # Background
+/// This function exists only to make user code consistent when used with other interfacing
+/// functions like `produce_kt_ubyte()`.
 pub fn produce_kt_byte(source: i8) -> jbyte {
     source
 }
@@ -43,6 +65,10 @@ pub fn produce_kt_byte(source: i8) -> jbyte {
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
 ///
+/// NB: `UByte` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UByte` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Byte` value.
+///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
 pub fn consume_kt_ubyte(source: jbyte) -> u8 {
@@ -57,6 +83,10 @@ pub fn consume_kt_ubyte(source: jbyte) -> u8 {
 /// unchanged throughout. Work to correctly interface the type interpretation of the bits between
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
+///
+/// NB: `UByte` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UByte` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Byte` value.
 ///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
@@ -93,6 +123,10 @@ pub fn produce_kt_short(source: i16) -> jshort {
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
 ///
+/// NB: `UShort` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UShort` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Short` value.
+///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
 pub fn consume_kt_ushort(source: jshort) -> u16 {
@@ -107,6 +141,10 @@ pub fn consume_kt_ushort(source: jshort) -> u16 {
 /// unchanged throughout. Work to correctly interface the type interpretation of the bits between
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
+///
+/// NB: `UShort` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UShort` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Short` value.
 ///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
@@ -143,6 +181,10 @@ pub fn produce_kt_int(source: i32) -> jint {
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
 ///
+/// NB: `UInt` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UInt` class instance, and the non-nullable variant is represented in memory as the
+/// underlying `Int` value.
+///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
 pub fn consume_kt_uint(source: jint) -> u32 {
@@ -157,6 +199,10 @@ pub fn consume_kt_uint(source: jint) -> u32 {
 /// unchanged throughout. Work to correctly interface the type interpretation of the bits between
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
+///
+/// NB: `UInt` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UInt` class instance, and the non-nullable variant is represented in memory as the
+/// underlying `Int` value.
 ///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
@@ -193,6 +239,10 @@ pub fn produce_kt_long(source: i64) -> jlong {
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
 ///
+/// NB: `ULong` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/ULong` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Long` value.
+///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives
 pub fn consume_kt_ulong(source: jlong) -> u64 {
@@ -207,6 +257,10 @@ pub fn consume_kt_ulong(source: jlong) -> u64 {
 /// unchanged throughout. Work to correctly interface the type interpretation of the bits between
 /// Kotlin and the JVM is done by the Kotlin standard library, but such work isn't provided in Rust.
 /// This function does this interfacing work between Rust and the JVM.
+///
+/// NB: `ULong` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/ULong` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Long` value.
 ///
 /// # Reference
 /// Strategy from https://doc.rust-lang.org/std/mem/fn.transmute.html#alternatives

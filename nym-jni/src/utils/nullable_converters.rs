@@ -8,6 +8,104 @@ use jni::{
 };
 
 // Kotlin Boolean?
+/// Receives a Kotlin `Boolean?` through JNI.
+///
+/// # Background
+/// While the Kotlin `Boolean` type is represented as a primitive `boolean` in JVM, the Kotlin
+/// `Boolean?` type is represented as the boxed class `java/lang/Boolean` in JVM. Therefore, in
+/// Rust, we call the JNI functions that call the `booleanValue` method of the `java/lang/Boolean`
+/// class instance.
+///
+/// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
+/// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
+/// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
+pub fn consume_kt_nullable_boolean_fallible(
+    env: JNIEnv,
+    source: JObject,
+    err_field_name: &str,
+) -> Result<Option<bool>, String> {
+    if source.is_null() {
+        return Ok(None); // null was passed from Kotlin, so return None
+    }
+
+    let method_id = env
+        .get_method_id("java/lang/Boolean", "booleanValue", "()Z")
+        .map_err(|err| {
+            format!(
+                "Unable to get java/lang/Boolean's booleanValue method ID from Kotlin ({})",
+                err
+            )
+        })?;
+
+    env.call_method_unchecked(
+        source,
+        method_id,
+        ReturnType::Primitive(Primitive::Boolean),
+        &[],
+    )
+    .map_err(|err| {
+        format!(
+            "Unable to get {}'s value from Kotlin ({})",
+            err_field_name, err
+        )
+    })?
+    .z()
+    .map(Some)
+    .map_err(|err| {
+        format!(
+            "Unable to convert {}'s value to bool ({})",
+            err_field_name, err
+        )
+    })
+}
+/// Prepares a Kotlin `Boolean?` to be sent through JNI.
+///
+/// # Background
+/// While the Kotlin `Boolean` type is represented as a primitive `boolean` in JVM, the Kotlin
+/// `Boolean?` type is represented as the boxed class `java/lang/Boolean` in JVM. Therefore, in
+/// Rust, we call the JNI functions that call the `booleanValue` method of the `java/lang/Boolean`
+/// class instance.
+///
+/// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
+/// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
+/// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
+pub fn produce_kt_nullable_boolean_fallible(
+    env: JNIEnv,
+    source: Option<bool>,
+) -> Result<jobject, String> {
+    if source.is_none() {
+        return Ok(null_mut());
+    }
+    let source = source.unwrap(); // safe, never panics
+    let source = jvalue {
+        z: super::produce_kt_bool(source),
+    };
+
+    let method_id = env
+        .get_static_method_id("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;")
+        .map_err(|err| {
+            format!(
+                "Unable to get java/lang/Boolean's valueOf method ID from Kotlin ({})",
+                err
+            )
+        })?;
+
+    env.call_static_method_unchecked(
+        "java/lang/Boolean",
+        method_id,
+        ReturnType::Object,
+        &[source],
+    )
+    .map_err(|err| {
+        format!(
+            "Unable to construct a java/lang/Boolean from Rust ({})",
+            err
+        )
+    })?
+    .l()
+    .map(|val| val.into_raw())
+    .map_err(|_| format!("Unexpected Exception"))
+}
 
 // Kotlin Char?
 // TODO: Requires handling of modified UTF-8 strings. It's rare to ever need to pass a single
@@ -63,7 +161,7 @@ pub fn consume_kt_nullable_byte_fallible(
         )
     })
 }
-/// Receives a Kotlin `Byte?` through JNI.
+/// Prepares a Kotlin `Byte?` to be sent through JNI.
 ///
 /// # Background
 /// While the Kotlin `Byte` type is represented as a primitive `byte` in JVM, the Kotlin `Byte?`
@@ -102,9 +200,11 @@ pub fn produce_kt_nullable_byte_fallible(
 ///
 /// # Background
 /// The `UByte` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that get the
-/// `data` field value of the `UByte` class instance. NB: `UByte` is an inline class in Kotlin, so
-/// the nullable variant is represented in memory as a boxed `kotlin/UByte` class instance, and the
-/// non-nullable variant is represented in memory as the underlying `Byte` value.
+/// `data` field value of the `UByte` class instance.
+///
+/// NB: `UByte` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UByte` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Byte` value.
 pub fn consume_kt_nullable_ubyte_fallible(
     env: JNIEnv,
     source: JObject,
@@ -144,9 +244,11 @@ pub fn consume_kt_nullable_ubyte_fallible(
 ///
 /// # Background
 /// The `UByte` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that create
-/// a new `UByte` class instance. NB: `UByte` is an inline class in Kotlin, so the nullable variant is
-/// represented in memory as a boxed `kotlin/UByte` class instance, and the non-nullable variant is
-/// represented in memory as the underlying `Byte` value.
+/// a new `UByte` class instance.
+///
+/// NB: `UByte` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UByte` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Byte` value.
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `UByte` object (e.g. the JVM runs out of memory).
@@ -221,7 +323,7 @@ pub fn consume_kt_nullable_short_fallible(
         )
     })
 }
-/// Receives a Kotlin `Short?` through JNI.
+/// Prepares a Kotlin `Short?` to be sent through JNI.
 ///
 /// # Background
 /// While the Kotlin `Short` type is represented as a primitive `short` in JVM, the Kotlin `Short?`
@@ -260,9 +362,11 @@ pub fn produce_kt_nullable_short_fallible(
 ///
 /// # Background
 /// The `UShort` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that get the
-/// `data` field value of the `UShort` class instance. NB: `UShort` is an inline class in Kotlin, so
-/// the nullable variant is represented in memory as a boxed `kotlin/UShort` class instance, and the
-/// non-nullable variant is represented in memory as the underlying `Short` value.
+/// `data` field value of the `UShort` class instance.
+///
+/// NB: `UShort` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UShort` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Short` value.
 pub fn consume_kt_nullable_ushort_fallible(
     env: JNIEnv,
     source: JObject,
@@ -302,9 +406,11 @@ pub fn consume_kt_nullable_ushort_fallible(
 ///
 /// # Background
 /// The `UShort` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that create
-/// a new `UShort` class instance. NB: `UShort` is an inline class in Kotlin, so the nullable
-/// variant is represented in memory as a boxed `kotlin/UShort` class instance, and the non-nullable
-/// variant is represented in memory as the underlying `Short` value.
+/// a new `UShort` class instance.
+///
+/// NB: `UShort` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UShort` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Short` value.
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `UShort` object (e.g. the JVM runs out of memory).
@@ -379,7 +485,7 @@ pub fn consume_kt_nullable_int_fallible(
         )
     })
 }
-/// Receives a Kotlin `Int?` through JNI.
+/// Prepares a Kotlin `Int?` to be sent through JNI.
 ///
 /// # Background
 /// While the Kotlin `Int` type is represented as a primitive `int` in JVM, the Kotlin `Int?` type
@@ -428,9 +534,11 @@ pub fn produce_kt_nullable_int_fallible(
 ///
 /// # Background
 /// The `UInt` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that get the
-/// `data` field value of the `UInt` class instance. NB: `UInt` is an inline class in Kotlin, so the
-/// nullable variant is represented in memory as a boxed `kotlin/UInt` class instance, and the
-/// non-nullable variant is represented in memory as the underlying `Int` value.
+/// `data` field value of the `UInt` class instance.
+///
+/// NB: `UInt` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UInt` class instance, and the non-nullable variant is represented in memory as the
+/// underlying `Int` value.
 pub fn consume_kt_nullable_uint_fallible(
     env: JNIEnv,
     source: JObject,
@@ -470,9 +578,11 @@ pub fn consume_kt_nullable_uint_fallible(
 ///
 /// # Background
 /// The `UInt` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that create
-/// a new `UInt` class instance. NB: `UInt` is an inline class in Kotlin, so the nullable variant is
-/// represented in memory as a boxed `kotlin/UInt` class instance, and the non-nullable variant is
-/// represented in memory as the underlying `Int` value.
+/// a new `UInt` class instance.
+///
+/// NB: `UInt` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/UInt` class instance, and the non-nullable variant is represented in memory as the
+/// underlying `Int` value.
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `UInt` object (e.g. the JVM runs out of memory).
@@ -547,7 +657,7 @@ pub fn consume_kt_nullable_long_fallible(
         )
     })
 }
-/// Receives a Kotlin `Long?` through JNI.
+/// Prepares a Kotlin `Long?` to be sent through JNI.
 ///
 /// # Background
 /// While the Kotlin `Long` type is represented as a primitive `long` in JVM, the Kotlin `Long?`
@@ -586,9 +696,11 @@ pub fn produce_kt_nullable_long_fallible(
 ///
 /// # Background
 /// The `ULong` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that get the
-/// `data` field value of the `ULong` class instance. NB: `ULong` is an inline class in Kotlin, so
-/// the nullable variant is represented in memory as a boxed `kotlin/ULong` class instance, and the
-/// non-nullable variant is represented in memory as the underlying `Long` value.
+/// `data` field value of the `ULong` class instance.
+///
+/// NB: `ULong` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/ULong` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Long` value.
 pub fn consume_kt_nullable_ulong_fallible(
     env: JNIEnv,
     source: JObject,
@@ -628,9 +740,11 @@ pub fn consume_kt_nullable_ulong_fallible(
 ///
 /// # Background
 /// The `ULong` type is non-primitive in Kotlin, so in Rust, we call the JNI functions that create
-/// a new `ULong` class instance. NB: `ULong` is an inline class in Kotlin, so the nullable variant
-/// is represented in memory as a boxed `kotlin/ULong` class instance, and the non-nullable variant
-/// is represented in memory as the underlying `Long` value.
+/// a new `ULong` class instance.
+///
+/// NB: `ULong` is an inline class in Kotlin, so the nullable variant is represented in memory as a
+/// boxed `kotlin/ULong` class instance, and the non-nullable variant is represented in memory as
+/// the underlying `Long` value.
 ///
 /// # Failure
 /// If the JVM cannot instantiate an `ULong` object (e.g. the JVM runs out of memory).
@@ -705,12 +819,12 @@ pub fn consume_kt_nullable_float_fallible(
         )
     })
 }
-/// Receives a Kotlin `Int?` through JNI.
+/// Prepares a Kotlin `Float?` to be sent through JNI.
 ///
 /// # Background
-/// While the Kotlin `Int` type is represented as a primitive `int` in JVM, the Kotlin `Int?` type
-/// is represented as the boxed class `java/lang/Integer` in JVM. Therefore, in Rust, we call the
-/// JNI functions that create a new `java/lang/Integer` class instance.
+/// While the Kotlin `Float` type is represented as a primitive `float` in JVM, the Kotlin `Float?`
+/// type is represented as the boxed class `java/lang/Float` in JVM. Therefore, in Rust, we call the
+/// JNI functions that create a new `java/lang/Float` class instance.
 pub fn produce_kt_nullable_float_fallible(
     env: JNIEnv,
     source: Option<f32>,
@@ -786,7 +900,7 @@ pub fn consume_kt_nullable_double_fallible(
         )
     })
 }
-/// Receives a Kotlin `Double?` through JNI.
+/// Prepares a Kotlin `Double?` to be sent through JNI.
 ///
 /// # Background
 /// While the Kotlin `Double` type is represented as a primitive `double` in JVM, the Kotlin
