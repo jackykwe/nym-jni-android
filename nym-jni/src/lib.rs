@@ -1,19 +1,17 @@
 // Requires manual sync with nym-client
 
 use std::path::PathBuf;
-use std::ptr::null_mut;
 
 use anyhow::Context;
 use client_core::config::GatewayEndpoint;
 use client_core::error::ClientCoreError;
 use config::NymConfig;
 use jni::{
-    errors::Error as JNIError,
     objects::{JClass, JObject, JString},
-    sys::jobject,
     JNIEnv,
 };
 use network_defaults::setup_env;
+use tracing_subscriber::layer::SubscriberExt;
 
 mod android_config; // renamed from config to android_config to avoid name clash with config (crate dependency)
 mod android_instrumented_tests;
@@ -21,39 +19,9 @@ mod utils;
 
 use android_config::{
     AndroidConfig, SocketType,
-    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
+    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE,
 };
-use utils::{
-    consume_kt_nullable_string, consume_kt_nullable_uint, consume_kt_nullable_ushort,
-    consume_kt_string, produce_kt_nullable_uint,
-};
-
-#[no_mangle]
-pub extern "C" fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_0002dExVfyTY(
-    env: JNIEnv,
-    class: JClass,
-    arg: JObject,
-) -> jobject {
-    call_fallible_or_else!(
-        null_mut,
-        Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible,
-        env,
-        class,
-        arg
-    )
-}
-
-#[allow(non_snake_case)]
-fn Java_com_kaeonx_nymandroidport_NymHandlerKt_testImpl_fallible(
-    env: JNIEnv,
-    _: JClass,
-    arg: JObject,
-) -> Result<jobject, JNIError> {
-    let arg = consume_kt_nullable_uint(env, arg)?;
-    log::info!("Rust received arg::: {:?}", arg);
-    let result = produce_kt_nullable_uint(env, arg.map(|v| v.wrapping_add(1)))?;
-    Ok(result)
-}
+use utils::{consume_kt_nullable_string, consume_kt_nullable_ushort, consume_kt_string};
 
 #[no_mangle]
 pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl(
@@ -74,21 +42,23 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible(
     env: JNIEnv,
     _: JClass,
     config_env_file: JString, // Path pointing to an env file that configures the client.
-) -> Result<(), JNIError> {
-    // TODO Consider tracing crate, used by nym-client, if the necessity arises.
-    // TODO @ Saturday: reminder to Daniel for some template code
-    #[cfg(feature = "debug_logs")]
-    android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Trace));
+) -> Result<(), anyhow::Error> {
+    // Set up logging to be detectable on Android Studio
+    tracing_log::LogTracer::init()?; // allows subscriber to consume messages produced by log crate
+    let android_studio_layer = tracing_android::layer("nym_jni")?;
+    let subscriber = tracing_subscriber::registry().with(android_studio_layer);
+    tracing::subscriber::set_global_default(subscriber)?;
 
+    // Actual Nym initialisation, done once per process
     let config_env_file = consume_kt_nullable_string(env, config_env_file)?;
     let config_env_file = config_env_file.map(PathBuf::from);
-
     setup_env(config_env_file); // config_env_file can be provided as an additional argument
+
     Ok(())
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl(
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4(
     env: JNIEnv,
     class: JClass,
     storage_abs_path: JString,
@@ -102,7 +72,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl(
     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
 ) {
     call_fallible!(
-        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible,
+        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_fallible,
         env,
         class,
         storage_abs_path,
@@ -118,7 +88,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl(
 
 #[allow(non_snake_case)]
 #[allow(clippy::too_many_arguments)]
-fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
+fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_fallible(
     env: JNIEnv,
     _: JClass,
     storage_abs_path: JString,
@@ -162,7 +132,7 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     // that facility to pass this value to the default_root_directory() function at runtime.
     // This line must be executed before creation of any AndroidConfig structs.
     std::env::set_var(
-        STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_FALLIBLE,
+        STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE,
         &storage_abs_path,
     );
 
