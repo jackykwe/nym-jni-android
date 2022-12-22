@@ -1,8 +1,5 @@
 package com.kaeonx.nymandroidport.jni
 
-internal fun test(arg: UInt?): UInt? = testImpl(arg)
-private external fun testImpl(arg: UInt?): UInt?
-
 internal fun topLevelInit(configEnvFile: String? = null) = topLevelInitImpl(configEnvFile)
 private external fun topLevelInitImpl(configEnvFile: String?)
 
@@ -13,7 +10,7 @@ internal fun nymInit(
     forceRegisterGateway: Boolean = false,
     validators: String? = null,
     disableSocket: Boolean = false,
-    port: Int? = null,
+    port: UShort? = null,
     fastmode: Boolean? = false,
 ) = nymInitImpl(
     storageAbsPath, id, gateway, forceRegisterGateway, validators, disableSocket, port, fastmode
@@ -26,6 +23,6 @@ private external fun nymInitImpl(
     forceRegisterGateway: Boolean,
     validators: String?,
     disableSocket: Boolean,
-    port: Int?,
+    port: UShort?,
     fastmode: Boolean?,
 )

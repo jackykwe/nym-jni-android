@@ -11,7 +11,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.kaeonx.nymandroidport.databinding.ActivityMainBinding
-import com.kaeonx.nymandroidport.jni.test
+import com.kaeonx.nymandroidport.jni.nymInit
 import com.kaeonx.nymandroidport.jni.topLevelInit
 
 private const val TAG = "mainActivity"
@@ -21,10 +21,8 @@ class MainActivity : AppCompatActivity() {
     init {
         // Use this to identify the device's ABI.
         Log.i(TAG, "This device's ABI is ${android.os.Build.SUPPORTED_ABIS[0]}.")
-
-        Log.i(TAG, "Before load")
         System.loadLibrary("nym_jni")
-        Log.i(TAG, "After load")
+        Log.d(TAG, "nym_jni has been successfully loaded")
     }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
@@ -55,12 +53,7 @@ class MainActivity : AppCompatActivity() {
 //            Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
 
         topLevelInit()  // sets up logging on Rust side
-//        nymInit(applicationContext.filesDir.absolutePath, "client1")
-        var input: UInt? = 42u
-        input = input?.plus(1u)
-        Log.i(TAG, "Kotlin passing $input")
-        val result = test(input)
-        Log.i(TAG, "Kotlin received $result")
+        nymInit(applicationContext.filesDir.absolutePath, "client1")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
