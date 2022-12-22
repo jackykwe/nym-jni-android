@@ -4,11 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import com.kaeonx.nymandroidport.components.NymAndroidPortHome
 import com.kaeonx.nymandroidport.jni.nymInit
 import com.kaeonx.nymandroidport.jni.topLevelInit
 import com.kaeonx.nymandroidport.ui.NymAndroidPortTheme
@@ -39,9 +35,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             NymAndroidPortTheme {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Just migrated to Compose!")
-                }
+                NymAndroidPortHome()
             }
         }
     }
