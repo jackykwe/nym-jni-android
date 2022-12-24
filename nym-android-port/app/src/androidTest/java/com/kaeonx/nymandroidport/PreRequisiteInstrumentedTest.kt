@@ -28,7 +28,7 @@ class PreRequisiteInstrumentedTest {
     @Before
     fun loadJNILibrary() {
         System.loadLibrary("nym_jni")
-        topLevelInit()  // WHAT WENT WRONG??? FIGURE WHEN AWAKE
+        topLevelInit()
     }
 
     @Test

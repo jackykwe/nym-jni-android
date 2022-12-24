@@ -4,9 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.kaeonx.nymandroidport.components.NymAndroidPortHome
-import com.kaeonx.nymandroidport.jni.nymInit
-import com.kaeonx.nymandroidport.jni.topLevelInit
 import com.kaeonx.nymandroidport.ui.NymAndroidPortTheme
 
 private const val TAG = "mainActivity"
@@ -30,12 +27,9 @@ class MainActivity : ComponentActivity() {
 //        val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
 //        Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
 
-        topLevelInit()  // sets up logging on Rust side
-        nymInit(applicationContext.filesDir.absolutePath, "client1")
-
         setContent {
             NymAndroidPortTheme {
-                NymAndroidPortHome()
+                NymAndroidPortApp()
             }
         }
     }
