@@ -1,8 +1,17 @@
+/*
+ * nym/clients/native/src/client/config/template.rs
+ *
+ * Essentially the same as the above file (from the nym crate), except some minor adjustments to
+ * make it fit into nym_jni.
+ *
+ * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
+ * be accessed from nym_jni otherwise.
+ */
+
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-// Note to nym-jni maintainers: must manually synchronise with nym-client
-
+// ? Copied wholesale, except `pub(crate) -> pub`
 #[allow(clippy::module_name_repetitions)]
 pub fn config_template() -> &'static str {
     // While using normal toml marshalling would have been way simpler with less overhead,

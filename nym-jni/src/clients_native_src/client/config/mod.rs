@@ -1,22 +1,27 @@
+/*
+ * nym/clients/native/src/client/config/mod.rs
+ *
+ * Adapted from the above file (from the nym crate) to fit Android architecture.
+ *
+ * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
+ * be accessed from nym_jni otherwise.
+ */
+
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-// Note to nym-jni maintainers: must manually synchronise with nym-client
-
-use std::path::PathBuf;
-
+use crate::clients_native_src::client::config::template::config_template;
 use client_core::config::Config as BaseConfig;
 use config::defaults::DEFAULT_WEBSOCKET_LISTENING_PORT;
 use config::NymConfig;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 mod template;
 
-use template::config_template;
+use crate::nym_init::STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE;
 
-pub const STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE:
-    &str = "ANDROIDCONFIG_STORAGE_ABS_PATH";
-
+// ? Copied wholesale
 #[derive(Debug, Deserialize, PartialEq, Eq, Serialize, Clone, Copy)]
 #[serde(deny_unknown_fields)]
 pub enum SocketType {
@@ -24,6 +29,7 @@ pub enum SocketType {
     None,
 }
 
+// ? Copied wholesale
 impl SocketType {
     #[allow(dead_code)] // TODO: Remove after full implementation
     pub fn from_string<S: Into<String>>(val: S) -> Self {
@@ -36,16 +42,19 @@ impl SocketType {
     }
 }
 
+// ? Adapted to fit Android architecture
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct AndroidConfig {
+pub struct ConfigAndroid {
     #[serde(flatten)]
-    base: BaseConfig<AndroidConfig>,
+    base: BaseConfig<ConfigAndroid>,
 
     socket: Socket,
 }
 
-impl NymConfig for AndroidConfig {
+// ? Adapted to fit Android architecture
+impl NymConfig for ConfigAndroid {
     fn template() -> &'static str {
         config_template()
     }
@@ -90,10 +99,11 @@ impl NymConfig for AndroidConfig {
     }
 }
 
-impl AndroidConfig {
+// ? Copied wholesale, except renamed `Config` -> `ConfigAndroid`
+impl ConfigAndroid {
     #[allow(clippy::default_trait_access)] // I avoid reformatting nym code as far as possible
     pub fn new<S: Into<String>>(id: S) -> Self {
-        AndroidConfig {
+        ConfigAndroid {
             base: BaseConfig::new(id),
             socket: Default::default(),
         }
@@ -123,18 +133,17 @@ impl AndroidConfig {
     }
 
     #[allow(dead_code)] // TODO: Remove after full implementation
-
     pub fn get_socket_type(&self) -> SocketType {
         self.socket.socket_type
     }
 
     #[allow(dead_code)] // TODO: Remove after full implementation
-
     pub fn get_listening_port(&self) -> u16 {
         self.socket.listening_port
     }
 }
 
+// ? Copied wholesale
 #[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Socket {
@@ -142,6 +151,7 @@ pub struct Socket {
     listening_port: u16,
 }
 
+// ? Copied wholesale
 impl Default for Socket {
     fn default() -> Self {
         Socket {

@@ -8,8 +8,8 @@ use jni::{
 };
 use network_defaults::setup_env;
 use tracing_subscriber::layer::SubscriberExt;
-mod android_config; // renamed from config to android_config to avoid name clash with config (crate dependency)
 mod android_instrumented_tests;
+mod clients_native_src;
 mod nym_init;
 mod utils;
 

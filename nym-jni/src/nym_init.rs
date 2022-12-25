@@ -1,19 +1,16 @@
 // Requires manual sync with nym-client
 
 use anyhow::Context;
-use client_core::config::GatewayEndpoint;
-use client_core::error::ClientCoreError;
-use config::NymConfig;
 use jni::{
     objects::{JClass, JObject, JString},
     JNIEnv,
 };
 
-use crate::android_config::{
-    AndroidConfig, SocketType,
-    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE,
-};
+use crate::clients_native_src::commands::init::{execute, Init};
 use crate::utils::{consume_kt_nullable_string, consume_kt_nullable_ushort, consume_kt_string};
+
+pub const STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE:
+    &str = "ANDROIDCONFIG_STORAGE_ABS_PATH";
 
 #[allow(non_snake_case)]
 #[allow(clippy::too_many_arguments)]
@@ -31,10 +28,16 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_
                     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool, // Set this client to work in a enabled credentials mode that would attempt to use gateway with bandwidth credential requirement.
 ) -> Result<(), anyhow::Error> {
     let storage_abs_path = consume_kt_string(env, storage_abs_path)?;
-    let id = &consume_kt_string(env, id)?;
-    let gateway = consume_kt_nullable_string(env, gateway)?;
-    let validators = consume_kt_nullable_string(env, validators)?;
-    let port = consume_kt_nullable_ushort(env, port)?;
+
+    let args = Init {
+        id: consume_kt_string(env, id)?,
+        gateway: consume_kt_nullable_string(env, gateway)?,
+        force_register_gateway,
+        validators: consume_kt_nullable_string(env, validators)?,
+        disable_socket,
+        port: consume_kt_nullable_ushort(env, port)?,
+        fastmode,
+    };
 
     /*
     DONE-TODO: Instead of environment variables, consider top level static mutable variables?
@@ -65,155 +68,13 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_
         &storage_abs_path,
     );
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// START: nym_client::commands::init::execute()
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    let already_init = AndroidConfig::default_config_file_path(Some(id)).exists();
-    if already_init {
-        log::info!(
-            "Client \"{}\" was already initialised before! \
-            Config information will be overwritten (but keys will be kept)!",
-            id
-        );
-    }
-
-    // Usually you only register with the gateway on the first init, however you can force
-    // re-registering if wanted.
-    let user_wants_force_register = force_register_gateway;
-
-    // If the client was already initialized, don't generate new keys and don't re-register with
-    // the gateway (because this would create a new shared key).
-    // Unless the user really wants to.
-    let register_gateway = !already_init || user_wants_force_register;
-
-    // Attempt to use a user-provided gateway, if possible
-    let user_chosen_gateway_id: Option<&str> = gateway.as_deref();
-
-    let mut config = AndroidConfig::new(id);
-    // let override_config_fields = OverrideConfig::from(args.clone());
-    // config = override_config(config, override_config_fields);
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// START: nym_client::commands::override_config()
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    if let Some(raw_validators) = validators {
-        config
-            .get_base_mut()
-            .set_custom_validator_apis(config::parse_validators(&raw_validators));
-    } else if std::env::var(network_defaults::var_names::CONFIGURED).is_ok() {
-        let raw_validators = std::env::var(network_defaults::var_names::API_VALIDATOR)
-            .with_context(|| String::from("api validator not set"))?; // modified to suit anyhow
-        config
-            .get_base_mut()
-            .set_custom_validator_apis(config::parse_validators(&raw_validators));
-    }
-    if disable_socket {
-        config = config.with_socket(SocketType::None);
-    }
-    if let Some(port) = port {
-        config = config.with_port(port);
-    }
-    // #[cfg(feature = "coconut")]
-    // {
-    //     if args.enabled_credentials_mode {
-    //         config.get_base_mut().with_disabled_credentials(false)
-    //     }
-    // }
-    if fastmode {
-        config.get_base_mut().set_high_default_traffic_volume();
-    }
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// END: nym_client::commands::override_config()
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    let gateway = setup_gateway(id, register_gateway, user_chosen_gateway_id, &config);
     // using tokio's block_on() instead of direct .await or futures::executor::block_on()
     // TODO: futures::executor::block_on() does not work on aarch64 (works on x86_64); not sure why
-    // let gateway = futures::executor::block_on(gateway)
-    //     .map_err(|err| format!("Failed to setup gateway\nError: {err}"))?;
-    let gateway = tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
-        .with_context(|| String::from("Failed to setup tokio runtime"))?
-        .block_on(gateway)
-        .with_context(|| String::from("Failed to setup gateway"))?;
-    config.get_base_mut().with_gateway_endpoint(gateway);
-
-    let config_save_location = config.get_config_file_save_location();
-    config
-        .save_to_file(None)
-        .with_context(|| String::from("Failed to save the config file"))?;
-
-    log::info!("Saved configuration file to {:?}", config_save_location);
-    log::info!("Using gateway: {}", config.get_base().get_gateway_id());
-    log::debug!("Gateway id: {}", config.get_base().get_gateway_id());
-    log::debug!("Gateway owner: {}", config.get_base().get_gateway_owner());
-    log::debug!(
-        "Gateway listener: {}",
-        config.get_base().get_gateway_listener()
-    );
-    log::debug!("Client configuration completed.");
-
-    // Useless, prints to stdout but not visible from Android
-    // client_core::init::show_address(config.get_base())
-    //     .map_err(|err| format!("Failed to show address\nError: {err}"))?;
+        .with_context(|| "Failed to setup tokio runtime")?
+        .block_on(execute(&args))?;
 
     Ok(())
-}
-
-async fn setup_gateway(
-    id: &str,
-    register: bool,
-    user_chosen_gateway_id: Option<&str>,
-    config: &AndroidConfig,
-) -> Result<GatewayEndpoint, ClientCoreError> {
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    //// START: nym_client::commands::init::setup_gateway()
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    if register {
-        // Get the gateway details by querying the validator-api. Either pick one at random or use
-        // the chosen one if it's among the available ones.
-        log::info!(
-            "Configuring gateway {:?}",
-            config.get_base().get_validator_api_endpoints()
-        );
-        let gateway = client_core::init::query_gateway_details(
-            config.get_base().get_validator_api_endpoints(),
-            user_chosen_gateway_id,
-        )
-        .await?;
-        log::debug!("Querying gateway gives: {}", gateway);
-
-        // Registering with gateway by setting up and writing shared keys to disk
-        log::trace!("Registering gateway");
-        client_core::init::register_with_gateway_and_store_keys(gateway.clone(), config.get_base())
-            .await?;
-        log::debug!("Saved all generated keys");
-
-        Ok(gateway.into())
-    } else if user_chosen_gateway_id.is_some() {
-        // Just set the config, don't register or create any keys
-        // This assumes that the user knows what they are doing, and that the existing keys are
-        // valid for the gateway being used
-        println!("Using gateway provided by user, keeping existing keys");
-        let gateway = client_core::init::query_gateway_details(
-            config.get_base().get_validator_api_endpoints(),
-            user_chosen_gateway_id,
-        )
-        .await?;
-        log::debug!("Querying gateway gives: {}", gateway);
-        Ok(gateway.into())
-    } else {
-        log::debug!("Not registering gateway, will reuse existing config and keys");
-        let existing_config = AndroidConfig::load_from_file(Some(id)).map_err(|err| {
-            log::error!(
-                "Unable to configure gateway: {err}. \n
-                Seems like the client was already initialized but it was not possible to read \
-                the existing configuration file. \n
-                CAUTION: Consider backing up your gateway keys and try force gateway registration, or \
-                removing the existing configuration and starting over."
-            );
-            ClientCoreError::CouldNotLoadExistingGatewayConfiguration(err)
-        })?;
-
-        Ok(existing_config.get_base().get_gateway_endpoint().clone())
-    }
 }
