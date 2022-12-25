@@ -18,14 +18,14 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_
     env: JNIEnv,
     _: JClass,
     storage_abs_path: JString,
-    id: JString,      // Id of the nym-mixnet-client we want to create config for.
-    gateway: JString, // (Optional) Id of the gateway we are going to connect to.
-    force_register_gateway: bool, // Force register gateway. WARNING: this will overwrite any existing keys for the given id, potentially causing loss of access.
-    validators: JString, // (Optional) Comma separated list of rest endpoints of the validators
-    disable_socket: bool, // Whether to not start the websocket
-    port: JObject, // (Optional) Port for the socket (if applicable) to listen on in all subsequent runs
-    fastmode: bool, // Mostly debug-related option to increase default traffic rate so that you would not need to modify config post init
-                    // #[cfg(feature = "coconut")] enabled_credentials_mode: bool, // Set this client to work in a enabled credentials mode that would attempt to use gateway with bandwidth credential requirement.
+    id: JString,
+    gateway: JString,
+    force_register_gateway: bool,
+    validators: JString,
+    disable_socket: bool,
+    port: JObject,
+    fastmode: bool,
+    // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
 ) -> Result<(), anyhow::Error> {
     let storage_abs_path = consume_kt_string(env, storage_abs_path)?;
 
@@ -37,6 +37,8 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_
         disable_socket,
         port: consume_kt_nullable_ushort(env, port)?,
         fastmode,
+        // #[cfg(feature = "coconut")]
+        // enabled_credentials_mode,
     };
 
     /*
