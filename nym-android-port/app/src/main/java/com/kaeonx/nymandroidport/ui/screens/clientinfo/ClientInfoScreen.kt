@@ -67,8 +67,8 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                         onClick = {
                             when (option) {
                                 ADD_NEW_OPTION -> createClientDialogOpen = true
-                                NONE_OPTION -> clientInfoViewModel.setSelectedClient(null)
-                                else -> clientInfoViewModel.setSelectedClient(option)
+                                NONE_OPTION -> clientInfoViewModel.unselectClient()
+                                else -> clientInfoViewModel.selectClient(option)
                             }
                             clientSelectionExpanded = false
                         },

@@ -26,3 +26,24 @@ private external fun nymInitImpl(
     port: UShort?,
     fastmode: Boolean?,
 )
+
+
+internal fun nymRun(
+    storageAbsPath: String,
+    id: String,
+    validators: String? = null,
+    gateway: String? = null,
+    disable_socket: Boolean = false,
+    port: UShort? = null,
+) = nymRunImpl(
+    storageAbsPath, id, validators, gateway, disable_socket, port
+)
+
+private external fun nymRunImpl(
+    storageAbsPath: String,
+    id: String,
+    validators: String?,
+    gateway: String?,
+    disable_socket: Boolean,
+    port: UShort?,
+)
