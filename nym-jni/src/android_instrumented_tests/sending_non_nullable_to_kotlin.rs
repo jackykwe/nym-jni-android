@@ -7,7 +7,7 @@ use jni::{
 };
 
 use crate::utils::{
-    produce_kt_bool, produce_kt_byte, produce_kt_double, produce_kt_float, produce_kt_int,
+    produce_kt_boolean, produce_kt_byte, produce_kt_double, produce_kt_float, produce_kt_int,
     produce_kt_long, produce_kt_short, produce_kt_ubyte, produce_kt_uint, produce_kt_ulong,
     produce_kt_ushort,
 };
@@ -17,7 +17,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_Rec
     _: JNIEnv,
     _: JClass,
 ) -> jboolean {
-    produce_kt_bool(true)
+    produce_kt_boolean(true)
 }
 
 #[no_mangle]
@@ -25,7 +25,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_Rec
     _: JNIEnv,
     _: JClass,
 ) -> jboolean {
-    produce_kt_bool(false)
+    produce_kt_boolean(false)
 }
 
 #[no_mangle]

@@ -53,7 +53,7 @@ pub fn produce_kt_nullable_boolean(env: JNIEnv, source: Option<bool>) -> Result<
         Some(source) => {
             // variable shadowing
             let source = jvalue {
-                z: super::produce_kt_bool(source),
+                z: super::produce_kt_boolean(source),
             };
 
             let method_id =

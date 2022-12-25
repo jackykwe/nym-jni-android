@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use jni::{
     objects::{JClass, JObject, JString},
+    sys::jboolean,
     JNIEnv,
 };
 use network_defaults::setup_env;
@@ -11,9 +12,11 @@ use tracing_subscriber::layer::SubscriberExt;
 mod android_instrumented_tests;
 mod clients_native_src;
 mod nym_init;
+mod nym_run;
 mod utils;
 
-use crate::nym_init::Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_fallible;
+use crate::nym_init::Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible;
+use crate::nym_run::Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible;
 use crate::utils::consume_kt_nullable_string;
 
 #[no_mangle]
@@ -63,15 +66,15 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_00
     storage_abs_path: JString,
     id: JString,
     gateway: JString,
-    force_register_gateway: bool,
+    force_register_gateway: jboolean,
     validators: JString,
-    disable_socket: bool,
+    disable_socket: jboolean,
     port: JObject,
-    fastmode: bool,
+    fastmode: jboolean,
     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
 ) {
     call_fallible!(
-        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_fallible,
+        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible,
         env,
         class,
         storage_abs_path,
@@ -82,5 +85,29 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_00
         disable_socket,
         port,
         fastmode
+    );
+}
+
+#[no_mangle]
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_0002dFrySw6s(
+    env: JNIEnv,
+    class: JClass,
+    storage_abs_path: JString,
+    id: JString,
+    validators: JString,
+    gateway: JString,
+    disable_socket: jboolean,
+    port: JObject,
+) {
+    call_fallible!(
+        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible,
+        env,
+        class,
+        storage_abs_path,
+        id,
+        validators,
+        gateway,
+        disable_socket,
+        port
     );
 }

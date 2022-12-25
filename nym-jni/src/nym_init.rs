@@ -3,28 +3,29 @@
 use anyhow::Context;
 use jni::{
     objects::{JClass, JObject, JString},
+    sys::jboolean,
     JNIEnv,
 };
 
+use crate::clients_native_src::client::config::STORAGE_ABS_PATH_ENVVARKEY;
 use crate::clients_native_src::commands::init::{execute, Init};
-use crate::utils::{consume_kt_nullable_string, consume_kt_nullable_ushort, consume_kt_string};
-
-pub const STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE:
-    &str = "ANDROIDCONFIG_STORAGE_ABS_PATH";
+use crate::utils::{
+    consume_kt_boolean, consume_kt_nullable_string, consume_kt_nullable_ushort, consume_kt_string,
+};
 
 #[allow(non_snake_case)]
 #[allow(clippy::too_many_arguments)]
-pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_fallible(
+pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     env: JNIEnv,
     _: JClass,
     storage_abs_path: JString,
     id: JString,
     gateway: JString,
-    force_register_gateway: bool,
+    force_register_gateway: jboolean,
     validators: JString,
-    disable_socket: bool,
+    disable_socket: jboolean,
     port: JObject,
-    fastmode: bool,
+    fastmode: jboolean,
     // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
 ) -> Result<(), anyhow::Error> {
     let storage_abs_path = consume_kt_string(env, storage_abs_path)?;
@@ -32,11 +33,11 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_
     let args = Init {
         id: consume_kt_string(env, id)?,
         gateway: consume_kt_nullable_string(env, gateway)?,
-        force_register_gateway,
+        force_register_gateway: consume_kt_boolean(force_register_gateway),
         validators: consume_kt_nullable_string(env, validators)?,
-        disable_socket,
+        disable_socket: consume_kt_boolean(disable_socket),
         port: consume_kt_nullable_ushort(env, port)?,
-        fastmode,
+        fastmode: consume_kt_boolean(fastmode),
         // #[cfg(feature = "coconut")]
         // enabled_credentials_mode,
     };
@@ -65,10 +66,7 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dlxgbCg4_
     // trait. Environment variables are just another form of arguments to functions, so I'm using
     // that facility to pass this value to the default_root_directory() function at runtime.
     // This line must be executed before creation of any AndroidConfig structs.
-    std::env::set_var(
-        STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE,
-        &storage_abs_path,
-    );
+    std::env::set_var(STORAGE_ABS_PATH_ENVVARKEY, &storage_abs_path);
 
     // using tokio's block_on() instead of direct .await or futures::executor::block_on()
     // TODO: futures::executor::block_on() does not work on aarch64 (works on x86_64); not sure why

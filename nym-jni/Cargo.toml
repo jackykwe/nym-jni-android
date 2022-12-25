@@ -1,28 +1,44 @@
 [package]
 name = "nym-jni"
-version = "0.1.0"
+version = "1.1.0"  # must match nym's version, otherwise run method fails local version check
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jni = "0.20.0"
-anyhow = "1.0.68"
-nym-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-client-core = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-network-defaults = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-config = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-serde = "1.0.151"
-# https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
-# OpenSSL, which is not suitable for cross-compilation.
-openssl = { version = "0.10.45", features = ["vendored"] }
-
+# Logging
 log = "0.4.17"
 android_logger = "=0.11.1"  # 0.11.3 is broken
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 tracing-android = "0.2.0"  # provides a tracing layer that can connect to Android Studio's logcat
+
+# External
+anyhow = "1.0.68"
+jni = "0.20.0"
+# https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
+# OpenSSL, which is not suitable for cross-compilation.
+openssl = { version = "0.10.45", features = ["vendored"] }
+serde = "1.0.151"
 tokio = { version = "1.23.0", features = ["rt"] }  # necessary for async functions to execute properly on aarch64
+tokio-tungstenite = "0.14" # websocket
+
+# Internal (to nym crate)
+network-defaults = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+## clients_native_src::client::config
+client-core = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+config = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+## clients_native_src::client
+crypto = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+gateway-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+nymsphinx = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+task = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+credential-storage = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+websocket-requests = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+futures = "0.3" # WARN: listed under "dependencies to review" in nym crate
+## clients_native_src::commands::run
+version-checker = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+
 
 [lib]
 crate_type = ["cdylib"]

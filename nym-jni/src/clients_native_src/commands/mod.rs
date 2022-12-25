@@ -9,6 +9,7 @@
  */
 
 pub mod init;
+pub mod run;
 
 use anyhow::Context;
 

@@ -1,8 +1,7 @@
 /*
  * nym/clients/native/src/commands/init.rs
  *
- * Essentially the same as the above file (from the nym crate), except some minor adjustments to
- * make it fit into nym_jni.
+ * Adapted from the above file (from the nym crate) to fit Android architecture.
  *
  * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
  * be accessed from nym_jni otherwise.
@@ -15,12 +14,11 @@ use anyhow::Context;
 use client_core::{config::GatewayEndpoint, error::ClientCoreError};
 use config::NymConfig;
 
-use crate::clients_native_src::{
-    client::config::ConfigAndroid,
-    commands::{override_config, OverrideConfig},
-};
+use crate::clients_native_src::client::config::ConfigAndroid;
+use crate::clients_native_src::commands::{override_config, OverrideConfig};
 
-// ? Copied wholesale, except removal of `#[clap]` macros and making all fields `pub`
+// ? Copied wholesale, except removal of `#[clap]` macros, `pub(crate) -> pub` and making all fields
+// ? `pub`
 #[derive(Clone)]
 pub struct Init {
     /// Id of the nym-mixnet-client we want to create config for.
@@ -65,7 +63,7 @@ impl From<Init> for OverrideConfig {
     }
 }
 
-// ? Adapted to suit Android architecture
+// ? Adapted to suit Android architecture, and `pub(crate) -> pub`
 pub async fn execute(args: &Init) -> Result<(), anyhow::Error> {
     log::info!("Initialising client...");
 

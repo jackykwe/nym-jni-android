@@ -7,6 +7,11 @@
  * be accessed from nym_jni otherwise.
  */
 
+// I avoid reformatting nym code as far as possible
+#![allow(clippy::default_trait_access)]
+#![allow(clippy::expect_used)]
+#![allow(clippy::module_name_repetitions)]
+
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
@@ -19,7 +24,8 @@ use std::path::PathBuf;
 
 mod template;
 
-use crate::nym_init::STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE;
+// Value (environment variable key) follows the impl block below
+pub const STORAGE_ABS_PATH_ENVVARKEY: &str = "IMPL_NYMCONFIG_FOR_CONFIGANDROID_STORAGE_ABS_PATH";
 
 // ? Copied wholesale
 #[derive(Debug, Deserialize, PartialEq, Eq, Serialize, Clone, Copy)]
@@ -31,7 +37,6 @@ pub enum SocketType {
 
 // ? Copied wholesale
 impl SocketType {
-    #[allow(dead_code)] // TODO: Remove after full implementation
     pub fn from_string<S: Into<String>>(val: S) -> Self {
         let mut upper = val.into();
         upper.make_ascii_uppercase();
@@ -43,7 +48,6 @@ impl SocketType {
 }
 
 // ? Adapted to fit Android architecture
-#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ConfigAndroid {
@@ -59,16 +63,12 @@ impl NymConfig for ConfigAndroid {
         config_template()
     }
 
-    #[allow(clippy::expect_used)] // nym also uses expect
     fn default_root_directory() -> PathBuf {
         PathBuf::from(
-            std::env::var(
-                STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE
-            )
-            .unwrap_or_else(|_| {
+            std::env::var(STORAGE_ABS_PATH_ENVVARKEY).unwrap_or_else(|_| {
                 panic!(
                     "Failed to get {}. Is the environment variable not set?",
-                    STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE
+                    STORAGE_ABS_PATH_ENVVARKEY
                 )
             }),
         )
@@ -77,11 +77,9 @@ impl NymConfig for ConfigAndroid {
     }
 
     fn try_default_root_directory() -> Option<PathBuf> {
-        std::env::var(
-            STORAGE_ABS_PATH_FROM_JAVA_COM_KAEONX_NYMANDROIDPORT_JNI_NYMHANDLERKT_NYMINITIMPL_0002DLXGBCG4_FALLIBLE,
-        )
-        .ok()
-        .map(|path| PathBuf::from(path).join(".nym").join("clients"))
+        std::env::var(STORAGE_ABS_PATH_ENVVARKEY)
+            .ok()
+            .map(|path| PathBuf::from(path).join(".nym").join("clients"))
     }
 
     fn root_directory(&self) -> PathBuf {
@@ -101,7 +99,6 @@ impl NymConfig for ConfigAndroid {
 
 // ? Copied wholesale, except renamed `Config` -> `ConfigAndroid`
 impl ConfigAndroid {
-    #[allow(clippy::default_trait_access)] // I avoid reformatting nym code as far as possible
     pub fn new<S: Into<String>>(id: S) -> Self {
         ConfigAndroid {
             base: BaseConfig::new(id),
@@ -132,12 +129,10 @@ impl ConfigAndroid {
         &mut self.base
     }
 
-    #[allow(dead_code)] // TODO: Remove after full implementation
     pub fn get_socket_type(&self) -> SocketType {
         self.socket.socket_type
     }
 
-    #[allow(dead_code)] // TODO: Remove after full implementation
     pub fn get_listening_port(&self) -> u16 {
         self.socket.listening_port
     }

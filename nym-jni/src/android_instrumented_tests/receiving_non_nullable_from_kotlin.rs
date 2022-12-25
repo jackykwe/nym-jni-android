@@ -12,7 +12,7 @@ use jni::{
 use crate::{
     call_fallible_or_else,
     utils::{
-        consume_kt_bool, consume_kt_byte, consume_kt_double, consume_kt_float, consume_kt_int,
+        consume_kt_boolean, consume_kt_byte, consume_kt_double, consume_kt_float, consume_kt_int,
         consume_kt_long, consume_kt_short, consume_kt_string, consume_kt_ubyte, consume_kt_uint,
         consume_kt_ulong, consume_kt_ushort, produce_kt_string,
     },
@@ -38,7 +38,7 @@ fn Java_com_kaeonx_nymandroidport_jni_instrumentedtesthelpers_SendingNonNullable
     _: JClass,
     arg: jboolean,
 ) -> Result<jstring, JNIError> {
-    let arg = consume_kt_bool(arg);
+    let arg = consume_kt_boolean(arg);
     produce_kt_string(env, format!("Rust received {} (Boolean/bool)", arg))
 }
 

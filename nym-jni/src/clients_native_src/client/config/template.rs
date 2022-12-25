@@ -12,7 +12,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ? Copied wholesale, except `pub(crate) -> pub`
-#[allow(clippy::module_name_repetitions)]
 pub fn config_template() -> &'static str {
     // While using normal toml marshalling would have been way simpler with less overhead,
     // I think it's useful to have comments attached to the saved config file to explain behaviour of

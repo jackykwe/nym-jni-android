@@ -12,7 +12,7 @@ use jni::{
 /// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
 /// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
 /// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
-pub fn consume_kt_bool(source: jboolean) -> bool {
+pub fn consume_kt_boolean(source: jboolean) -> bool {
     source == 1
 }
 /// Prepares a Kotlin `Boolean` to be sent through JNI.
@@ -21,7 +21,7 @@ pub fn consume_kt_bool(source: jboolean) -> bool {
 /// NB: The JVM's memory representation of `boolean`s uses 8 bits, and there are only 2 possible
 /// values: `1` for `true` and `0` for `false`. This coincides with Rust's memory representation,
 /// which also uses 8 bits, and uses bit pattern `0x01` for `true` and `0x00` for `false`.
-pub fn produce_kt_bool(source: bool) -> jboolean {
+pub fn produce_kt_boolean(source: bool) -> jboolean {
     source.into()
 }
 
