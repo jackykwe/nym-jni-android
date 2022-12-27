@@ -3,6 +3,7 @@ package com.kaeonx.nymandroidport.ui.screens.clientinfo
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,12 +78,44 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 }
             }
         }
-
-        Box(modifier = Modifier.weight(1f)) {
-            // TODO: Content / diagnostics goes here
+        // Diagnostics
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 8.dp, bottom = 8.dp)
+        ) {
+            if (selectedOption != null) {
+                val workInfo by clientInfoViewModel.nymRunWorkInfo.observeAsState()
+                Column {
+                    workInfo?.forEach {
+                        Text(
+                            text = "\"$selectedOption\" state: ${it.state} (${
+                                it.progress.getInt(
+                                    "PROGRESS",
+                                    -1
+                                )
+                            })"
+                        )
+                    }
+                }
+            }
         }
 
         if (selectedOption != null) {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { clientInfoViewModel.stopRunningClient() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text(
+                    text = "Stop nym Client \"$selectedOption\"",
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { deleteClientDialogOpen = true },
@@ -92,7 +125,8 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 )
             ) {
                 Text(
-                    text = "Delete Nym Client \"$selectedOption\"", overflow = TextOverflow.Ellipsis
+                    text = "Delete Nym Client \"$selectedOption\"",
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

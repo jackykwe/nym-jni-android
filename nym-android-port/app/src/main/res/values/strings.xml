@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Nym Android Port</string>
+    <string name="nym_run_worker_cancel_action_text">Stop Background Execution</string>
+    <string name="nym_run_worker_notification_title">Nym Run Running…</string>
+    <string name="nym_run_worker_notification_channel_id">NRWnotificationChannelId</string>
+    <string name="nym_run_worker_notification_channel_name">Nym Run Notifications</string>
+    <string name="nym_run_worker_notification_channel_description">Notifications related to the Nym Run method…</string>
 </resources>
