@@ -1,5 +1,8 @@
 package com.kaeonx.nymandroidport
 
+import android.os.Build
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -7,10 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.kaeonx.nymandroidport.*
 
 // To pass the snackbarHostState into the hierarchy without manual "prop drilling"
@@ -18,10 +26,48 @@ internal val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> {
     error("No SnackbarHostState provided")
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+internal fun NymAndroidPortApp() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        NymAndroidPortAppInner()
+    } else {
+        // Permission
+        val notificationPermissionState =
+            rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
+        if (notificationPermissionState.status.isGranted) {
+            NymAndroidPortAppInner()
+        } else {
+            Column(modifier = Modifier.padding(8.dp)) {
+                val textToShow = if (notificationPermissionState.status.shouldShowRationale) {
+                    // If the user has denied the permission but the rationale can be shown,
+                    // then gently explain why the app requires this permission
+                    "Without the notifications permission, nym is unable to continuously sync messages in the background. Please grant the permission."
+                } else {
+                    // If it's the first time the user lands on this feature, or the user
+                    // doesn't want to be asked again for this permission, explain that the
+                    // permission is required
+                    "Nym requires the notifications permission to be able to continuously sync messages in the background. Please grant the permission."
+                }
+                Text(textToShow)
+                Button(
+                    onClick = { notificationPermissionState.launchPermissionRequest() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    Text(text = "Request permission")
+                }
+                Text(text = "If the button above doesn't work, please manually enable notifications in your phone's application settings.")
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-internal fun NymAndroidPortApp() {
+private fun NymAndroidPortAppInner() {
     val navController = rememberNavController()
 
     // For snackbars

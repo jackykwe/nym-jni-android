@@ -43,6 +43,10 @@ android {
 dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.activity:activity-compose:1.6.1'
+    implementation 'androidx.work:work-multiprocess:2.7.1'  // for RemoteCoroutineWorker
+
+    // For permissions
+    implementation "com.google.accompanist:accompanist-permissions:0.28.0"
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

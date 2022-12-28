@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,38 +88,32 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 .weight(1f)
                 .padding(top = 8.dp, bottom = 8.dp)
         ) {
-            if (selectedOption != null) {
+            Column {
+                Text(
+                    text = "For every work that has been scheduled before, there will be one entry that shows up below. Since we are using unique work, there should be at most 1. \nStates:\n - RUNNING: in execution in the background (run forever)\n - FAILED: terminated, not running, but some error occurred (typically when stopping the client too soon after running)\n - SUCCEEDED: terminated, not running",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic
+                )
                 val workInfo by clientInfoViewModel.nymRunWorkInfo.observeAsState()
-                Column {
+                Column(
+                    modifier = Modifier
+                        .padding(top = 8.dp, bottom = 8.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     workInfo?.forEach {
                         Text(
-                            text = "\"$selectedOption\" state: ${it.state} (${
-                                it.progress.getInt(
-                                    "PROGRESS",
-                                    -1
-                                )
-                            })"
+                            text = "Client \"$selectedOption\" state: ${it.state}",
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
+
         }
 
         if (selectedOption != null) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { clientInfoViewModel.stopRunningClient() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.tertiary
-                )
-            ) {
-                Text(
-                    text = "Stop nym Client \"$selectedOption\"",
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { deleteClientDialogOpen = true },
@@ -129,6 +127,17 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     overflow = TextOverflow.Ellipsis
                 )
             }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { clientInfoViewModel.stopRunningClient() },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.tertiary
+            )
+        ) {
+            Text(text = "Stop running Nym clients")
         }
     }
 

@@ -1,30 +1,33 @@
 package com.kaeonx.nymandroidport.ui.screens.clientinfo
 
+import android.app.ActivityManager
 import android.app.Application
+import android.content.ComponentName
 import android.util.Log
 import androidx.compose.runtime.toMutableStateList
+import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
+import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_CLASS_NAME
+import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_PACKAGE_NAME
 import com.kaeonx.nymandroidport.jni.nymInit
 import com.kaeonx.nymandroidport.jni.topLevelInit
+import com.kaeonx.nymandroidport.services.NymRunService
 import com.kaeonx.nymandroidport.workers.NYMRUNWORKER_CLIENT_ID_KEY
 import com.kaeonx.nymandroidport.workers.NymRunWorker
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 
 private const val TAG = "clientInfoViewModel"
 private const val NYM_RUN_UNIQUE_WORK_NAME = "nymRunUWN"
 
 class ClientInfoViewModel(application: Application) : AndroidViewModel(application) {
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,
-    // not stored as a persistent field in an AndroidViewModel. Instead, it is guarded behind a
-    // function call.
+    // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
+    // guarded behind a function call.
     private fun getAppContext() = getApplication<Application>().applicationContext
     private fun getStorageAbsPath() = getAppContext().filesDir.absolutePath
     private fun getClientsDir() = getAppContext().filesDir
@@ -67,30 +70,34 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    // TODO: Need to make it stoppable
     private fun runClient(clientName: String) {
+        val nymRunServiceName = NymRunService::class.java.name
+        val componentName = ComponentName(getAppContext().packageName, nymRunServiceName)
+
         // TODO: empty constraints; enable during evaluation
         val constraints = Constraints.Builder().build()
-
+        val request = OneTimeWorkRequestBuilder<NymRunWorker>(
+//                PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS,
+//                TimeUnit.MILLISECONDS
+        )
+            .setConstraints(constraints)
+//                .setBackoffCriteria(
+//                    BackoffPolicy.LINEAR,
+//                    PeriodicWorkRequest.MIN_BACKOFF_MILLIS,
+//                    TimeUnit.MILLISECONDS
+//                )
+            .setInputData(
+                workDataOf(
+                    ARGUMENT_PACKAGE_NAME to componentName.packageName,  // necessary for RemoteCoroutineWorker to know which process to bind to
+                    ARGUMENT_CLASS_NAME to componentName.className,  // necessary for RemoteCoroutineWorker to know which process to bind to
+                    NYMRUNWORKER_CLIENT_ID_KEY to clientName
+                )
+            )
+            .build()
         nymRunWorkManager.enqueueUniqueWork(
             NYM_RUN_UNIQUE_WORK_NAME,
             ExistingWorkPolicy.REPLACE,  // automatically cancels the existing work
-            OneTimeWorkRequestBuilder<NymRunWorker>(
-//                PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS,
-//                TimeUnit.MILLISECONDS
-            )
-                .setConstraints(constraints)
-                .setBackoffCriteria(
-                    BackoffPolicy.LINEAR,
-                    PeriodicWorkRequest.MIN_BACKOFF_MILLIS,
-                    TimeUnit.MILLISECONDS
-                )
-                .setInputData(
-                    workDataOf(
-                        NYMRUNWORKER_CLIENT_ID_KEY to clientName
-                    )
-                )
-                .build()
+            request
         )
     }
 
@@ -99,10 +106,23 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         _selectedClient.value = clientName
     }
 
+    private var cancelJob: Job? = null  //
     internal fun stopRunningClient() {
-        Log.e(TAG, "STOPPING")
-        nymRunWorkManager.cancelUniqueWork(NYM_RUN_UNIQUE_WORK_NAME)
-        Log.e(TAG, "STOPPED?")
+        val nymRunServicePid =
+            getAppContext().getSystemService<ActivityManager>()?.runningAppProcesses?.getOrNull(1)?.pid
+        if (nymRunServicePid != null) {
+            Log.w(TAG, "SIGINTIng PID: $nymRunServicePid")
+            android.os.Process.sendSignal(nymRunServicePid, 2)  // SIGINT
+        }
+        cancelJob = viewModelScope.launch {
+            cancelJob?.cancelAndJoin()
+            do {
+                Log.d(TAG, "Waiting for 5s, work still running...")
+                delay(5000L)
+            } while (nymRunWorkInfo.value!!.any { workInfo -> workInfo.state == WorkInfo.State.RUNNING })
+            Log.w(TAG, "Cancelling unique work")
+            nymRunWorkManager.cancelUniqueWork(NYM_RUN_UNIQUE_WORK_NAME)
+        }
     }
 
     internal fun unselectClient() {

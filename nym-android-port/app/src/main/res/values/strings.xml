@@ -5,4 +5,6 @@
     <string name="nym_run_worker_notification_channel_id">NRWnotificationChannelId</string>
     <string name="nym_run_worker_notification_channel_name">Nym Run Notifications</string>
     <string name="nym_run_worker_notification_channel_description">Notifications related to the Nym Run method…</string>
+    <string name="nym_run_service_description">The Foreground Service that executes the Nym Run method. If terminated, the Nym Run method will stop executing in the background.</string>
+    <string name="nym_run_service_process_name">:nymRunService</string>
 </resources>

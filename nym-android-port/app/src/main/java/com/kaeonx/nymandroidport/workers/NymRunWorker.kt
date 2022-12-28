@@ -3,24 +3,20 @@ package com.kaeonx.nymandroidport.workers
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.graphics.drawable.Icon
-import androidx.core.app.TaskStackBuilder
-import androidx.work.CoroutineWorker
+import android.util.Log
 import androidx.work.ForegroundInfo
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.kaeonx.nymandroidport.MainActivity
+import androidx.work.multiprocess.RemoteCoroutineWorker
 import com.kaeonx.nymandroidport.R
 import com.kaeonx.nymandroidport.jni.nymRun
+import com.kaeonx.nymandroidport.jni.topLevelInit
 
 private const val TAG = "nymRunWorker"
 internal const val NYMRUNWORKER_CLIENT_ID_KEY = "clientId"
 
 class NymRunWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) { // CoroutineWorker is recommended for Kotlin
+    RemoteCoroutineWorker(appContext, workerParams) { // CoroutineWorker is recommended for Kotlin
 
     private val notificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -29,28 +25,28 @@ class NymRunWorker(appContext: Context, workerParams: WorkerParameters) :
     // Calls setForeground(createForegroundInfo(<msg>)) to replace the text in the ongoing
     // Notification with <msg>.
     // NB: Notifications from conversations are NOT handled here.
-    private fun createForegroundInfo(notificationText: String): ForegroundInfo {
+    private fun createForegroundInfo(notificationText: String, ongoing: Boolean): ForegroundInfo {
         val channelId =
             applicationContext.getString(R.string.nym_run_worker_notification_channel_id)
         val notificationTitle =
             applicationContext.getString(R.string.nym_run_worker_notification_title)
-        val cancelActionText =
-            applicationContext.getString(R.string.nym_run_worker_cancel_action_text)
-        // This PendingIntent can be used to cancel the worker
+//        val cancelActionText =
+//            applicationContext.getString(R.string.nym_run_worker_cancel_action_text)
 
-        val contentIntent = Intent(applicationContext, MainActivity::class.java)
-        val contentPendingIntent =
-            TaskStackBuilder.create(applicationContext).run {
-                // Add the intent, which inflates the back stack
-                addNextIntentWithParentStack(contentIntent)
-                // Get the PendingIntent containing the entire back stack
-                getPendingIntent(
-                    0,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            }
-        val cancelWorkerPendingIntent =
-            WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
+//        val contentIntent = Intent(applicationContext, MainActivity::class.java)
+//        val contentPendingIntent =
+//            TaskStackBuilder.create(applicationContext).run {
+//                // Add the intent, which inflates the back stack
+//                addNextIntentWithParentStack(contentIntent)
+//                // Get the PendingIntent containing the entire back stack
+//                getPendingIntent(
+//                    0,
+//                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+//                )
+//            }
+        // This PendingIntent can be used to cancel the worker
+//        val cancelWorkerPendingIntent =
+//            WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
 
         // Create a Notification channel
         // SDK_INT is always >=26 (Android O) as specified in manifest, so need to create a
@@ -61,30 +57,28 @@ class NymRunWorker(appContext: Context, workerParams: WorkerParameters) :
             .setContentTitle(notificationTitle)
             .setTicker(notificationTitle)
             .setContentText(notificationText)
-            .setContentIntent(contentPendingIntent)
-//            .setAutoCancel(true)
+//            .setContentIntent(contentPendingIntent)  // launch activity on press
             .setSmallIcon(R.drawable.ic_baseline_cloud_sync_24)
-            .setOngoing(true)
+            .setOngoing(ongoing)
             // Add the cancel action to the notification which allows user to cancel this worker
-            .addAction(
-                Notification.Action.Builder(
-                    Icon.createWithResource(
-                        applicationContext,
-                        android.R.drawable.ic_delete
-                    ),
-                    cancelActionText,
-                    cancelWorkerPendingIntent
-                )
-                    .setAuthenticationRequired(true).build()
-            )
+//            .addAction(
+//                Notification.Action.Builder(
+//                    Icon.createWithResource(
+//                        applicationContext,
+//                        android.R.drawable.ic_delete
+//                    ),
+//                    cancelActionText,
+//                    cancelWorkerPendingIntent
+//                )
+//                    .setAuthenticationRequired(true).build()
+//            )
             .build()
-
-        return ForegroundInfo(69420, notification)
+        return ForegroundInfo(
+            42,
+            notification
+        )  // TODO: NON-DETERMINISTIC BEHAVIOUR, NOTIFICATION DOESN'T ALWAYS SHOW UP
     }
 
-    // TODO: NB: https://developer.android.com/develop/ui/views/notifications/notification-permission#new-apps
-    // TODO: When the notification channel is created, a request for "show notifications" permissions
-    // TODO: is made.
     // It's safe to call this repeatedly because creating an existing notification channel performs
     // no operation.
     private fun createChannel() {
@@ -105,22 +99,22 @@ class NymRunWorker(appContext: Context, workerParams: WorkerParameters) :
     }
 
     // runs on Dispatchers.Default by default
-    override suspend fun doWork(): Result {
+    override suspend fun doRemoteWork(): Result {
+        // NB: When in a separate process, applicationContext is a different instance! (TODO: Clarify)
+        Log.w(
+            TAG,
+            "[[[ SUBPROCESS PID = ${android.os.Process.myPid()} ]]] applicationContext is $applicationContext"
+        )
         val clientId = inputData.getString(NYMRUNWORKER_CLIENT_ID_KEY) ?: return Result.failure()
 
         // Mark the Worker as important, and run even if app is closed
-        setForeground(createForegroundInfo("Nym Run is executing in the background."))
+        setForegroundAsync(createForegroundInfo("Nym Run is executing in the background.", true))
 
+        System.loadLibrary("nym_jni")
+        topLevelInit()
         nymRun(applicationContext.filesDir.absolutePath, clientId)
-//        val seconds = 60
-//        Log.i(TAG, "[$clientId] Doing background work for ${seconds}s...")
-//
-//        for (ping in 0 until seconds) {
-//            Log.d(TAG, "[$clientId] ping: $ping seconds passed")
-//            setProgress(workDataOf("PROGRESS" to ping))
-//            delay(1000L)  // cooperative
-//        }
-//        Log.i(TAG, "[$clientId] Work done!")
+
+        setForegroundAsync(createForegroundInfo("Nym Run has finished execution.", false))
         return Result.success()
     }
 }
