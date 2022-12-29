@@ -1,7 +1,7 @@
 /*
  * nym/clients/native/src/commands/run.rs
  *
- * Adapted from the above file (from the nym crate) to fit Android architecture.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
  * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
  * be accessed from nym_jni otherwise.
@@ -57,7 +57,7 @@ impl From<Run> for OverrideConfig {
     }
 }
 
-// ? Adapted to suit Android architecture
+// ? Adapted to fit Android ecosystem
 // this only checks compatibility between config the binary. It does not take into consideration
 // network version. It might do so in the future.
 fn version_check(cfg: &ConfigAndroid) -> bool {
@@ -77,7 +77,7 @@ fn version_check(cfg: &ConfigAndroid) -> bool {
     }
 }
 
-// ? Adapted to suit Android architecture, and `pub(crate) -> pub`
+// ? Adapted to fit Android ecosystem, and `pub(crate) -> pub`
 pub async fn execute(args: &Run) -> Result<(), anyhow::Error> {
     let id = &args.id;
 

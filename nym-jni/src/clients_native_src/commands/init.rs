@@ -1,7 +1,7 @@
 /*
  * nym/clients/native/src/commands/init.rs
  *
- * Adapted from the above file (from the nym crate) to fit Android architecture.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
  * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
  * be accessed from nym_jni otherwise.
@@ -14,6 +14,7 @@ use anyhow::Context;
 use client_core::{config::GatewayEndpoint, error::ClientCoreError};
 use config::NymConfig;
 
+use crate::clients_client_core_src;
 use crate::clients_native_src::client::config::ConfigAndroid;
 use crate::clients_native_src::commands::{override_config, OverrideConfig};
 
@@ -63,7 +64,7 @@ impl From<Init> for OverrideConfig {
     }
 }
 
-// ? Adapted to suit Android architecture, and `pub(crate) -> pub`
+// ? Adapted to fit Android ecosystem, and `pub(crate) -> pub`
 pub async fn execute(args: &Init) -> Result<(), anyhow::Error> {
     log::info!("Initialising client...");
 
@@ -115,7 +116,8 @@ pub async fn execute(args: &Init) -> Result<(), anyhow::Error> {
     log::info!("Client configuration completed.");
 
     // Useless, prints to stdout but not visible from Android
-    // client_core::init::show_address(config.get_base()).with_context(|| "Failed to show address")?;
+    clients_client_core_src::init::show_address(config.get_base())
+        .with_context(|| "Failed to show address")?;
 
     Ok(())
 }

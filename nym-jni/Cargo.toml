@@ -25,6 +25,9 @@ tokio-tungstenite = "0.14" # websocket
 
 # Internal (to nym crate)
 network-defaults = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+## clients_client_core_src::init
+pemstore = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+tap = "1.0.1"
 ## clients_native_src::client::config
 client-core = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
 config = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }

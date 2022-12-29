@@ -26,7 +26,7 @@ pub struct OverrideConfig {
     // enabled_credentials_mode: bool,
 }
 
-// ? Adapted to suit Android architecture
+// ? Adapted to fit Android ecosystem
 pub fn override_config(
     mut config: ConfigAndroid,
     args: OverrideConfig,

@@ -1,7 +1,7 @@
 /*
  * nym/clients/native/src/client/config/mod.rs
  *
- * Adapted from the above file (from the nym crate) to fit Android architecture.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
  * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
  * be accessed from nym_jni otherwise.
@@ -47,7 +47,7 @@ impl SocketType {
     }
 }
 
-// ? Adapted to fit Android architecture
+// ? Adapted to fit Android ecosystem
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ConfigAndroid {
@@ -57,7 +57,7 @@ pub struct ConfigAndroid {
     socket: Socket,
 }
 
-// ? Adapted to fit Android architecture
+// ? Adapted to fit Android ecosystem
 impl NymConfig for ConfigAndroid {
     fn template() -> &'static str {
         config_template()

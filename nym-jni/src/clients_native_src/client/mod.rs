@@ -1,7 +1,7 @@
 /*
  * nym/clients/native/src/client/mod.rs
  *
- * Adapted from the above file (from the nym crate) to fit Android architecture.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
  * This file is copied over because of the need to use ConfigAndroid instead of Config, but the
  * nym_jni crate's NymClient doesn't use a generic Config type.
