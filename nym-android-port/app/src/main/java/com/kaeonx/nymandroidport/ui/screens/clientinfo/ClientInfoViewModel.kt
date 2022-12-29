@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_CLASS_NAME
 import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_PACKAGE_NAME
+import com.kaeonx.nymandroidport.jni.getAddress
 import com.kaeonx.nymandroidport.jni.nymInit
 import com.kaeonx.nymandroidport.jni.topLevelInit
 import com.kaeonx.nymandroidport.services.NymRunService
@@ -18,7 +19,6 @@ import com.kaeonx.nymandroidport.workers.NYMRUNWORKER_CLIENT_ID_KEY
 import com.kaeonx.nymandroidport.workers.NymRunWorker
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "clientInfoViewModel"
@@ -29,13 +29,14 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
     // guarded behind a function call.
     private fun getAppContext() = getApplication<Application>().applicationContext
-    private fun getStorageAbsPath() = getAppContext().filesDir.absolutePath
     private fun getClientsDir() = getAppContext().filesDir
         .toPath().resolve(".nym").resolve("clients")
         .toFile()
 
     private val _selectedClient: MutableStateFlow<String?> = MutableStateFlow(null)
-    val selectedClient: StateFlow<String?> = _selectedClient.asStateFlow()
+    val selectedClient = _selectedClient.asStateFlow()
+    private val _selectedClientAddress: MutableStateFlow<String?> = MutableStateFlow(null)
+    val selectedClientAddress = _selectedClientAddress.asStateFlow()
     private val _clients = listOf<String>().toMutableStateList()
     val clients: List<String>
         get() = _clients.sorted()
@@ -64,7 +65,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             withContext(Dispatchers.Default) {
                 // sets up logging on Rust side
-                topLevelInit()
+                topLevelInit(getAppContext().filesDir.absolutePath)
             }
             refreshClientsList()
         }
@@ -102,6 +103,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     internal fun selectClient(clientName: String) {
+        _selectedClientAddress.value = getAddress(clientName)
         runClient(clientName)
         _selectedClient.value = clientName
     }
@@ -117,7 +119,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         cancelJob = viewModelScope.launch {
             cancelJob?.cancelAndJoin()
             do {
-                Log.d(TAG, "Waiting for 5s, work still running...")
+                Log.d(TAG, "Waiting for 5s, work potentially still running...")
                 delay(5000L)
             } while (nymRunWorkInfo.value!!.any { workInfo -> workInfo.state == WorkInfo.State.RUNNING })
             Log.w(TAG, "Cancelling unique work")
@@ -142,7 +144,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             viewModelScope.launch {
                 try {
                     withContext(Dispatchers.Default) {
-                        nymInit(getStorageAbsPath(), nonEmptyNewClientName)
+                        nymInit(nonEmptyNewClientName)
                     }
                     refreshClientsList()
                     selectClient(nonEmptyNewClientName)
@@ -166,6 +168,5 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             callback()
         }
     }
-
 
 }

@@ -111,8 +111,8 @@ class NymRunWorker(appContext: Context, workerParams: WorkerParameters) :
         setForegroundAsync(createForegroundInfo("Nym Run is executing in the background.", true))
 
         System.loadLibrary("nym_jni")
-        topLevelInit()
-        nymRun(applicationContext.filesDir.absolutePath, clientId)
+        topLevelInit(applicationContext.filesDir.absolutePath)
+        nymRun(clientId)
 
         setForegroundAsync(createForegroundInfo("Nym Run has finished execution.", false))
         return Result.success()

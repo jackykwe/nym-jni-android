@@ -6,6 +6,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -14,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaeonx.nymandroidport.LocalSnackbarHostState
+import com.kaeonx.nymandroidport.R
 import kotlinx.coroutines.launch
 
 private const val NONE_OPTION = "<none>"
@@ -106,6 +110,32 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                             text = "Client \"$selectedOption\" state: ${it.state}",
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                val selectedClientAddress by clientInfoViewModel.selectedClientAddress.collectAsState()
+                val clipboard = LocalClipboardManager.current
+                Text(
+                    text = "Nym address for \"$selectedOption\" is",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = selectedClientAddress.toString(),
+                        modifier = Modifier.weight(1f),
+                        fontStyle = FontStyle.Italic,
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    IconButton(
+                        onClick = {
+                            clipboard.setText(AnnotatedString(selectedClientAddress!!))
+                        },
+                        enabled = selectedClientAddress != null
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_baseline_content_copy_24),
+                            contentDescription = null
                         )
                     }
                 }
