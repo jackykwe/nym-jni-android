@@ -3,8 +3,8 @@ package com.kaeonx.nymandroidport.ui.screens.clientinfo
 import android.app.ActivityManager
 import android.app.Application
 import android.content.ComponentName
+import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.toMutableStateList
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "clientInfoViewModel"
 private const val NYM_RUN_UNIQUE_WORK_NAME = "nymRunUWN"
+private const val SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY = "selectedClientNameSPK"
 
 class ClientInfoViewModel(application: Application) : AndroidViewModel(application) {
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,
@@ -33,29 +34,38 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         .toPath().resolve(".nym").resolve("clients")
         .toFile()
 
-    private val _selectedClient: MutableStateFlow<String?> = MutableStateFlow(null)
-    val selectedClient = _selectedClient.asStateFlow()
-    private val _selectedClientAddress: MutableStateFlow<String?> = MutableStateFlow(null)
-    val selectedClientAddress = _selectedClientAddress.asStateFlow()
-    private val _clients = listOf<String>().toMutableStateList()
-    val clients: List<String>
-        get() = _clients.sorted()
-
-    // Under the hood, WorkManager manages and runs a foreground service on your behalf to execute
-    // the WorkRequest.
-    private val nymRunWorkManager = WorkManager.getInstance(application)
-    internal val nymRunWorkInfo = nymRunWorkManager.getWorkInfosForUniqueWorkLiveData(
-        NYM_RUN_UNIQUE_WORK_NAME
+    // Shared Preferences to store selected client name
+    private fun getSharedPref() = getAppContext().getSharedPreferences(
+        getAppContext().getString(
+            com.kaeonx.nymandroidport.R.string.preference_file_key
+        ),
+        Context.MODE_PRIVATE
     )
 
-    private suspend fun refreshClientsList() {
+    private val _clientInfoScreenUIState =
+        MutableStateFlow(ClientInfoScreenUIState(listOf(), null, null))
+    internal val clientInfoScreenUIState = _clientInfoScreenUIState.asStateFlow()
+
+    private suspend fun updateClientInfoScreenUIState() {
+        lateinit var clients: List<String>
+        var selectedClientName: String? = null
+        var selectedClientAddress: String? = null
+
         withContext(Dispatchers.IO) {
             val clientsDir = getClientsDir()
             // null if clientsDir doesn't exist (app run for very first time after install)
-            val listOfFiles = clientsDir.list()
-            _clients.clear()
-            listOfFiles?.toCollection(_clients)
+            clients = clientsDir.list()?.asList() ?: listOf()
         }
+
+        getSharedPref().getString(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY, null)?.let {
+            selectedClientName = it
+            withContext(Dispatchers.Default) {
+                selectedClientAddress = getAddress(it)
+            }
+        }
+
+        _clientInfoScreenUIState.value =
+            ClientInfoScreenUIState(clients, selectedClientName, selectedClientAddress)
     }
 
     // Only run once, when ClientInfoScreen is launched and so the ClientInfoViewModel is created
@@ -67,9 +77,16 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                 // sets up logging on Rust side
                 topLevelInit(getAppContext().filesDir.absolutePath)
             }
-            refreshClientsList()
+            updateClientInfoScreenUIState()
         }
     }
+
+    // Under the hood, WorkManager manages and runs a foreground service on your behalf to execute
+    // the WorkRequest.
+    private val nymRunWorkManager = WorkManager.getInstance(application)
+    internal val nymRunWorkInfo = nymRunWorkManager.getWorkInfosForUniqueWorkLiveData(
+        NYM_RUN_UNIQUE_WORK_NAME
+    )
 
     private fun runClient(clientName: String) {
         val nymRunServiceName = NymRunService::class.java.name
@@ -103,17 +120,23 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     internal fun selectClient(clientName: String) {
-        _selectedClientAddress.value = getAddress(clientName)
         runClient(clientName)
-        _selectedClient.value = clientName
+
+        viewModelScope.launch {
+            with(getSharedPref().edit()) {
+                putString(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY, clientName)
+                commit()
+            }
+            updateClientInfoScreenUIState()
+        }
     }
 
     private var cancelJob: Job? = null  //
-    internal fun stopRunningClient() {
+    private fun stopRunningClient() {
         val nymRunServicePid =
             getAppContext().getSystemService<ActivityManager>()?.runningAppProcesses?.getOrNull(1)?.pid
         if (nymRunServicePid != null) {
-            Log.w(TAG, "SIGINTIng PID: $nymRunServicePid")
+            Log.w(TAG, "SIGINT-ing PID: $nymRunServicePid")
             android.os.Process.sendSignal(nymRunServicePid, 2)  // SIGINT
         }
         cancelJob = viewModelScope.launch {
@@ -129,13 +152,20 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
 
     internal fun unselectClient() {
         stopRunningClient()
-        _selectedClient.value = null
+
+        viewModelScope.launch {
+            with(getSharedPref().edit()) {
+                remove(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY)
+                commit()
+            }
+            updateClientInfoScreenUIState()
+        }
     }
 
     internal fun addClient(newClientName: String, callback: (Boolean) -> Unit) {
         val nonEmptyNewClientName = newClientName.ifEmpty { "client" }
 
-        if (clients.contains(nonEmptyNewClientName)) {
+        if (_clientInfoScreenUIState.value.clients.contains(nonEmptyNewClientName)) {
             // Already exists, just run
             selectClient(nonEmptyNewClientName)
             callback(true)
@@ -146,7 +176,6 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                     withContext(Dispatchers.Default) {
                         nymInit(nonEmptyNewClientName)
                     }
-                    refreshClientsList()
                     selectClient(nonEmptyNewClientName)
                     callback(true)
                 } catch (e: RuntimeException) {
@@ -158,13 +187,19 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     internal fun deleteClient(clientName: String, callback: () -> Unit) {
-        unselectClient()
+        stopRunningClient()
         viewModelScope.launch {
             val clientsDir = getClientsDir()
             withContext(Dispatchers.IO) {
                 clientsDir.resolve(clientName).deleteRecursively()
             }
-            refreshClientsList()
+
+            with(getSharedPref().edit()) {
+                remove(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY)
+                commit()
+            }
+            updateClientInfoScreenUIState()
+
             callback()
         }
     }

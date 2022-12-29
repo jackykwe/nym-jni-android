@@ -23,18 +23,17 @@ import kotlinx.coroutines.launch
 private const val NONE_OPTION = "<none>"
 private const val ADD_NEW_OPTION = "<add new...>"
 
+fun getDisplayClients(list: List<String>) = list.toMutableList().apply {
+    add(0, NONE_OPTION)
+    add(ADD_NEW_OPTION)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
-    val options = clientInfoViewModel.clients.toMutableList().apply {
-        add(0, NONE_OPTION)
-        add(ADD_NEW_OPTION)
-    }
-
     // For ExposedDropdownMenuBox
     var clientSelectionExpanded by remember { mutableStateOf(false) }
-//    var selectedOption by remember { mutableStateOf(options[0]) }
-    val selectedOption by clientInfoViewModel.selectedClient.collectAsState()
+    val clientInfoScreenUIState by clientInfoViewModel.clientInfoScreenUIState.collectAsState()
 
     // For AlertDialogs
     var createClientDialogOpen by remember { mutableStateOf(false) }
@@ -58,7 +57,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     .menuAnchor()
                     .fillMaxWidth(),
                 readOnly = true,
-                value = selectedOption ?: NONE_OPTION,
+                value = clientInfoScreenUIState.selectClientName ?: NONE_OPTION,
                 onValueChange = {},
                 label = { Text(text = "Active Nym Client") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = clientSelectionExpanded) },
@@ -69,7 +68,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 onDismissRequest = { clientSelectionExpanded = false },
                 modifier = Modifier.exposedDropdownSize()  // Bug fix courtesy of: https://stackoverflow.com/a/70683378
             ) {
-                options.forEach { option ->
+                getDisplayClients(clientInfoScreenUIState.clients).forEach { option ->
                     DropdownMenuItem(
                         modifier = Modifier,
                         text = { Text(text = option) },
@@ -107,21 +106,20 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 ) {
                     workInfo?.forEach {
                         Text(
-                            text = "Client \"$selectedOption\" state: ${it.state}",
+                            text = "Client \"${clientInfoScreenUIState.selectClientName}\" state: ${it.state}",
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
-                val selectedClientAddress by clientInfoViewModel.selectedClientAddress.collectAsState()
                 val clipboard = LocalClipboardManager.current
                 Text(
-                    text = "Nym address for \"$selectedOption\" is",
+                    text = "Nym address for \"${clientInfoScreenUIState.selectClientName}\" is",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = selectedClientAddress.toString(),
+                        text = clientInfoScreenUIState.selectedClientAddress.toString(),
                         modifier = Modifier.weight(1f),
                         fontStyle = FontStyle.Italic,
                         fontFamily = FontFamily.Monospace,
@@ -129,9 +127,9 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     )
                     IconButton(
                         onClick = {
-                            clipboard.setText(AnnotatedString(selectedClientAddress!!))
+                            clipboard.setText(AnnotatedString(clientInfoScreenUIState.selectedClientAddress!!))
                         },
-                        enabled = selectedClientAddress != null
+                        enabled = clientInfoScreenUIState.selectedClientAddress != null
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_baseline_content_copy_24),
@@ -143,7 +141,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
 
         }
 
-        if (selectedOption != null) {
+        if (clientInfoScreenUIState.selectClientName != null) {
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { deleteClientDialogOpen = true },
@@ -153,7 +151,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 )
             ) {
                 Text(
-                    text = "Delete Nym Client \"$selectedOption\"",
+                    text = "Delete Nym Client \"${clientInfoScreenUIState.selectClientName}\"",
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -161,7 +159,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { clientInfoViewModel.stopRunningClient() },
+            onClick = { clientInfoViewModel.unselectClient() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.tertiary
@@ -177,16 +175,13 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
             title = { Text(text = "Create Nym Client") },
             text = {
                 Column {
-                    TextField(value = createClientDialogNewName, onValueChange = {
-//                        val beforeSelection = it.getTextBeforeSelection(it.text.length).filter { c -> c.isDigit() || c.isLetter() }.toString()
-//                        val afterSelection = it.getTextAfterSelection(it.text.length).filter { c -> c.isDigit() || c.isLetter() }.toString()
-//                        createClientDialogNewName = TextFieldValue(
-//                            text = StringBuilder().append(beforeSelection).append(afterSelection).toString(),
-//                            selection = TextRange(beforeSelection.length, beforeSelection.length),
-//                            composition = // STUCK
-//                        )
-                        createClientDialogNewName = it
-                    }, label = { Text("New Nym Client Name") })
+                    TextField(
+                        value = createClientDialogNewName,
+                        onValueChange = {
+                            createClientDialogNewName = it
+                        },
+                        label = { Text("New Nym Client Name") }
+                    )
                     Text(
                         text = "Note that non-alphanumeric characters will be removed on confirm. If empty, default name \"client\" is used.",
                         modifier = Modifier.padding(top = 8.dp)
@@ -231,11 +226,11 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
             })
     }
 
-    if (deleteClientDialogOpen && selectedOption != null) {
+    if (deleteClientDialogOpen && clientInfoScreenUIState.selectClientName != null) {
         AlertDialog(
             onDismissRequest = {},
             title = { Text(text = "Delete Nym Client") },
-            text = { Text(text = "Information related to the client \"$selectedOption\" is not recoverable after this operation. Continue?") },
+            text = { Text(text = "Information related to the client \"${clientInfoScreenUIState.selectClientName}\" is not recoverable after this operation. Continue?") },
             confirmButton = {
                 if (deleteClientDialogLoading) {
                     CircularProgressIndicator()
@@ -243,7 +238,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     TextButton(
                         onClick = {
                             deleteClientDialogLoading = true
-                            clientInfoViewModel.deleteClient(selectedOption!!) {
+                            clientInfoViewModel.deleteClient(clientInfoScreenUIState.selectClientName!!) {
                                 deleteClientDialogOpen = false
                                 deleteClientDialogLoading = false
                             }
