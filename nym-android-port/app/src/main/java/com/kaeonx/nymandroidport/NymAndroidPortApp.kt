@@ -4,12 +4,13 @@ import android.os.Build
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -65,10 +66,11 @@ internal fun NymAndroidPortApp() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 private fun NymAndroidPortAppInner() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
     // For snackbars
     val snackbarHostState = remember { SnackbarHostState() }
@@ -85,6 +87,20 @@ private fun NymAndroidPortAppInner() {
                             overflow = TextOverflow.Ellipsis
                         )
                     },
+                    navigationIcon = {
+                        if (currentDestination?.route?.startsWith(NAPDestination.Chat.route) == true) {
+                            IconButton(
+                                onClick = {
+                                    navController.popBackStack()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
@@ -92,24 +108,29 @@ private fun NymAndroidPortAppInner() {
             },
             bottomBar = {
                 NavigationBar {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
                     bottomNavBarItems.forEach { destination ->
                         NavigationBarItem(
                             selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                             onClick = {
-                                navController.navigate(destination.route) {
-                                    // Pop up to the start destination of the graph first to avoid
-                                    // building up a large stack of destinations on the back stack as
-                                    // users select items
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (destination.route == NAPDestination.Contacts.route && currentDestination?.route?.startsWith(
+                                        NAPDestination.Chat.route
+                                    ) == true
+                                ) {
+                                    navController.popBackStack()
+                                } else {
+                                    navController.navigate(destination.route) {
+                                        // Pop up to the start destination of the graph first to avoid
+                                        // building up a large stack of destinations on the back stack as
+                                        // users select items
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        // Avoid multiple copies of the same destination when reselecting
+                                        // the same item
+                                        launchSingleTop = true
+                                        // Restore state when reselecting a previously selected item
+                                        restoreState = true
                                     }
-                                    // Avoid multiple copies of the same destination when reselecting
-                                    // the same item
-                                    launchSingleTop = true
-                                    // Restore state when reselecting a previously selected item
-                                    restoreState = true
                                 }
                             },
                             icon = {
@@ -118,7 +139,7 @@ private fun NymAndroidPortAppInner() {
                                     contentDescription = null
                                 )
                             },
-                            label = { Text(text = destination.displayName) }
+                            label = { Text(text = destination.bottomBarDisplayName) }
                         )
                     }
                 }

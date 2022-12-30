@@ -7,14 +7,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class NAPDestination(
     val route: String,
-    val displayName: String,
+    val bottomBarDisplayName: String,
     val icon: ImageVector,
 ) {
     object ClientInfo : NAPDestination("clientinfo", "Clients", Icons.Default.Info)
-    object Chat : NAPDestination("chat", "Chat", Icons.Default.MailOutline)
+    object Contacts : NAPDestination("contacts", "Conversations", Icons.Default.MailOutline)
+    object Chat : NAPDestination("chat", "", Icons.Default.MailOutline)
 }
 
 val bottomNavBarItems = listOf(
     NAPDestination.ClientInfo,
-    NAPDestination.Chat
+    NAPDestination.Contacts
 )

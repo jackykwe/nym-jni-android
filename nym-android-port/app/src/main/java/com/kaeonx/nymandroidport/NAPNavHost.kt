@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.kaeonx.nymandroidport.ui.screens.chat.ChatScreen
 import com.kaeonx.nymandroidport.ui.screens.clientinfo.ClientInfoScreen
+import com.kaeonx.nymandroidport.ui.screens.contacts.ContactsScreen
 
 @Composable
 fun NAPNavHost(
@@ -23,8 +24,15 @@ fun NAPNavHost(
         composable(route = NAPDestination.ClientInfo.route) {
             ClientInfoScreen()
         }
-        composable(route = NAPDestination.Chat.route) {
-            ChatScreen()
+        composable(route = NAPDestination.Contacts.route) {
+            ContactsScreen(nymIdSelected = { nymId ->
+                navController.navigate("${NAPDestination.Chat.route}/$nymId") {
+                    launchSingleTop = true
+                }
+            })
+        }
+        composable(route = "${NAPDestination.Chat.route}/{nymId}") { backStackEntry ->
+            ChatScreen(backStackEntry.arguments?.getString("nymId")!!)
         }
     }
 }
