@@ -11,12 +11,14 @@ private const val TAG = "appDatabase"
 @Database(
     entities = [
         Contact::class,
+        KeyStringValuePair::class,
         Message::class
     ],
     version = 1
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun contactDao(): ContactDAO
+    abstract fun keyStringValuePairDao(): KeyStringValuePairDAO
     abstract fun messageDao(): MessageDAO
 
     companion object {

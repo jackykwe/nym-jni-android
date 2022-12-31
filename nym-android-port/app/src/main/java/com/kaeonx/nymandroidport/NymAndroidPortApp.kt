@@ -112,25 +112,14 @@ private fun NymAndroidPortAppInner() {
                         NavigationBarItem(
                             selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                             onClick = {
-                                if (destination.route == NAPDestination.Contacts.route && currentDestination?.route?.startsWith(
-                                        NAPDestination.Chat.route
-                                    ) == true
-                                ) {
-                                    navController.popBackStack()
-                                } else {
-                                    navController.navigate(destination.route) {
-                                        // Pop up to the start destination of the graph first to avoid
-                                        // building up a large stack of destinations on the back stack as
-                                        // users select items
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        // Avoid multiple copies of the same destination when reselecting
-                                        // the same item
-                                        launchSingleTop = true
-                                        // Restore state when reselecting a previously selected item
-                                        restoreState = true
-                                    }
+                                navController.navigate(destination.route) {
+                                    // Pop up to the start destination of the graph first to avoid
+                                    // building up a large stack of destinations on the back stack as
+                                    // users select items
+                                    popUpTo(navController.graph.findStartDestination().id)
+                                    // Avoid multiple copies of the same destination when reselecting
+                                    // the same item
+                                    launchSingleTop = true
                                 }
                             },
                             icon = {

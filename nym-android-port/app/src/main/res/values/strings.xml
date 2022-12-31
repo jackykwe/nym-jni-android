@@ -7,5 +7,4 @@
     <string name="nym_run_worker_notification_channel_description">Notifications related to the Nym Run method…</string>
     <string name="nym_run_service_description">The Foreground Service that executes the Nym Run method. If terminated, the Nym Run method will stop executing in the background.</string>
     <string name="nym_run_service_process_name">:nymRunService</string>
-    <string name="preference_file_key">com.kaeonx.nymandroidport.PREFERENCE_FILE_KEY</string>
 </resources>

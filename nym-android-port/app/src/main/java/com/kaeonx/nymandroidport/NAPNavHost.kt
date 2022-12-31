@@ -25,15 +25,15 @@ fun NAPNavHost(
             ClientInfoScreen()
         }
         composable(route = NAPDestination.Contacts.route) {
-            ContactsScreen(nymIdSelected = { nymId ->
-                navController.navigate("${NAPDestination.Chat.route}/$nymId") {
+            ContactsScreen(nymAddressSelected = { nymAddress ->
+                navController.navigate("${NAPDestination.Chat.route}/$nymAddress") {
                     launchSingleTop = true
                 }
             })
         }
-        composable(route = "${NAPDestination.Chat.route}/{nymId}") { backStackEntry ->
+        composable(route = "${NAPDestination.Chat.route}/{contactAddress}") { backStackEntry ->
             ChatScreen(
-                nymId = backStackEntry.arguments?.getString("nymId")!!
+                contactAddress = backStackEntry.arguments?.getString("contactAddress")!!
             )
         }
     }

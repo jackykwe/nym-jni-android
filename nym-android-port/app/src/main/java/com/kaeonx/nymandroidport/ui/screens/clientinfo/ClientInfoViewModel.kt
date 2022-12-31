@@ -3,7 +3,6 @@ package com.kaeonx.nymandroidport.ui.screens.clientinfo
 import android.app.ActivityManager
 import android.app.Application
 import android.content.ComponentName
-import android.content.Context
 import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
@@ -11,19 +10,25 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_CLASS_NAME
 import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_PACKAGE_NAME
+import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymandroidport.jni.getAddress
 import com.kaeonx.nymandroidport.jni.nymInit
 import com.kaeonx.nymandroidport.jni.topLevelInit
+import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
 import com.kaeonx.nymandroidport.services.NymRunService
 import com.kaeonx.nymandroidport.workers.NYMRUNWORKER_CLIENT_ID_KEY
 import com.kaeonx.nymandroidport.workers.NymRunWorker
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 private const val TAG = "clientInfoViewModel"
 private const val NYM_RUN_UNIQUE_WORK_NAME = "nymRunUWN"
-internal const val SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY = "selectedClientNameSPK"
+internal const val SELECTED_CLIENT_ID_KSVP_KEY =
+    "selectedClientId"  // KSVP is KeyStringValuePair
+internal const val SELECTED_CLIENT_ADDRESS_KSVP_KEY =
+    "selectedClientAddress"  // KSVP is KeyStringValuePair
 
 class ClientInfoViewModel(application: Application) : AndroidViewModel(application) {
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,
@@ -34,39 +39,40 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         .toPath().resolve(".nym").resolve("clients")
         .toFile()
 
-    // Shared Preferences to store selected client name
-    private fun getSharedPref() = getAppContext().getSharedPreferences(
-        getAppContext().getString(
-            com.kaeonx.nymandroidport.R.string.preference_file_key
-        ),
-        Context.MODE_PRIVATE
+    private val keyStringValuePairRepository = KeyStringValuePairRepository(
+        AppDatabase.getInstance(getAppContext()).keyStringValuePairDao()
     )
 
-    private val _clientInfoScreenUIState =
-        MutableStateFlow(ClientInfoScreenUIState(listOf(), null, null))
-    internal val clientInfoScreenUIState = _clientInfoScreenUIState.asStateFlow()
-
-    private suspend fun updateClientInfoScreenUIState() {
-        lateinit var clients: List<String>
-        var selectedClientName: String? = null
-        var selectedClientAddress: String? = null
-
-        withContext(Dispatchers.IO) {
-            val clientsDir = getClientsDir()
-            // null if clientsDir doesn't exist (app run for very first time after install)
-            clients = clientsDir.list()?.asList() ?: listOf()
+    private suspend fun getClientsList(): List<String> {
+        return withContext(Dispatchers.IO) {
+            getClientsDir().list()  // null if clientsDir doesn't exist (app run for very first time after install)
+                ?.asList()
+                ?: listOf()
         }
-
-        getSharedPref().getString(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY, null)?.let {
-            selectedClientName = it
-            withContext(Dispatchers.Default) {
-                selectedClientAddress = getAddress(it)
-            }
-        }
-
-        _clientInfoScreenUIState.value =
-            ClientInfoScreenUIState(clients, selectedClientName, selectedClientAddress)
     }
+
+    // Always up-to-date values in the database; hot flow
+    internal val clientInfoScreenUIState =
+        keyStringValuePairRepository.get(
+            listOf(
+                SELECTED_CLIENT_ID_KSVP_KEY,
+                SELECTED_CLIENT_ADDRESS_KSVP_KEY
+            )
+        ).map {
+            ClientInfoScreenUIState(
+                clients = getClientsList(),
+                selectedClientId = it[SELECTED_CLIENT_ID_KSVP_KEY],
+                selectedClientAddress = it[SELECTED_CLIENT_ADDRESS_KSVP_KEY]
+            )
+        }.stateIn(  // turn cold flow into hot flow
+            viewModelScope,
+            SharingStarted.Eagerly,
+            ClientInfoScreenUIState(
+                clients = listOf(),
+                selectedClientId = null,
+                selectedClientAddress = null
+            )
+        )
 
     // Only run once, when ClientInfoScreen is launched and so the ClientInfoViewModel is created
     // (lasts across activity recreation)
@@ -77,7 +83,6 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                 // sets up logging on Rust side
                 topLevelInit(getAppContext().filesDir.absolutePath)
             }
-            updateClientInfoScreenUIState()
         }
     }
 
@@ -88,7 +93,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         NYM_RUN_UNIQUE_WORK_NAME
     )
 
-    private fun runClient(clientName: String) {
+    private fun runClient(clientId: String) {
         val nymRunServiceName = NymRunService::class.java.name
         val componentName = ComponentName(getAppContext().packageName, nymRunServiceName)
 
@@ -108,7 +113,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                 workDataOf(
                     ARGUMENT_PACKAGE_NAME to componentName.packageName,  // necessary for RemoteCoroutineWorker to know which process to bind to
                     ARGUMENT_CLASS_NAME to componentName.className,  // necessary for RemoteCoroutineWorker to know which process to bind to
-                    NYMRUNWORKER_CLIENT_ID_KEY to clientName
+                    NYMRUNWORKER_CLIENT_ID_KEY to clientId
                 )
             )
             .build()
@@ -119,15 +124,20 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         )
     }
 
-    internal fun selectClient(clientName: String) {
-        runClient(clientName)
-
+    internal fun selectClient(clientId: String) {
+        runClient(clientId)
         viewModelScope.launch {
-            with(getSharedPref().edit()) {
-                putString(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY, clientName)
-                commit()
+            val clientAddress = withContext(Dispatchers.Default) {
+                getAddress(clientId)
             }
-            updateClientInfoScreenUIState()
+            withContext(Dispatchers.IO) {
+                keyStringValuePairRepository.put(
+                    listOf(
+                        SELECTED_CLIENT_ID_KSVP_KEY to clientId,
+                        SELECTED_CLIENT_ADDRESS_KSVP_KEY to clientAddress
+                    )
+                )
+            }
         }
     }
 
@@ -152,31 +162,31 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
 
     internal fun unselectClient() {
         stopRunningClient()
-
-        viewModelScope.launch {
-            with(getSharedPref().edit()) {
-                remove(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY)
-                commit()
-            }
-            updateClientInfoScreenUIState()
+        viewModelScope.launch(Dispatchers.IO) {
+            keyStringValuePairRepository.remove(
+                listOf(
+                    SELECTED_CLIENT_ID_KSVP_KEY,
+                    SELECTED_CLIENT_ADDRESS_KSVP_KEY
+                )
+            )
         }
     }
 
-    internal fun addClient(newClientName: String, callback: (Boolean) -> Unit) {
-        val nonEmptyNewClientName = newClientName.ifEmpty { "client" }
+    internal fun addClient(newClientId: String, callback: (Boolean) -> Unit) {
+        val nonEmptyNewClientId = newClientId.ifEmpty { "client" }
 
-        if (_clientInfoScreenUIState.value.clients.contains(nonEmptyNewClientName)) {
+        if (clientInfoScreenUIState.value.clients.contains(nonEmptyNewClientId)) {
             // Already exists, just run
-            selectClient(nonEmptyNewClientName)
+            selectClient(nonEmptyNewClientId)
             callback(true)
         } else {
             // Create new
             viewModelScope.launch {
                 try {
                     withContext(Dispatchers.Default) {
-                        nymInit(nonEmptyNewClientName)
+                        nymInit(nonEmptyNewClientId)
                     }
-                    selectClient(nonEmptyNewClientName)
+                    selectClient(nonEmptyNewClientId)
                     callback(true)
                 } catch (e: RuntimeException) {
                     e.printStackTrace()
@@ -186,20 +196,21 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    internal fun deleteClient(clientName: String, callback: () -> Unit) {
+    internal fun deleteClient(clientId: String, callback: () -> Unit) {
         stopRunningClient()
         viewModelScope.launch {
             val clientsDir = getClientsDir()
             withContext(Dispatchers.IO) {
-                clientsDir.resolve(clientName).deleteRecursively()
+                clientsDir.resolve(clientId).deleteRecursively()
             }
-
-            with(getSharedPref().edit()) {
-                remove(SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY)
-                commit()
+            viewModelScope.launch(Dispatchers.IO) {
+                keyStringValuePairRepository.remove(
+                    listOf(
+                        SELECTED_CLIENT_ID_KSVP_KEY,
+                        SELECTED_CLIENT_ADDRESS_KSVP_KEY
+                    )
+                )
             }
-            updateClientInfoScreenUIState()
-
             callback()
         }
     }

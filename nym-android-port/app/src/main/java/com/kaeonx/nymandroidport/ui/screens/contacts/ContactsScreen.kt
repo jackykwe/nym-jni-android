@@ -1,33 +1,30 @@
 package com.kaeonx.nymandroidport.ui.screens.contacts
 
-import android.app.Application
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kaeonx.nymandroidport.LocalNymRepository
 import com.kaeonx.nymandroidport.LocalSnackbarHostState
-import com.kaeonx.nymandroidport.utils.viewModelFactory
+import com.kaeonx.nymandroidport.utils.NymAddress
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactsScreen(nymIdSelected: (String) -> Unit) {
-    // TODO: This feels odd... ContactsScreen should not be able to talk to repository directly.
-    val nymRepository = LocalNymRepository.current
-    val applicationContext = LocalContext.current.applicationContext as Application
-    // Returns an existing ViewModel or creates a new one
-    val contactsViewModel: ContactsViewModel = viewModel(factory = viewModelFactory {
-        ContactsViewModel(nymRepository, applicationContext)
-    })
+fun ContactsScreen(
+    nymAddressSelected: (String) -> Unit,
+    contactsViewModel: ContactsViewModel = viewModel()
+) {
+    val contactsScreenUIState by contactsViewModel.contactsScreenUIState.collectAsState()
 
     // For AlertDialogs
     var addContactDialogOpen by remember { mutableStateOf(false) }
@@ -38,32 +35,66 @@ fun ContactsScreen(nymIdSelected: (String) -> Unit) {
     val snackbarHostState = LocalSnackbarHostState.current
     val scope = rememberCoroutineScope()
 
-    val contacts by contactsViewModel.contacts.collectAsState()
     Column(
         modifier = Modifier.fillMaxHeight()
     ) {
-        LazyColumn(
-            modifier = Modifier.weight(1f)
-        ) {
-            items(
-                items = contacts,
-                key = { contact -> contact.contactAddress }
-            ) { contact ->
-                Text(text = contact.contactAddress)
+        if (contactsScreenUIState.selectedClientId == null) {
+            Text(
+                text = "Please run a client on the Clients page first.",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        } else {
+            Text(text = "Contacts of \"${contactsScreenUIState.selectedClientId}\":")
+            LazyColumn(
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .weight(1f)
+            ) {
+                items(
+                    items = contactsScreenUIState.contactAddresses,
+                    key = { contactAddress -> contactAddress }
+                ) { contactAddress ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color.Gray)
+                            .clickable { nymAddressSelected(contactAddress) }
+                    ) {
+                        val nymAddress = NymAddress.from(contactAddress)
+                        Column(
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text(
+                                text = nymAddress.userIdentityKey,
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Text(
+                                text = ". ${nymAddress.userEncryptionKey}",
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Text(
+                                text = "@ ${nymAddress.gatewayIdentityKey}",
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+
+                }
             }
-        }
-        Button(onClick = { addContactDialogOpen = true }) {
-            Text(text = "Add Nym contact")
-        }
-        Button(onClick = { nymIdSelected("1234") }) {
-            Text(text = "Open chat for 1234")
+            Button(
+                onClick = { addContactDialogOpen = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Add Nym contact")
+            }
         }
     }
 
     if (addContactDialogOpen) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text(text = "Create Nym Client") },
+            title = { Text(text = "Add Nym Contact") },
             text = {
                 Column {
                     TextField(
@@ -74,8 +105,13 @@ fun ContactsScreen(nymIdSelected: (String) -> Unit) {
                         label = { Text("New contact's Nym address") }
                     )
                     Text(
-                        text = "user-identity-key.user-encryption-key@gateway-identity-key",
+                        text = "Format:",
                         modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Text(
+                        text = "<user-identity-key>.<user-encryption-key>@<gateway-identity-key>",
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             },

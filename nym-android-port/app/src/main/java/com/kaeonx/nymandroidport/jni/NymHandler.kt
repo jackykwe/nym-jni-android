@@ -47,4 +47,4 @@ private external fun nymRunImpl(
 )
 
 internal fun getAddress(id: String) = getAddressImpl(id)
-private external fun getAddressImpl(id: String): String?
+private external fun getAddressImpl(id: String): String
