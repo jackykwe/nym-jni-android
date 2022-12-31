@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "clientInfoViewModel"
 private const val NYM_RUN_UNIQUE_WORK_NAME = "nymRunUWN"
-private const val SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY = "selectedClientNameSPK"
+internal const val SELECTED_CLIENT_NAME_SHARED_PREFERENCE_KEY = "selectedClientNameSPK"
 
 class ClientInfoViewModel(application: Application) : AndroidViewModel(application) {
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,

@@ -4,9 +4,17 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import com.kaeonx.nymandroidport.database.AppDatabase
+import com.kaeonx.nymandroidport.repositories.NymRepository
 import com.kaeonx.nymandroidport.ui.NymAndroidPortTheme
 
 private const val TAG = "mainActivity"
+
+internal val LocalNymRepository = compositionLocalOf<NymRepository> {
+    error("No NymRepository provided")
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -27,9 +35,15 @@ class MainActivity : ComponentActivity() {
 //        val generatedBytes = generatePseudorandomBytes(key, iv, 10).map { byte -> byte.toUByte() }
 //        Log.i(TAG, "generatedBytes are [${generatedBytes.joinToString()}]")
 
+        // TODO (Clarify): Will this (usage of applicationContext) leak? Also applies for view models that get applicationContext
+        // Relevant reference: <https://stackoverflow.com/a/10347346>
+        val appDatabase = AppDatabase.getInstance(applicationContext)
+        val nymRepository = NymRepository(appDatabase.contactDao(), appDatabase.messageDao())
         setContent {
             NymAndroidPortTheme {
-                NymAndroidPortApp()
+                CompositionLocalProvider(LocalNymRepository provides nymRepository) {
+                    NymAndroidPortApp()
+                }
             }
         }
     }

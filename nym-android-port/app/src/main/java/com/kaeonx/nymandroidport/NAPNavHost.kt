@@ -32,7 +32,9 @@ fun NAPNavHost(
             })
         }
         composable(route = "${NAPDestination.Chat.route}/{nymId}") { backStackEntry ->
-            ChatScreen(backStackEntry.arguments?.getString("nymId")!!)
+            ChatScreen(
+                nymId = backStackEntry.arguments?.getString("nymId")!!
+            )
         }
     }
 }
