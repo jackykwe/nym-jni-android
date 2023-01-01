@@ -21,19 +21,24 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun keyStringValuePairDao(): KeyStringValuePairDAO
     abstract fun messageDao(): MessageDAO
 
+    // Handling singleton within an abstract class instead of object (more Kotlin-like)
+    // <https://developer.android.com/codelabs/android-room-with-a-view-kotlin#7>
+    // TODO (Clarify): Is this thread safe?
     companion object {
-        private var instance: AppDatabase? = null
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
         fun getInstance(applicationContext: Context): AppDatabase {
-            // TODO: Not thread safe?
-            if (instance == null) {
+            return INSTANCE ?: synchronized(this) {
                 Log.w(TAG, "Requesting AppDatabase instance")
-                instance = Room.databaseBuilder(
+                val instance = Room.databaseBuilder(
                     applicationContext,
                     AppDatabase::class.java,
                     "nym-db"
                 ).build()
+                INSTANCE = instance
+                instance
             }
-            return instance!!
         }
     }
 }
