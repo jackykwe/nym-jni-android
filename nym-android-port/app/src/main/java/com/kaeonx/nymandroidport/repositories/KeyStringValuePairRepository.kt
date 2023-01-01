@@ -3,11 +3,20 @@ package com.kaeonx.nymandroidport.repositories
 import com.kaeonx.nymandroidport.database.KeyStringValuePair
 import com.kaeonx.nymandroidport.database.KeyStringValuePairDAO
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
+/*
+ * Reminder: use distinctUntilChanged()
+ * Observable queries in Room have one important limitation: the query reruns whenever any row
+ * in the table is updated, whether or not that row is in the result set. You can ensure that
+ * the UI is only notified when the actual query results change by applying the
+ * distinctUntilChanged() operator at the observation site.
+ * <https://developer.android.com/training/data-storage/room/async-queries#observable>
+ */
 class KeyStringValuePairRepository(private val keyStringValuePairDAO: KeyStringValuePairDAO) {
     internal fun get(key: String): Flow<String?> {
-        return keyStringValuePairDAO.get(key).map { it?.value }
+        return keyStringValuePairDAO.get(key).map { it?.value }.distinctUntilChanged()
     }
 
     /**
@@ -18,12 +27,7 @@ class KeyStringValuePairRepository(private val keyStringValuePairDAO: KeyStringV
     internal fun get(keys: List<String>): Flow<Map<String, String?>> {
         return keyStringValuePairDAO.get(keys).map { keyStringValuePairs ->
             keys.associateWith { key -> keyStringValuePairs.find { it.key == key }?.value }
-        }
-    }
-
-    // Convenience function
-    internal suspend fun put(key: String, value: String) {
-        keyStringValuePairDAO.upsert(listOf(KeyStringValuePair(key = key, value = value)))
+        }.distinctUntilChanged()
     }
 
     /**
@@ -38,10 +42,6 @@ class KeyStringValuePairRepository(private val keyStringValuePairDAO: KeyStringV
                 value = it.second
             )
         })
-    }
-
-    internal suspend fun remove(key: String) {
-        keyStringValuePairDAO.delete(key)
     }
 
     internal suspend fun remove(keys: List<String>) {

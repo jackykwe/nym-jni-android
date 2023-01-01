@@ -2,27 +2,46 @@ package com.kaeonx.nymandroidport.database
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
 import androidx.room.Query
+import com.kaeonx.nymandroidport.ui.screens.clientinfo.SELECTED_CLIENT_ADDRESS_KSVP_KEY
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MessageDAO {
     // TODO: Use paging
-    // TODO: Have 1 database per user, right now all users share 1 database (need to see this when hooking up database singleton)  // NO NEED: managed by Kotlin code
-    /*
-     * TODO: use distinctUntilChanged()
-     * Observable queries in Room have one important limitation: the query reruns whenever any row
-     * in the table is updated, whether or not that row is in the result set. You can ensure that
-     * the UI is only notified when the actual query results change by applying the
-     * distinctUntilChanged() operator at the observation site.
-     */
-    @Query("SELECT * FROM message WHERE fromAddress = :senderNymId AND toAddress = :receiverNymId")
-    fun getAllBySender(senderNymId: String, receiverNymId: String): Flow<List<Message>>
+    // DONE: Consider having 1 database per user, right now all users share 1 database (need to see
+    // this when hooking up database singleton). There's no need for this: access to database is
+    // handled by Kotlin code. The end user cannot normally access the database directly.
+    @Query(
+        "SELECT * FROM message " +
+                "WHERE (fromAddress = :contactAddress AND toAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey)) " +
+                "OR (fromAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey) AND toAddress = :contactAddress) " +
+                "ORDER BY id;"
+    )
+    fun getAllWithSelectedClient(
+        contactAddress: String,
+        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+    ): Flow<List<Message>>
 
     // Returns new rowId
-    @Insert
-    suspend fun insert(message: Message): Long
+    @Query(
+        "INSERT INTO message (fromAddress, toAddress, message) VALUES ((SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey), :toAddress, :message);"
+    )
+    suspend fun insertFromSelectedClient(
+        toAddress: String,
+        message: String,
+        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+    ): Long
+
+    // Returns new rowId
+    @Query(
+        "INSERT INTO message (fromAddress, toAddress, message) VALUES (:fromAddress, (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey), :message);"
+    )
+    suspend fun debugInsertToSelectedClient(
+        fromAddress: String,
+        message: String,
+        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+    ): Long
 
     // Returns number of rows successfully deleted
     @Delete

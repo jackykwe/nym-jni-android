@@ -23,10 +23,6 @@ interface KeyStringValuePairDAO {
     suspend fun upsert(keyStringValuePairs: List<KeyStringValuePair>)
 
     // Returns number of rows successfully deleted
-    @Query("DELETE FROM keystringvaluepair WHERE `key` = :key;")
-    suspend fun delete(key: String): Int
-
-    // Returns number of rows successfully deleted
     @Query("DELETE FROM keystringvaluepair WHERE `key` IN(:keys);")
     suspend fun delete(keys: List<String>): Int
 }

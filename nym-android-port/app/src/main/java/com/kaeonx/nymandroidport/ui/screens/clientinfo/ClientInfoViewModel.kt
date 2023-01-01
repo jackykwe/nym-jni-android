@@ -125,7 +125,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     internal fun selectClient(clientId: String) {
-        runClient(clientId)
+//        runClient(clientId)
         viewModelScope.launch {
             val clientAddress = withContext(Dispatchers.Default) {
                 getAddress(clientId)

@@ -52,7 +52,7 @@ class ContactsViewModel(application: Application) : AndroidViewModel(application
 
     internal fun addContact(newContactNymAddress: String, callback: (Boolean) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            contactRepository.addContact(
+            contactRepository.addContactOfSelectedClient(
                 newContactAddress = newContactNymAddress
             )
             callback(true)
