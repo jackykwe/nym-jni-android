@@ -1,25 +1,27 @@
 /*
  * nym/clients/native/src/websocket/handler.rs
  *
- * Essentially the same as the above file (from the nym crate), minus some minor adjustments to make
- * it fit into nym_jni.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
- * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
- * be accessed from nym_jni otherwise.
+ * This file is copied over and adapted because in the nym crate, it is not publicly visible (due to
+ * `pub(crate)` in ./mod.rs), thus it cannot be accessed from nym_jni.
  */
 
 // I avoid reformatting nym code as far as possible
+#![allow(clippy::cast_precision_loss)]
 #![allow(clippy::default_trait_access)]
 #![allow(clippy::expect_used)]
 #![allow(clippy::large_types_passed_by_value)]
 #![allow(clippy::semicolon_if_nothing_returned)]
-#![allow(clippy::unused_self)]
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::wildcard_imports)]
 
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
+use client_connections::{
+    ConnectionCommand, ConnectionCommandSender, LaneQueueLengths, TransmissionLane,
+};
 use client_core::client::{
     inbound_messages::{InputMessage, InputMessageSender},
     received_buffer::{
@@ -30,7 +32,7 @@ use futures::channel::mpsc;
 use futures::{SinkExt, StreamExt};
 use log::*;
 use nymsphinx::addressing::clients::Recipient;
-use nymsphinx::anonymous_replies::ReplySurb;
+use nymsphinx::anonymous_replies::requests::AnonymousSenderTag;
 use nymsphinx::receiver::ReconstructedMessage;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
@@ -53,13 +55,15 @@ impl Default for ReceivedResponseType {
     }
 }
 
-// ? Copied wholesale, except `pub(crate) -> pub`
+// ? Copied wholesale, except `pub(crate)` -> `pub`
 pub struct Handler {
     msg_input: InputMessageSender,
+    client_connection_tx: ConnectionCommandSender,
     buffer_requester: ReceivedBufferRequestSender,
     self_full_address: Recipient,
     socket: Option<WebSocketStream<TcpStream>>,
     received_response_type: ReceivedResponseType,
+    lane_queue_lengths: LaneQueueLengths,
 }
 
 // ? Copied wholesale
@@ -68,10 +72,12 @@ impl Clone for Handler {
     fn clone(&self) -> Self {
         Handler {
             msg_input: self.msg_input.clone(),
+            client_connection_tx: self.client_connection_tx.clone(),
             buffer_requester: self.buffer_requester.clone(),
             self_full_address: self.self_full_address,
             socket: None,
             received_response_type: Default::default(),
+            lane_queue_lengths: self.lane_queue_lengths.clone(),
         }
     }
 }
@@ -79,9 +85,13 @@ impl Clone for Handler {
 // ? Copied wholesale
 impl Drop for Handler {
     fn drop(&mut self) {
-        self.buffer_requester
+        if self
+            .buffer_requester
             .unbounded_send(ReceivedBufferMessage::ReceiverDisconnect)
-            .expect("the buffer request failed!")
+            .is_err()
+        {
+            error!("we failed to disconnect the receiver from the buffer! presumably the shutdown procedure has been initiated!")
+        }
     }
 }
 
@@ -89,62 +99,217 @@ impl Drop for Handler {
 impl Handler {
     pub(crate) fn new(
         msg_input: InputMessageSender,
+        client_connection_tx: ConnectionCommandSender,
         buffer_requester: ReceivedBufferRequestSender,
         self_full_address: Recipient,
+        lane_queue_lengths: LaneQueueLengths,
     ) -> Self {
         Handler {
             msg_input,
+            client_connection_tx,
             buffer_requester,
             self_full_address,
             socket: None,
             received_response_type: Default::default(),
+            lane_queue_lengths,
         }
     }
 
-    fn handle_send(
+    async fn handle_send(
         &mut self,
         recipient: Recipient,
         message: Vec<u8>,
-        with_reply_surb: bool,
+        connection_id: Option<u64>,
     ) -> Option<ServerResponse> {
-        // the ack control is now responsible for chunking, etc.
-        let input_msg = InputMessage::new_fresh(recipient, message, with_reply_surb);
-        self.msg_input.unbounded_send(input_msg).unwrap();
+        info!(
+            "Attempting to send {:.2} kiB message to {recipient} on connection_id {connection_id:?}",
+            message.len() as f64 / 1024.0
+        );
 
+        // We map the absence of a connection id as going into the general lane.
+        let lane = connection_id.map_or(TransmissionLane::General, |id| {
+            TransmissionLane::ConnectionId(id)
+        });
+
+        // the ack control is now responsible for chunking, etc.
+        let input_msg = InputMessage::new_regular(recipient, message, lane);
+        self.msg_input
+            .send(input_msg)
+            .await
+            .expect("InputMessageReceiver has stopped receiving!");
+
+        // Only reply back with a `LaneQueueLength` if the sender providided a connection id
+        let connection_id = match lane {
+            TransmissionLane::General
+            | TransmissionLane::ReplySurbRequest
+            | TransmissionLane::Retransmission
+            | TransmissionLane::AdditionalReplySurbs => return None,
+            TransmissionLane::ConnectionId(id) => id,
+        };
+
+        // on receiving a send, we reply back the current lane queue length for that connection id.
+        // Note that this does _NOT_ take into account the packets that have been received but not
+        // yet reach `OutQueueControl`, so it might be a tad low.
+        if let Ok(lane_queue_lengths) = self.lane_queue_lengths.lock() {
+            let queue_length = lane_queue_lengths.get(&lane).unwrap_or(0);
+            return Some(ServerResponse::LaneQueueLength {
+                lane: connection_id,
+                queue_length,
+            });
+        }
+
+        log::warn!("Failed to get the lane queue length lock, not responding back with the current queue length");
         None
     }
 
-    fn handle_reply(&mut self, reply_surb: ReplySurb, message: Vec<u8>) -> Option<ServerResponse> {
-        if message.len() > ReplySurb::max_msg_len(Default::default()) {
-            return Some(ServerResponse::new_error(format!("too long message to put inside a reply SURB. Received: {} bytes and maximum is {} bytes", message.len(), ReplySurb::max_msg_len(Default::default()))));
+    async fn handle_send_anonymous(
+        &mut self,
+        recipient: Recipient,
+        message: Vec<u8>,
+        reply_surbs: u32,
+        connection_id: Option<u64>,
+    ) -> Option<ServerResponse> {
+        info!(
+            "Attempting to anonymously send {:.2} kiB message to {recipient} on connection_id {connection_id:?} while attaching {reply_surbs} replySURBs.",
+            message.len() as f64 / 1024.0
+        );
+
+        // We map the absence of a connection id as going into the general lane.
+        let lane = connection_id.map_or(TransmissionLane::General, |id| {
+            TransmissionLane::ConnectionId(id)
+        });
+
+        let input_msg = InputMessage::new_anonymous(recipient, message, reply_surbs, lane);
+        self.msg_input
+            .send(input_msg)
+            .await
+            .expect("InputMessageReceiver has stopped receiving!");
+
+        // Only reply back with a `LaneQueueLength` if the sender providided a connection id
+        let connection_id = match lane {
+            TransmissionLane::General
+            | TransmissionLane::ReplySurbRequest
+            | TransmissionLane::Retransmission
+            | TransmissionLane::AdditionalReplySurbs => return None,
+            TransmissionLane::ConnectionId(id) => id,
+        };
+
+        // on receiving a send, we reply back the current lane queue length for that connection id.
+        // Note that this does _NOT_ take into account the packets that have been received but not
+        // yet reach `OutQueueControl`, so it might be a tad low.
+        if let Ok(lane_queue_lengths) = self.lane_queue_lengths.lock() {
+            let queue_length = lane_queue_lengths.get(&lane).unwrap_or(0);
+            return Some(ServerResponse::LaneQueueLength {
+                lane: connection_id,
+                queue_length,
+            });
         }
 
-        let input_msg = InputMessage::new_reply(reply_surb, message);
-        self.msg_input.unbounded_send(input_msg).unwrap();
+        log::warn!("Failed to get the lane queue length lock, not responding back with the current queue length");
+        None
+    }
 
+    async fn handle_reply(
+        &mut self,
+        recipient_tag: AnonymousSenderTag,
+        message: Vec<u8>,
+        connection_id: Option<u64>,
+    ) -> Option<ServerResponse> {
+        info!("Attempting to send {:.2} kiB reply message to {recipient_tag} on connection_id {connection_id:?}", message.len() as f64 / 1024.0);
+
+        // We map the absence of a connection id as going into the general lane.
+        let lane = connection_id.map_or(TransmissionLane::General, |id| {
+            TransmissionLane::ConnectionId(id)
+        });
+
+        let input_msg = InputMessage::new_reply(recipient_tag, message, lane);
+        self.msg_input
+            .send(input_msg)
+            .await
+            .expect("InputMessageReceiver has stopped receiving!");
+
+        // Only reply back with a `LaneQueueLength` if the sender providided a connection id
+        let connection_id = match lane {
+            TransmissionLane::General
+            | TransmissionLane::ReplySurbRequest
+            | TransmissionLane::Retransmission
+            | TransmissionLane::AdditionalReplySurbs => return None,
+            TransmissionLane::ConnectionId(id) => id,
+        };
+
+        // on receiving a send, we reply back the current lane queue length for that connection id.
+        // Note that this does _NOT_ take into account the packets that have been received but not
+        // yet reach `OutQueueControl`, so it might be a tad low.
+        if let Ok(lane_queue_lengths) = self.lane_queue_lengths.lock() {
+            let queue_length = lane_queue_lengths.get(&lane).unwrap_or(0);
+            return Some(ServerResponse::LaneQueueLength {
+                lane: connection_id,
+                queue_length,
+            });
+        }
+
+        log::warn!("Failed to get the lane queue length lock, not responding back with the current queue length");
         None
     }
 
     fn handle_self_address(&self) -> ServerResponse {
-        ServerResponse::SelfAddress(self.self_full_address)
+        ServerResponse::SelfAddress(Box::new(self.self_full_address))
     }
 
-    fn handle_request(&mut self, request: ClientRequest) -> Option<ServerResponse> {
+    fn handle_closed_connection(&self, connection_id: u64) -> Option<ServerResponse> {
+        self.client_connection_tx
+            .unbounded_send(ConnectionCommand::Close(connection_id))
+            .unwrap();
+        None
+    }
+
+    fn handle_get_lane_queue_length(&self, connection_id: u64) -> Option<ServerResponse> {
+        let Ok(lane_queue_lengths) = self.lane_queue_lengths.lock() else {
+            log::warn!(
+                "Failed to get the lane queue length lock, not responding back with the current queue length"
+            );
+            return None;
+        };
+
+        let lane = TransmissionLane::ConnectionId(connection_id);
+        let queue_length = lane_queue_lengths.get(&lane).unwrap_or(0);
+        Some(ServerResponse::LaneQueueLength {
+            lane: connection_id,
+            queue_length,
+        })
+    }
+
+    async fn handle_request(&mut self, request: ClientRequest) -> Option<ServerResponse> {
         match request {
             ClientRequest::Send {
                 recipient,
                 message,
-                with_reply_surb,
-            } => self.handle_send(recipient, message, with_reply_surb),
+                connection_id,
+            } => self.handle_send(recipient, message, connection_id).await,
+
+            ClientRequest::SendAnonymous {
+                recipient,
+                message,
+                reply_surbs,
+                connection_id,
+            } => {
+                self.handle_send_anonymous(recipient, message, reply_surbs, connection_id)
+                    .await
+            }
+
             ClientRequest::Reply {
                 message,
-                reply_surb,
-            } => self.handle_reply(reply_surb, message),
+                sender_tag,
+                connection_id,
+            } => self.handle_reply(sender_tag, message, connection_id).await,
+
             ClientRequest::SelfAddress => Some(self.handle_self_address()),
+            ClientRequest::ClosedConnection(id) => self.handle_closed_connection(id),
+            ClientRequest::GetLaneQueueLength(id) => self.handle_get_lane_queue_length(id),
         }
     }
 
-    fn handle_text_message(&mut self, msg: String) -> Option<WsMessage> {
+    async fn handle_text_message(&mut self, msg: String) -> Option<WsMessage> {
         debug!("Handling text message request");
         trace!("Content: {:?}", msg);
 
@@ -153,13 +318,13 @@ impl Handler {
 
         let response = match client_request {
             Err(err) => Some(ServerResponse::Error(err)),
-            Ok(req) => self.handle_request(req),
+            Ok(req) => self.handle_request(req).await,
         };
 
         response.map(|resp| WsMessage::text(resp.into_text()))
     }
 
-    fn handle_binary_message(&mut self, msg: Vec<u8>) -> Option<WsMessage> {
+    async fn handle_binary_message(&mut self, msg: &[u8]) -> Option<WsMessage> {
         debug!("Handling binary message request");
 
         self.received_response_type = ReceivedResponseType::Binary;
@@ -167,47 +332,21 @@ impl Handler {
 
         let response = match client_request {
             Err(err) => Some(ServerResponse::Error(err)),
-            Ok(req) => self.handle_request(req),
+            Ok(req) => self.handle_request(req).await,
         };
 
         response.map(|resp| WsMessage::Binary(resp.into_binary()))
     }
 
-    fn handle_ws_request(&mut self, raw_request: WsMessage) -> Option<WsMessage> {
+    async fn handle_ws_request(&mut self, raw_request: WsMessage) -> Option<WsMessage> {
         // apparently tungstenite auto-handles ping/pong/close messages so for now let's ignore
         // them and let's test that claim. If that's not the case, just copy code from
         // old version of this file.
         match raw_request {
-            WsMessage::Text(text_message) => self.handle_text_message(text_message),
-            WsMessage::Binary(binary_message) => self.handle_binary_message(binary_message),
+            WsMessage::Text(text_message) => self.handle_text_message(text_message).await,
+            WsMessage::Binary(binary_message) => self.handle_binary_message(&binary_message).await,
             _ => None,
         }
-    }
-
-    // I'm still not entirely sure why `send_all` requires `TryStream` rather than `Stream`, but
-    // let's just play along for now
-    fn prepare_reconstructed_binary(
-        &self,
-        reconstructed_messages: Vec<ReconstructedMessage>,
-    ) -> Vec<Result<WsMessage, WsError>> {
-        reconstructed_messages
-            .into_iter()
-            .map(ServerResponse::Received)
-            .map(|resp| Ok(WsMessage::Binary(resp.into_binary())))
-            .collect()
-    }
-
-    // I'm still not entirely sure why `send_all` requires `TryStream` rather than `Stream`, but
-    // let's just play along for now
-    fn prepare_reconstructed_text(
-        &self,
-        reconstructed_messages: Vec<ReconstructedMessage>,
-    ) -> Vec<Result<WsMessage, WsError>> {
-        reconstructed_messages
-            .into_iter()
-            .map(ServerResponse::Received)
-            .map(|resp| Ok(WsMessage::Text(resp.into_text())))
-            .collect()
     }
 
     async fn push_websocket_received_plaintexts(
@@ -218,10 +357,8 @@ impl Handler {
         // if it's text or binary, but for time being we use the naive assumption that if
         // client is sending Message::Text it expects text back. Same for Message::Binary
         let response_messages = match self.received_response_type {
-            ReceivedResponseType::Binary => {
-                self.prepare_reconstructed_binary(reconstructed_messages)
-            }
-            ReceivedResponseType::Text => self.prepare_reconstructed_text(reconstructed_messages),
+            ReceivedResponseType::Binary => prepare_reconstructed_binary(reconstructed_messages),
+            ReceivedResponseType::Text => prepare_reconstructed_text(reconstructed_messages),
         };
 
         let mut send_stream = futures::stream::iter(response_messages);
@@ -269,11 +406,10 @@ impl Handler {
                         break;
                     }
 
-                    if let Some(response) = self.handle_ws_request(socket_msg) {
+                    if let Some(response) = self.handle_ws_request(socket_msg).await {
                         if let Err(err) = self.send_websocket_response(response).await {
                             warn!(
-                                "Failed to send message over websocket: {}. Assuming the connection is dead.",
-                                err
+                                "Failed to send message over websocket: {err}. Assuming the connection is dead.",
                             );
                             break;
                         }
@@ -281,9 +417,10 @@ impl Handler {
                 }
                 // or a reconstructed mix message that we need to push back to the client
                 mix_messages = msg_receiver.next() => {
-                    let mix_messages = mix_messages.expect(
-                        "mix messages sender was unexpectedly closed! this shouldn't have ever happened!",
-                    );
+                    let Some(mix_messages) = mix_messages else {
+                        error!("mix messages sender was unexpectedly closed! this shouldn't have ever happened! (unless we're shutting down - TODO: implement proper graceful shutdown handler)");
+                        return
+                    };
                     if let Err(e) = self.push_websocket_received_plaintexts(mix_messages).await {
                         warn!("failed to send sphinx packets back to the client - {:?}, assuming the connection is dead", e);
                         break;
@@ -315,4 +452,30 @@ impl Handler {
 
         self.listen_for_requests(reconstructed_receiver).await;
     }
+}
+
+// ? Copied wholesale
+// I'm still not entirely sure why `send_all` requires `TryStream` rather than `Stream`, but
+// let's just play along for now
+fn prepare_reconstructed_binary(
+    reconstructed_messages: Vec<ReconstructedMessage>,
+) -> Vec<Result<WsMessage, WsError>> {
+    reconstructed_messages
+        .into_iter()
+        .map(ServerResponse::Received)
+        .map(|resp| Ok(WsMessage::Binary(resp.into_binary())))
+        .collect()
+}
+
+// ? Copied wholesale
+// I'm still not entirely sure why `send_all` requires `TryStream` rather than `Stream`, but
+// let's just play along for now
+fn prepare_reconstructed_text(
+    reconstructed_messages: Vec<ReconstructedMessage>,
+) -> Vec<Result<WsMessage, WsError>> {
+    reconstructed_messages
+        .into_iter()
+        .map(ServerResponse::Received)
+        .map(|resp| Ok(WsMessage::Text(resp.into_text())))
+        .collect()
 }

@@ -1,11 +1,10 @@
 /*
  * nym/clients/native/src/websocket/listener.rs
  *
- * Essentially the same as the above file (from the nym crate), minus some minor adjustments to make
- * it fit into nym_jni.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
- * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
- * be accessed from nym_jni otherwise.
+ * This file is copied over and adapted because in the nym crate, it is not publicly visible (due to
+ * `pub(crate)` in ./mod.rs), thus it cannot be accessed from nym_jni.
  */
 
 // I avoid reformatting nym code as far as possible
@@ -72,9 +71,8 @@ impl Listener {
                         Ok((mut socket, remote_addr)) => {
                             debug!("Received connection from {:?}", remote_addr);
                             if self.state.is_connected() {
-                                warn!("tried to duplicate!");
+                                warn!("Tried to open a duplicate websocket connection. The request came from {}", remote_addr);
                                 // if we've already got a connection, don't allow another one
-                                debug!("but there was already a connection present!");
                                 // while we only ever want to accept a single connection, we don't want
                                 // to leave clients hanging (and also allow for reconnection if it somehow
                                 // was dropped)

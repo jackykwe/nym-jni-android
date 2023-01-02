@@ -1,18 +1,18 @@
 /*
  * nym/clients/native/src/client/config/template.rs
  *
- * Essentially the same as the above file (from the nym crate), except some minor adjustments to
- * make it fit into nym_jni.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
- * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
- * be accessed from nym_jni otherwise.
+ * This file is copied over and adapted because in the nym crate, ./mod.rs is not publicly visible
+ * (due to `pub(crate)` in ../mod.rs), thus the config_template() function cannot be accessed from
+ * nym_jni.
  */
 
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-// ? Copied wholesale, except `pub(crate) -> pub`
-pub fn config_template() -> &'static str {
+// ? Copied wholesale
+pub(crate) fn config_template() -> &'static str {
     // While using normal toml marshalling would have been way simpler with less overhead,
     // I think it's useful to have comments attached to the saved config file to explain behaviour of
     // particular fields.
@@ -34,6 +34,13 @@ id = '{{ client.id }}'
 # to claim bandwidth without presenting bandwidth credentials.
 disabled_credentials_mode = {{ client.disabled_credentials_mode }}
 
+# Addresses to nymd validators via which the client can communicate with the chain.
+validator_urls = [
+    {{#each client.validator_urls }}
+        '{{this}}',
+    {{/each}}
+]
+
 # Addresses to APIs running on validator from which the client gets the view of the network.
 validator_api_urls = [
     {{#each client.validator_api_urls }}
@@ -53,12 +60,11 @@ private_encryption_key_file = '{{ client.private_encryption_key_file }}'
 # Path to file containing public encryption key.
 public_encryption_key_file = '{{ client.public_encryption_key_file }}'
 
-# Full path to file containing reply encryption keys of all reply-SURBs we have ever
-# sent but not received back.
-reply_encryption_key_store_path = '{{ client.reply_encryption_key_store_path }}'
-
 # Path to the database containing bandwidth credentials
 database_path = '{{ client.database_path }}'
+
+# Path to the persistent store for received reply surbs, unused encryption keys and used sender tags.
+reply_surb_database_path = '{{ client.reply_surb_database_path }}'
 
 ##### additional client config options #####
 

@@ -1,8 +1,8 @@
-// Requires manual sync with nym-client
+// TODO: For all `pub` visibility in this project, restrict to `pub(crate)`?
 
 use std::{path::PathBuf, ptr::null_mut};
 
-use anyhow::Context;
+use client_core::client::replies::reply_storage::fs_backend::Backend;
 use clients_native_src::client::config::{ConfigAndroid, STORAGE_ABS_PATH_ENVVARKEY};
 use config::NymConfig;
 use jni::{
@@ -11,10 +11,10 @@ use jni::{
     JNIEnv,
 };
 use network_defaults::setup_env;
+use nym_client::error::ClientError;
 use tracing_subscriber::layer::SubscriberExt;
 use utils::{consume_kt_string, produce_kt_string};
 mod android_instrumented_tests;
-mod clients_client_core_src;
 mod clients_native_src;
 mod nym_init;
 mod nym_run;
@@ -121,17 +121,20 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dR_1lVLfo(
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_0002dpB8v_1Vc(
     env: JNIEnv,
     class: JClass,
     id: JString,
     gateway: JString,
     force_register_gateway: jboolean,
-    validators: JString,
+    nymd_validators: JString,
+    api_validators: JString,
     disable_socket: jboolean,
     port: JObject,
     fastmode: jboolean,
-    // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
+    no_cover: jboolean,
+    // #[cfg(feature = "coconut")] enabled_credentials_mode: jboolean,
+    output_json: jboolean,
 ) {
     call_fallible!(
         Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible,
@@ -140,32 +143,42 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_00
         id,
         gateway,
         force_register_gateway,
-        validators,
+        nymd_validators,
+        api_validators,
         disable_socket,
         port,
-        fastmode
+        fastmode,
+        no_cover,
+        output_json
     );
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_0002dd0ssPSI(
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_0002ds2fY7I4(
     env: JNIEnv,
     class: JClass,
     id: JString,
-    validators: JString,
+    nymd_validators: JString,
+    api_validators: JString,
     gateway: JString,
     disable_socket: jboolean,
     port: JObject,
+    fastmode: jboolean,
+    no_cover: jboolean,
+    // #[cfg(feature = "coconut")] enabled_credentials_mode: jboolean,
 ) {
     call_fallible!(
         Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible,
         env,
         class,
         id,
-        validators,
+        nymd_validators,
+        api_validators,
         gateway,
         disable_socket,
-        port
+        port,
+        fastmode,
+        no_cover
     );
 }
 
@@ -190,12 +203,15 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_getAddressImpl_fallible(
     id: JString,
 ) -> Result<jstring, anyhow::Error> {
     let id = consume_kt_string(env, id)?;
-    let config = ConfigAndroid::load_from_file(Some(&id)).with_context(|| {
-        format!(
-            "Failed to load config for {}. Are you sure you have run `init` before?",
-            id
-        )
-    })?;
-    let address_string = clients_client_core_src::init::show_address(config.get_base())?;
+    let config = match ConfigAndroid::load_from_file(Some(&id)) {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            log::error!("Failed to load config for {}. Are you sure you have run `init` before? (Error was: {})", id, err);
+            anyhow::bail!(ClientError::FailedToLoadConfig(id.to_string()));
+        }
+    };
+    let address_string =
+        client_core::init::get_client_address_from_stored_keys::<Backend, _>(config.get_base())?
+            .to_string();
     Ok(produce_kt_string(env, address_string)?)
 }

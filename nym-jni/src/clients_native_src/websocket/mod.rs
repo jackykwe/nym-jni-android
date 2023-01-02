@@ -1,17 +1,16 @@
 /*
  * nym/clients/native/src/websocket/mod.rs
  *
- * Essentially the same as the above file (from the nym crate), minus some minor adjustments to make
- * it fit into nym_jni.
+ * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
- * This file is copied over because it hides its components with `pub(crate)`, which cannot be
- * accessed from nym_jni otherwise.
+ * This file is copied over and adapted because in the nym crate, it hides Handler and Listener with
+ * `pub(crate)`, thus they cannot be accessed from nym_jni.
  */
 
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-// ? Copied wholesale, except `pub(crate) -> pub`
+// ? Copied wholesale, except `pub(crate)` -> `pub`
 pub use handler::Handler;
 pub use listener::Listener;
 

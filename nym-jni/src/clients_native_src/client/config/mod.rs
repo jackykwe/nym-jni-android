@@ -3,26 +3,27 @@
  *
  * Adapted from the above file (from the nym crate) to fit Android ecosystem.
  *
- * This file is copied over because it is hidden in the actual nym crate via `pub(crate)` and cannot
- * be accessed from nym_jni otherwise.
+ * This file is copied over and adapted because in the nym crate, it is not publicly visible (due to
+ * `pub(crate)` in ../mod.rs), thus it cannot be accessed from nym_jni.
  */
 
 // I avoid reformatting nym code as far as possible
 #![allow(clippy::default_trait_access)]
 #![allow(clippy::expect_used)]
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::trivially_copy_pass_by_ref)]
 
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::clients_native_src::client::config::template::config_template;
-use client_core::config::Config as BaseConfig;
-use config::defaults::DEFAULT_WEBSOCKET_LISTENING_PORT;
-use config::NymConfig;
+use client_core::config::{ClientCoreConfigTrait, Config as BaseConfig, DebugConfig};
+use config::{defaults::DEFAULT_WEBSOCKET_LISTENING_PORT, NymConfig};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 mod template;
+
+use crate::clients_native_src::client::config::template::config_template;
 
 // Value (environment variable key) follows the impl block below
 pub const STORAGE_ABS_PATH_ENVVARKEY: &str = "IMPL_NYMCONFIG_FOR_CONFIGANDROID_STORAGE_ABS_PATH";
@@ -45,9 +46,13 @@ impl SocketType {
             _ => SocketType::None,
         }
     }
+
+    pub fn is_websocket(&self) -> bool {
+        matches!(self, SocketType::WebSocket)
+    }
 }
 
-// ? Adapted to fit Android ecosystem
+// ? Copied wholesale, except `Config` -> `ConfigAndroid`
 #[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ConfigAndroid {
@@ -57,12 +62,14 @@ pub struct ConfigAndroid {
     socket: Socket,
 }
 
-// ? Adapted to fit Android ecosystem
+// ? Adapted to fit Android ecosystem: custom implementation
 impl NymConfig for ConfigAndroid {
+    // ? Copied wholesale
     fn template() -> &'static str {
         config_template()
     }
 
+    // ? Adapted to fit Android ecosystem: custom implementation
     fn default_root_directory() -> PathBuf {
         PathBuf::from(
             std::env::var(STORAGE_ABS_PATH_ENVVARKEY).unwrap_or_else(|_| {
@@ -76,28 +83,39 @@ impl NymConfig for ConfigAndroid {
         .join("clients")
     }
 
+    // ? Adapted to fit Android ecosystem: custom implementation
     fn try_default_root_directory() -> Option<PathBuf> {
         std::env::var(STORAGE_ABS_PATH_ENVVARKEY)
             .ok()
             .map(|path| PathBuf::from(path).join(".nym").join("clients"))
     }
 
+    // ? Copied wholesale
     fn root_directory(&self) -> PathBuf {
         self.base.get_nym_root_directory()
     }
 
+    // ? Copied wholesale
     fn config_directory(&self) -> PathBuf {
         self.root_directory()
             .join(self.base.get_id())
             .join("config")
     }
 
+    // ? Copied wholesale
     fn data_directory(&self) -> PathBuf {
         self.root_directory().join(self.base.get_id()).join("data")
     }
 }
 
-// ? Copied wholesale, except renamed `Config` -> `ConfigAndroid`
+// ? Copied wholesale, except `Config` -> `ConfigAndroid`
+impl ClientCoreConfigTrait for ConfigAndroid {
+    fn get_gateway_endpoint(&self) -> &client_core::config::GatewayEndpointConfig {
+        self.base.get_gateway_endpoint()
+    }
+}
+
+// ? Copied wholesale, except `Config` -> `ConfigAndroid`
 impl ConfigAndroid {
     pub fn new<S: Into<String>>(id: S) -> Self {
         ConfigAndroid {
@@ -127,6 +145,10 @@ impl ConfigAndroid {
 
     pub fn get_base_mut(&mut self) -> &mut BaseConfig<Self> {
         &mut self.base
+    }
+
+    pub fn get_debug_settings(&self) -> &DebugConfig {
+        self.get_base().get_debug_config()
     }
 
     pub fn get_socket_type(&self) -> SocketType {

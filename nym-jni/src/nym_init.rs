@@ -20,22 +20,26 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
     id: JString,
     gateway: JString,
     force_register_gateway: jboolean,
-    validators: JString,
+    nymd_validators: JString,
+    api_validators: JString,
     disable_socket: jboolean,
     port: JObject,
     fastmode: jboolean,
-    // #[cfg(feature = "coconut")] enabled_credentials_mode: bool,
+    no_cover: jboolean,
+    // #[cfg(feature = "coconut")] enabled_credentials_mode: jboolean,
+    output_json: jboolean,
 ) -> Result<(), anyhow::Error> {
     let args = Init {
         id: consume_kt_string(env, id)?,
         gateway: consume_kt_nullable_string(env, gateway)?,
         force_register_gateway: consume_kt_boolean(force_register_gateway),
-        validators: consume_kt_nullable_string(env, validators)?,
+        nymd_validators: consume_kt_nullable_string(env, nymd_validators)?,
+        api_validators: consume_kt_nullable_string(env, api_validators)?,
         disable_socket: consume_kt_boolean(disable_socket),
         port: consume_kt_nullable_ushort(env, port)?,
         fastmode: consume_kt_boolean(fastmode),
-        // #[cfg(feature = "coconut")]
-        // enabled_credentials_mode,
+        no_cover: consume_kt_boolean(no_cover),
+        output_json: consume_kt_boolean(output_json),
     };
 
     // using tokio's block_on() instead of direct .await or futures::executor::block_on()

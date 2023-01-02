@@ -16,17 +16,24 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible(
     env: JNIEnv,
     _: JClass,
     id: JString,
-    validators: JString,
+    nymd_validators: JString,
+    api_validators: JString,
     gateway: JString,
     disable_socket: jboolean,
     port: JObject,
+    fastmode: jboolean,
+    no_cover: jboolean,
+    // #[cfg(feature = "coconut")] enabled_credentials_mode: jboolean,
 ) -> Result<(), anyhow::Error> {
     let args = Run {
         id: consume_kt_string(env, id)?,
-        validators: consume_kt_nullable_string(env, validators)?,
+        nymd_validators: consume_kt_nullable_string(env, nymd_validators)?,
+        api_validators: consume_kt_nullable_string(env, api_validators)?,
         gateway: consume_kt_nullable_string(env, gateway)?,
         disable_socket: consume_kt_boolean(disable_socket),
         port: consume_kt_nullable_ushort(env, port)?,
+        fastmode: consume_kt_boolean(fastmode),
+        no_cover: consume_kt_boolean(no_cover),
     };
 
     tokio::runtime::Builder::new_current_thread()

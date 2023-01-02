@@ -1,9 +1,10 @@
 [package]
 name = "nym-jni"
-version = "1.1.0"  # must match nym's version, otherwise run method fails local version check
+version = "1.1.4"  # must match nym's version, otherwise run method fails local version check
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 
 [dependencies]
 # Logging
@@ -23,24 +24,29 @@ serde = "1.0.151"
 tokio = { version = "1.23.0", features = ["rt"] }  # necessary for async functions to execute properly on aarch64
 tokio-tungstenite = "0.14" # websocket
 
+
+# TODO: Check that all numerical versions are correct
 # Internal (to nym crate)
-network-defaults = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-## clients_client_core_src::init
-pemstore = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-tap = "1.0.1"
-## clients_native_src::client::config
-client-core = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-config = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-## clients_native_src::client
-crypto = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-gateway-client = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-nymsphinx = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-task = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-credential-storage = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
-websocket-requests = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+network-defaults = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+
+## clients_native_src::client::mod
+credential-storage = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
 futures = "0.3" # WARN: listed under "dependencies to review" in nym crate
+gateway-client = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+nymsphinx = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+nym-client = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+task = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+
+## clients_native_src::client::config::mod
+client-core = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+config = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+
 ## clients_native_src::commands::run
-version-checker = { git = "https://github.com/nymtech/nym", rev = "b7aa84c" }
+version-checker = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+
+## clients_native_src::websocket::handler
+client-connections = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
+websocket-requests = { git = "https://github.com/nymtech/nym", rev = "d92d687" }
 
 
 [lib]
