@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
 import com.kaeonx.nymandroidport.repositories.MessageRepository
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.SELECTED_CLIENT_ADDRESS_KSVP_KEY
+import com.kaeonx.nymandroidport.ui.screens.clientinfo.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,7 +24,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     internal val selectedClientAddress = keyStringValuePairRepository.get(
-        SELECTED_CLIENT_ADDRESS_KSVP_KEY
+        RUNNING_CLIENT_ADDRESS_KSVP_KEY
     ).stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val messageRepository =
@@ -36,7 +36,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 //    /**
 //     *
 //     */
-//    internal val messages = keyStringValuePairRepository.get(SELECTED_CLIENT_ADDRESS_KSVP_KEY).flatMapLatest {
+//    internal val messages = keyStringValuePairRepository.get(RUNNING_CLIENT_ADDRESS_KSVP_KEY).flatMapLatest {
 //        messageRepository.getMessagesWithSelectedClient(it ?: "")
 //    }
     private val _contactAddress = MutableStateFlow("")

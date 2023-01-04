@@ -1,7 +1,11 @@
 package com.kaeonx.nymandroidport.ui.screens.clientinfo
 
-data class ClientInfoScreenUIState(
-    val clients: List<String>,
-    val selectedClientId: String?,
-    val selectedClientAddress: String?
+import androidx.work.WorkInfo
+
+internal data class ClientInfoScreenUIState(
+    internal val clients: List<String>,
+    internal val selectedClientId: String?,
+    internal val selectedClientAddress: String?,
+    internal val nymRunState: NymRunState,
+    internal val nymRunWorkInfo: WorkInfo?,
 )

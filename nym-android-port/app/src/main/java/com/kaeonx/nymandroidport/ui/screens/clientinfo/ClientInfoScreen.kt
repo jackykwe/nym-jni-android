@@ -3,7 +3,6 @@ package com.kaeonx.nymandroidport.ui.screens.clientinfo
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -16,6 +15,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.work.WorkInfo
 import com.kaeonx.nymandroidport.LocalSnackbarHostState
 import com.kaeonx.nymandroidport.R
 import kotlinx.coroutines.launch
@@ -32,6 +32,8 @@ fun getDisplayClients(list: List<String>) = list.toMutableList().apply {
 @Composable
 fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
     val clientInfoScreenUIState by clientInfoViewModel.clientInfoScreenUIState.collectAsState()
+//    val nymRunWorkInfoFlow by clientInfoViewModel.nymRunWorkInfoFlow.collectAsState()
+    val nymRunWorkInfoAllDebugFlow by clientInfoViewModel.nymRunWorkInfoAllDebugFlow.collectAsState()
 
     // For ExposedDropdownMenuBox
     var clientSelectionExpanded by remember { mutableStateOf(false) }
@@ -57,6 +59,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
+                enabled = clientInfoScreenUIState.nymRunState.allowSelectRunAndDelete(),
                 readOnly = true,
                 value = clientInfoScreenUIState.selectedClientId ?: NONE_OPTION,
                 onValueChange = {},
@@ -76,11 +79,12 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                         onClick = {
                             when (option) {
                                 ADD_NEW_OPTION -> createClientDialogOpen = true
-                                NONE_OPTION -> clientInfoViewModel.unselectClient()
+                                NONE_OPTION -> clientInfoViewModel.selectClient(null)
                                 else -> clientInfoViewModel.selectClient(option)
                             }
                             clientSelectionExpanded = false
                         },
+                        enabled = clientInfoScreenUIState.nymRunState.allowSelectRunAndDelete(),
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                     )
                 }
@@ -98,18 +102,46 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     style = MaterialTheme.typography.bodySmall,
                     fontStyle = FontStyle.Italic
                 )
-                val workInfo by clientInfoViewModel.nymRunWorkInfo.observeAsState()
+//                val workInfo by clientInfoViewModel.nymRunWorkInfo.observeAsState()
                 Column(
                     modifier = Modifier
                         .padding(top = 8.dp, bottom = 8.dp)
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    workInfo?.forEach {
+//                    workInfo?.forEach {
+//                        Text(
+//                            text = "Client \"${clientInfoScreenUIState.selectedClientId}\" state: ${it.state} ${
+//                                if (it.progress.getBoolean(
+//                                        PROGRESS_WEBSOCKET_CONNECTION_SUCCESSFUL_KEY, false
+//                                    )
+//                                ) {
+//                                    "OK"
+//                                } else {
+//                                    ""
+//                                }
+//                            }",
+//                            fontFamily = FontFamily.Monospace,
+//                            fontWeight = FontWeight.Bold
+//                        )
+//                    }
+                    Text(
+                        text = clientInfoScreenUIState.let {
+                            nymRunStateAndWorkInfoToString(
+                                it.nymRunState,
+                                it.nymRunWorkInfo
+                            )
+                        },
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    nymRunWorkInfoAllDebugFlow.forEach {
                         Text(
-                            text = "Client \"${clientInfoScreenUIState.selectedClientId}\" state: ${it.state}",
+                            text = "(Debug) WorkInfo state: ${it.state}",
                             fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }
@@ -144,8 +176,9 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
 
         if (clientInfoScreenUIState.selectedClientId != null) {
             Button(
-                modifier = Modifier.fillMaxWidth(),
                 onClick = { deleteClientDialogOpen = true },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = clientInfoScreenUIState.nymRunState.allowSelectRunAndDelete(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.error
@@ -157,16 +190,28 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-        }
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { clientInfoViewModel.unselectClient() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.tertiary
-            )
-        ) {
-            Text(text = "Stop running Nym clients")
+            Button(
+                onClick = { clientInfoViewModel.enqueueNymRunWork() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = clientInfoScreenUIState.nymRunState.allowSelectRunAndDelete(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text(text = "Run Nym client \"${clientInfoScreenUIState.selectedClientId}\"")
+            }
+            Button(
+                onClick = { clientInfoViewModel.stopNymRunWork() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = clientInfoScreenUIState.nymRunState.allowStop(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text(text = "Stop Nym client \"${clientInfoScreenUIState.selectedClientId}\"")
+            }
         }
     }
 
@@ -254,5 +299,14 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     Text("Cancel")
                 }
             })
+    }
+}
+
+private fun nymRunStateAndWorkInfoToString(nymRunState: NymRunState, workInfo: WorkInfo?): String {
+    return if (workInfo == null) {
+
+        nymRunState.name
+    } else {
+        "${nymRunState.name} (${workInfo.state})"
     }
 }

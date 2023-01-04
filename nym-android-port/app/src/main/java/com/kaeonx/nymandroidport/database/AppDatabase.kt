@@ -23,21 +23,24 @@ abstract class AppDatabase : RoomDatabase() {
 
     // Handling singleton within an abstract class instead of object (more Kotlin-like)
     // <https://developer.android.com/codelabs/android-room-with-a-view-kotlin#7>
-    // TODO (Clarify): Is this thread safe?
+    // Clarified: Is this thread safe? Yes. Note the need to do double null check. Also,
+    // optimisation has been done: double-checked locking.
     companion object {
         @Volatile
-        private var INSTANCE: AppDatabase? = null
+        private var instance: AppDatabase? = null
 
         fun getInstance(applicationContext: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                Log.w(TAG, "Requesting AppDatabase instance")
-                val instance = Room.databaseBuilder(
-                    applicationContext,
-                    AppDatabase::class.java,
-                    "nym-db"
-                ).build()
-                INSTANCE = instance
-                instance
+            return instance ?: synchronized(this) {
+                if (instance == null) {  // double null check necessary!
+                    Log.w(TAG, "Requesting AppDatabase instance")
+                    instance = Room.databaseBuilder(
+                        applicationContext,
+                        AppDatabase::class.java,
+                        "nym-db"
+                    ).enableMultiInstanceInvalidation()
+                        .build()
+                }
+                instance!!
             }
         }
     }

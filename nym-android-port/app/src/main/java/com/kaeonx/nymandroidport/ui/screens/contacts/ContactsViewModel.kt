@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymandroidport.repositories.ContactRepository
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.SELECTED_CLIENT_ID_KSVP_KEY
+import com.kaeonx.nymandroidport.ui.screens.clientinfo.RUNNING_CLIENT_ID_KSVP_KEY
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -34,7 +34,7 @@ class ContactsViewModel(application: Application) : AndroidViewModel(application
 
     internal val contactsScreenUIState =
         combine(
-            keyStringValuePairRepository.get(SELECTED_CLIENT_ID_KSVP_KEY),  // Flow
+            keyStringValuePairRepository.get(RUNNING_CLIENT_ID_KSVP_KEY),  // Flow
             contactRepository.getContactsOfSelectedClient()  // Flow
         ) { selectedClientId, contacts ->
             ContactsScreenUIState(

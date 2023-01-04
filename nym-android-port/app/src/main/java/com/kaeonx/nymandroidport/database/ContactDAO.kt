@@ -2,7 +2,7 @@ package com.kaeonx.nymandroidport.database
 
 import androidx.room.Dao
 import androidx.room.Query
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.SELECTED_CLIENT_ADDRESS_KSVP_KEY
+import com.kaeonx.nymandroidport.ui.screens.clientinfo.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -11,14 +11,14 @@ interface ContactDAO {
     @Query(
         "SELECT * FROM contact WHERE ownerAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey);"
     )
-    fun getAllBySelectedClient(selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY): Flow<List<Contact>>  // empty list if no client is selected
+    fun getAllBySelectedClient(selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY): Flow<List<Contact>>  // empty list if no client is selected
 
     @Query(
         "INSERT INTO contact VALUES ((SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey), :newContactAddress);"
     )
     suspend fun insertForSelectedClient(
         newContactAddress: String,
-        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+        selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     )
 
     // Returns number of rows successfully deleted
@@ -27,6 +27,6 @@ interface ContactDAO {
     )
     suspend fun deleteForSelectedClient(
         contactAddress: String,
-        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+        selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     ): Int
 }

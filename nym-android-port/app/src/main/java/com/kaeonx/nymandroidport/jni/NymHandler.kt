@@ -1,5 +1,7 @@
 package com.kaeonx.nymandroidport.jni
 
+import com.kaeonx.nymandroidport.workers.NymRunWorker
+
 internal fun topLevelInit(storageAbsPath: String, configEnvFile: String? = null) =
     topLevelInitImpl(storageAbsPath, configEnvFile)
 
@@ -40,6 +42,7 @@ private external fun nymInitImpl(
 )
 
 internal fun nymRun(
+    nymRunWorker: NymRunWorker,
     id: String,
     nymdValidators: String? = null,
     apiValidators: String? = null,
@@ -49,10 +52,19 @@ internal fun nymRun(
     fastmode: Boolean = false,
     noCover: Boolean = false
 ) = nymRunImpl(
-    id, nymdValidators, apiValidators, gateway, disable_socket, port, fastmode, noCover
+    nymRunWorker,
+    id,
+    nymdValidators,
+    apiValidators,
+    gateway,
+    disable_socket,
+    port,
+    fastmode,
+    noCover
 )
 
 private external fun nymRunImpl(
+    nymRunWorker: NymRunWorker,
     id: String,
     nymdValidators: String?,
     apiValidators: String?,

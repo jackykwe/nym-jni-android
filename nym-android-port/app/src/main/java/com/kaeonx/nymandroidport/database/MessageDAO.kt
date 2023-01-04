@@ -3,7 +3,7 @@ package com.kaeonx.nymandroidport.database
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.SELECTED_CLIENT_ADDRESS_KSVP_KEY
+import com.kaeonx.nymandroidport.ui.screens.clientinfo.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -20,7 +20,7 @@ interface MessageDAO {
     )
     fun getAllWithSelectedClient(
         contactAddress: String,
-        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+        selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     ): Flow<List<Message>>
 
     // Returns new rowId
@@ -30,7 +30,7 @@ interface MessageDAO {
     suspend fun insertFromSelectedClient(
         toAddress: String,
         message: String,
-        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+        selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     ): Long
 
     // Returns new rowId
@@ -40,7 +40,7 @@ interface MessageDAO {
     suspend fun debugInsertToSelectedClient(
         fromAddress: String,
         message: String,
-        selectedClientAddressKey: String = SELECTED_CLIENT_ADDRESS_KSVP_KEY
+        selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     ): Long
 
     // Returns number of rows successfully deleted

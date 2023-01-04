@@ -16,6 +16,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NymAndroidPort"
+        android:usesCleartextTraffic="true"
         tools:targetApi="32">
         <activity
             android:name=".MainActivity"
@@ -42,6 +43,12 @@
             android:description="@string/nym_run_service_description"
             android:exported="false"
             android:process="@string/nym_run_service_process_name" />
+
+        <service
+            android:name=".services.NymWebSocketBoundService"
+            android:description="@string/nym_websocket_bound_service_description"
+            android:exported="false"
+            android:process="@string/nym_websocket_bound_service_process_name" />
     </application>
 
 </manifest>

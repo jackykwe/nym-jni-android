@@ -7,4 +7,6 @@
     <string name="nym_run_worker_notification_channel_description">Notifications related to the Nym Run method…</string>
     <string name="nym_run_service_description">The Foreground Service that executes the Nym Run method. If terminated, the Nym Run method will stop executing in the background.</string>
     <string name="nym_run_service_process_name">:nymRunService</string>
+    <string name="nym_websocket_bound_service_description">The Bound Service that executes the web socket that communicates with the Num Run Foreground Service.</string>
+    <string name="nym_websocket_bound_service_process_name">:nymWebSocketBoundService</string>
 </resources>
