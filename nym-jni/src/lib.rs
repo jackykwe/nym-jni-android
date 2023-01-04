@@ -217,3 +217,58 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_getAddressImpl_fallible(
             .to_string();
     Ok(produce_kt_string(env, address_string)?)
 }
+
+#[no_mangle]
+pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymWebSocketRecvImpl(
+    env: JNIEnv,
+    class: JClass,
+    message_repository: JObject,
+) {
+    call_fallible!(
+        Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymWebSocketRecvImpl_fallible,
+        env,
+        class,
+        message_repository
+    );
+}
+
+#[allow(non_snake_case)]
+fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymWebSocketRecvImpl_fallible(
+    env: JNIEnv,
+    _: JClass,
+    message_repository: JObject,
+) -> Result<(), anyhow::Error> {
+    let method_id = env.get_method_id(
+        "com/kaeonx/nymandroidport/repositories/MessageRepository",
+        "debugSendMessageToSelectedClient",
+        "(Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;",
+    )?;
+
+    let from_address = jvalue {
+        l: produce_kt_string(env, String::from("Z.Z@Z"))?,
+    };
+    let message = jvalue {
+        l: produce_kt_string(env, String::from("Hello from Rust"))?,
+    };
+    let continuation = jvalue { l: null_mut() };
+
+    env.call_method_unchecked(
+        message_repository,
+        method_id,
+        ReturnType::Object,
+        &[from_address, message, continuation],
+    )?;
+
+    log::warn!("the method ID obtained successfully");
+
+    // env.call_method_unchecked(
+    //     source,
+    //     method_id,
+    //     ReturnType::Primitive(Primitive::Boolean),
+    //     &[],
+    // )?
+    // .z()
+    // .map(Some)
+
+    Ok(())
+}
