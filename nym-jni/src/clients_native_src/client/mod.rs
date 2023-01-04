@@ -25,6 +25,9 @@ use client_core::client::received_buffer::{ReceivedBufferMessage, ReconstructedM
 use client_core::config::persistence::key_pathfinder::ClientKeyPathfinder;
 use futures::channel::mpsc;
 use gateway_client::bandwidth::BandwidthController;
+use jni::objects::JObject;
+use jni::signature::Primitive;
+use jni::JNIEnv;
 use log::*;
 use nym_client::error::ClientError;
 use nymsphinx::addressing::clients::Recipient;
@@ -128,9 +131,38 @@ impl SocketClientAndroid {
     }
 
     /// blocking version of `start_socket` method. Will run forever (or until SIGINT is sent)
-    pub async fn run_socket_forever(self) -> Result<(), ClientError> {
+    pub async fn run_socket_forever(
+        self,
+        env: JNIEnv<'_>,
+        nym_run_worker: JObject<'_>,
+    ) -> Result<(), anyhow::Error> {
         let mut shutdown = self.start_socket().await?;
-        wait_for_signal().await;
+
+        let method_id = env.get_method_id(
+            "com/kaeonx/nymandroidport/workers/NymRunWorker",
+            "afterSocketOpenedCalledFromRust",
+            "()V",
+        )?;
+        env.call_method_unchecked(
+            nym_run_worker,
+            method_id,
+            jni::signature::ReturnType::Primitive(Primitive::Void),
+            &[],
+        )?;
+
+        wait_for_signal().await; // ? This is a suspending call! This function proceeds on receiving UNIX signals.
+
+        let method_id = env.get_method_id(
+            "com/kaeonx/nymandroidport/workers/NymRunWorker",
+            "beforeSocketClosedCalledFromRust",
+            "()V",
+        )?;
+        env.call_method_unchecked(
+            nym_run_worker,
+            method_id,
+            jni::signature::ReturnType::Primitive(Primitive::Void),
+            &[],
+        )?;
 
         println!(
             "Received signal - the client will terminate now (threads are not yet nicely stopped, if you see stack traces that's alright)."

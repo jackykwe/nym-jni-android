@@ -15,6 +15,7 @@ use crate::utils::{
 pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible(
     env: JNIEnv,
     _: JClass,
+    nym_run_worker: JObject,
     id: JString,
     nymd_validators: JString,
     api_validators: JString,
@@ -40,7 +41,7 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible(
         .enable_all()
         .build()
         .with_context(|| "Failed to setup tokio runtime")?
-        .block_on(execute(&args))?;
+        .block_on(execute(&args, env, nym_run_worker))?;
 
     Ok(())
 }

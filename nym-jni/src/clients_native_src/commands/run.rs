@@ -14,6 +14,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use config::NymConfig;
+use jni::objects::JObject;
+use jni::JNIEnv;
 use log::*;
 use nym_client::error::ClientError;
 use version_checker::is_minor_version_compatible;
@@ -98,7 +100,11 @@ fn version_check(cfg: &ConfigAndroid) -> bool {
 // ? - returns Result<_, anyhow::Error> instead of Result<_, ClientError>
 // ? - `Config` -> `ConfigAndroid`
 // ? - uses `anyhow::bail!` to return early with an Err (for context: <https://stackoverflow.com/q/67656431>)
-pub async fn execute(args: &Run) -> Result<(), anyhow::Error> {
+pub async fn execute(
+    args: &Run,
+    env: JNIEnv<'_>,
+    nym_run_worker: JObject<'_>,
+) -> Result<(), anyhow::Error> {
     let id = &args.id;
 
     let mut config = match ConfigAndroid::load_from_file(Some(id)) {
@@ -121,7 +127,10 @@ pub async fn execute(args: &Run) -> Result<(), anyhow::Error> {
         anyhow::bail!(ClientError::FailedLocalVersionCheck);
     }
 
-    if let Err(client_err) = SocketClientAndroid::new(config).run_socket_forever().await {
+    if let Err(client_err) = SocketClientAndroid::new(config)
+        .run_socket_forever(env, nym_run_worker)
+        .await
+    {
         anyhow::bail!(client_err);
     }
     Ok(())
