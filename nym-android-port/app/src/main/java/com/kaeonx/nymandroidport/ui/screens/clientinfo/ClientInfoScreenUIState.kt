@@ -1,6 +1,7 @@
 package com.kaeonx.nymandroidport.ui.screens.clientinfo
 
 import androidx.work.WorkInfo
+import com.kaeonx.nymandroidport.utils.NymRunState
 
 internal data class ClientInfoScreenUIState(
     internal val clients: List<String>,

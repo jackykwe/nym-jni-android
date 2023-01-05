@@ -1,6 +1,5 @@
 package com.kaeonx.nymandroidport.services
 
-import android.os.Messenger
 import android.util.Log
 import okhttp3.*
 import okio.ByteString
@@ -13,10 +12,6 @@ internal const val NYM_RUN_PORT: UShort = 1977u
 
 // Initial inspiration from <https://medium.com/@sthahemant1st/learn-how-to-use-web-socket-in-android-using-okhttp-b205709a2040>
 class NymWebSocketClient private constructor() {
-    init {
-        Log.e(TAG, "NymWebSocketClient instance created!")
-    }
-
     /**
      * OkHttp performs best when you create a single OkHttpClient instance and reuse it for all of
      * your HTTP calls. This is because each client holds its own connection pool and thread pools.
@@ -27,8 +22,7 @@ class NymWebSocketClient private constructor() {
 
     private lateinit var webSocketInstance: WebSocket
     internal fun connectToWebSocket(
-        replyTo: Messenger,
-        onSuccess: (replyTo: Messenger) -> Unit  // write to KSVP
+        onSuccess: () -> Unit  // write to KSVP
     ) {
         webSocketInstance = okHttpClient.newWebSocket(
             request = Request.Builder()
@@ -43,7 +37,7 @@ class NymWebSocketClient private constructor() {
             listener = object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     Log.i(TAG, "Web socket to Nym Run successfully opened.")
-                    onSuccess(replyTo)
+                    onSuccess()
                 }
 
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -67,7 +61,7 @@ class NymWebSocketClient private constructor() {
                             )
                             Log.w(TAG, t.stackTraceToString())
                             Log.w(TAG, "Retrying...")
-                            connectToWebSocket(replyTo, onSuccess)
+                            connectToWebSocket(onSuccess)
                         }
                         is EOFException -> {
                             Log.w(

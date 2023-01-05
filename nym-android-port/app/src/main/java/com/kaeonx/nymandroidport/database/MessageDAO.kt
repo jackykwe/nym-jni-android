@@ -3,7 +3,6 @@ package com.kaeonx.nymandroidport.database
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import kotlinx.coroutines.flow.Flow
 
 @Dao

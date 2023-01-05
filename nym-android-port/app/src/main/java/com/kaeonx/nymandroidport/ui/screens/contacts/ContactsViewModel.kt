@@ -4,16 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaeonx.nymandroidport.database.AppDatabase
+import com.kaeonx.nymandroidport.database.RUNNING_CLIENT_ID_KSVP_KEY
 import com.kaeonx.nymandroidport.repositories.ContactRepository
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.RUNNING_CLIENT_ID_KSVP_KEY
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-private const val TAG = "contactsViewModel"
+//private const val TAG = "contactsViewModel"
 
 // Lasts as long as the app, isn't cleared when navigating away from ContactsScreen
 class ContactsViewModel(application: Application) : AndroidViewModel(application) {

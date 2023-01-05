@@ -5,24 +5,18 @@ import android.content.Intent
 import android.os.*
 import android.util.Log
 import com.kaeonx.nymandroidport.database.AppDatabase
+import com.kaeonx.nymandroidport.database.NYM_RUN_STATE_KSVP_KEY
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.NYM_RUN_STATE_KSVP_KEY
-import com.kaeonx.nymandroidport.ui.screens.clientinfo.NymRunState
-import com.kaeonx.nymandroidport.utils.MSG_TYPE_CONNECT_TO_WEBSOCKET
-import com.kaeonx.nymandroidport.utils.MSG_TYPE_WEBSOCKET_SUCCESSFULLY_CONNECTED
+import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 private const val TAG = "nymWebSocketBoundService"
 
-// This subclass is defined in case we want to override things in RemoteWorkerService
 class NymWebSocketBoundService : Service() {
-    init {
-        Log.e(TAG, "NymWebSocketBoundService instance created!")
-    }
-
     // Courtesy of <https://stackoverflow.com/a/63407811>
     private val supervisorJob by lazy { SupervisorJob() }
     private val serviceScope by lazy { CoroutineScope(Dispatchers.IO + supervisorJob) }
@@ -43,13 +37,9 @@ class NymWebSocketBoundService : Service() {
                         // NB: This code could've well resided in this class's onBind(), but I put
                         // it here because I want to send a message back to NymRunService when the
                         // socket's successfully opened.
-                        Log.i(TAG, "MSG_TYPE_CONNECT_TO_WEBSOCKET received ${msg.replyTo}")
-                        // TODO (clarify): Why doesn't Kotlin capture and preserve references? If I don't pass msg.replyTo as an additional argument, it gets deleted by GC and becomes null..
-                        nymWebSocketClient.connectToWebSocket(msg.replyTo) { replyTo ->
-                            Log.i(TAG, "SOCKET CONNECTED")
-                            replyTo.send(
-                                Message.obtain(null, MSG_TYPE_WEBSOCKET_SUCCESSFULLY_CONNECTED)
-                            )
+                        // TODO (clarify): Why doesn't Kotlin capture and preserve references? If I don't pass msg.replyTo as an additional argument, it gets deleted by GC and becomes null...?
+                        //                 nymWebSocketClient.connectToWebSocket(msg.replyTo) { replyTo ->
+                        nymWebSocketClient.connectToWebSocket {
                             serviceScope.launch {
                                 keyStringValuePairRepository.put(
                                     listOf(
@@ -81,7 +71,8 @@ class NymWebSocketBoundService : Service() {
      */
     override fun onDestroy() {
         super.onDestroy()
-        supervisorJob.cancel()
-        Log.e(TAG, "DESTROYED, bye bye")
+        supervisorJob.cancel()  // NB: Doesn't wait for completion of its child jobs.
+        Log.w(TAG, "Exiting process 3")
+        exitProcess(0)
     }
 }

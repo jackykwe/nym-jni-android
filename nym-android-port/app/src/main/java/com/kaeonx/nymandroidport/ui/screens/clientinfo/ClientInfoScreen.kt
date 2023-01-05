@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.WorkInfo
 import com.kaeonx.nymandroidport.LocalSnackbarHostState
 import com.kaeonx.nymandroidport.R
+import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.launch
 
 private const val NONE_OPTION = "<none>"
@@ -32,7 +33,6 @@ fun getDisplayClients(list: List<String>) = list.toMutableList().apply {
 @Composable
 fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
     val clientInfoScreenUIState by clientInfoViewModel.clientInfoScreenUIState.collectAsState()
-//    val nymRunWorkInfoFlow by clientInfoViewModel.nymRunWorkInfoFlow.collectAsState()
     val nymRunWorkInfoAllDebugFlow by clientInfoViewModel.nymRunWorkInfoAllDebugFlow.collectAsState()
 
     // For ExposedDropdownMenuBox
@@ -109,22 +109,6 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-//                    workInfo?.forEach {
-//                        Text(
-//                            text = "Client \"${clientInfoScreenUIState.selectedClientId}\" state: ${it.state} ${
-//                                if (it.progress.getBoolean(
-//                                        PROGRESS_WEBSOCKET_CONNECTION_SUCCESSFUL_KEY, false
-//                                    )
-//                                ) {
-//                                    "OK"
-//                                } else {
-//                                    ""
-//                                }
-//                            }",
-//                            fontFamily = FontFamily.Monospace,
-//                            fontWeight = FontWeight.Bold
-//                        )
-//                    }
                     Text(
                         text = clientInfoScreenUIState.let {
                             nymRunStateAndWorkInfoToString(
@@ -243,15 +227,15 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                             createClientDialogLoading = true
                             clientInfoViewModel.addClient(
                                 createClientDialogNewName.text.filter { c -> c.isDigit() || c.isLetter() }
-                            ) { success ->
-                                if (success) {
-                                    createClientDialogOpen = false
+                            ) { errorMsg ->
+                                if (errorMsg == null) {
                                     createClientDialogNewName = TextFieldValue("")
                                 } else {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("Failed to create new client. Retrying should work.")
+                                        snackbarHostState.showSnackbar(errorMsg)
                                     }
                                 }
+                                createClientDialogOpen = false
                                 createClientDialogLoading = false
                             }
                         }
