@@ -1,6 +1,7 @@
 package com.kaeonx.nymandroidport
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.kaeonx.nymandroidport.jni.instrumentedtesthelpers.*
 import com.kaeonx.nymandroidport.jni.topLevelInit
 import org.junit.Assert.*
@@ -21,7 +22,7 @@ class ReceivingNullableFromRustInstrumentedTest {
     @Before
     fun loadJNILibrary() {
         System.loadLibrary("nym_jni")
-        topLevelInit()
+        topLevelInit(InstrumentationRegistry.getInstrumentation().targetContext.filesDir.absolutePath)
     }
 
     @Test
