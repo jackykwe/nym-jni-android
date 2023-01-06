@@ -121,14 +121,14 @@ fun ChatScreen(
                 }
             }
 
-            Button(
-                onClick = {
-                    chatViewModel.debugGenerateMessage(contactAddress)
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Generate message from other party")
-            }
+//            Button(
+//                onClick = {
+//                    chatViewModel.debugGenerateMessage(contactAddress)
+//                },
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text(text = "Generate message from other party")
+//            }
 
             OutlinedTextField(
                 value = newMessageContent,

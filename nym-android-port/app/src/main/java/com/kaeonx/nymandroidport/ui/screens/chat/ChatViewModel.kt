@@ -13,7 +13,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
     // TODO: Other fields store reference to this leakable object
@@ -56,14 +55,14 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    internal fun debugGenerateMessage(fromAddress: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            messageRepository.sendMessageToSelectedClient(
-                fromAddress,
-                Random.nextInt().toString()
-            )
-        }
-    }
+//    internal fun debugGenerateMessage(fromAddress: String) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            messageRepository.debugSendMessageToSelectedClient(
+//                fromAddress,
+//                Random.nextInt().toString()
+//            )
+//        }
+//    }
 
     internal fun deleteContact(contactAddress: String, callback: () -> Unit) {
         viewModelScope.launch {

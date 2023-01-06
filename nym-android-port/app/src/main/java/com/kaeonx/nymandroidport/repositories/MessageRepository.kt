@@ -30,7 +30,7 @@ class MessageRepository(private val messageDAO: MessageDAO) {
         messageDAO.insertFromSelectedClient(toAddress, message)
     }
 
-    internal suspend fun sendMessageToSelectedClient(fromAddress: String, message: String) {
-        messageDAO.insertToSelectedClient(fromAddress, message)
-    }
+//    internal suspend fun debugSendMessageToSelectedClient(fromAddress: String, message: String) {
+//        messageDAO.insertToSelectedClient(fromAddress, message)
+//    }
 }
