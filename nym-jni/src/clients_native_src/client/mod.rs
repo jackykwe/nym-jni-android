@@ -139,7 +139,7 @@ impl SocketClientAndroid {
         let mut shutdown = self.start_socket().await?;
 
         let method_id = env.get_method_id(
-            "com/kaeonx/nymandroidport/workers/NymRunWorker",
+            "com/kaeonx/nymandroidport/services/NymRunWorker",
             "afterSocketOpenedCalledFromRust",
             "()V",
         )?;
@@ -153,7 +153,7 @@ impl SocketClientAndroid {
         wait_for_signal().await; // ? This is a suspending call! This function proceeds on receiving UNIX signals.
 
         let method_id = env.get_method_id(
-            "com/kaeonx/nymandroidport/workers/NymRunWorker",
+            "com/kaeonx/nymandroidport/services/NymRunWorker",
             "beforeSocketClosedCalledFromRust",
             "()V",
         )?;
