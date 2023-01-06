@@ -29,8 +29,4 @@ class ContactRepository(private val contactDAO: ContactDAO) {
     internal suspend fun addContactOfSelectedClient(newContactAddress: String) {
         contactDAO.insertForSelectedClient(newContactAddress)
     }
-
-    internal suspend fun deleteContactOfSelectedClient(contactAddress: String) {
-        contactDAO.deleteForSelectedClient(contactAddress)
-    }
 }

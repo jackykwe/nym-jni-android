@@ -22,7 +22,7 @@ interface ContactDAO {
 
     // Returns number of rows successfully deleted
     @Query(
-        "DELETE FROM contact WHERE ownerAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey) AND contactAddress = :contactAddress"
+        "DELETE FROM contact WHERE ownerAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey) AND contactAddress = :contactAddress;"
     )
     suspend fun deleteForSelectedClient(
         contactAddress: String,

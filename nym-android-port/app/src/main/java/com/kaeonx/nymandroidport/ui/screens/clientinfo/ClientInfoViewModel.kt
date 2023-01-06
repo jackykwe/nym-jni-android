@@ -96,7 +96,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             nymRunWorkInfoFlow,
             nymRunStateFlow
         ) { ksvpMap, nymRunWorkInfo, nymRunState ->
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 if (
                     nymRunState == NymRunState.TEARING_DOWN
                     && nymRunWorkInfo?.state?.isFinished == true
@@ -136,11 +136,9 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     // (lasts across activity recreation)
     init {
         // coroutines are launched on UI thread (Dispatches.Main) by default
-        viewModelScope.launch {
-            withContext(Dispatchers.Default) {
-                // sets up logging on Rust side
-                topLevelInit(getAppContext().filesDir.absolutePath)
-            }
+        viewModelScope.launch(Dispatchers.Default) {
+            // sets up logging on Rust side
+            topLevelInit(getAppContext().filesDir.absolutePath)
         }
     }
 
@@ -248,15 +246,17 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                         nymInit(nonEmptyNewClientId, port = NYM_RUN_PORT)
                     }
                     selectClient(nonEmptyNewClientId)
-                    callback(null)  // no error
+                    callback(null)  // no error; must be called on main thread
                 } catch (e: RuntimeException) {
                     e.printStackTrace()
-                    keyStringValuePairRepository.put(
-                        listOf(
-                            NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name
+                    withContext(Dispatchers.IO) {
+                        keyStringValuePairRepository.put(
+                            listOf(
+                                NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name
+                            )
                         )
-                    )
-                    callback("Failed to create new client. Retrying should work.")
+                    }
+                    callback("Failed to create new client. Retrying should work.")  // must be called on main thread
                 }
             }
         }
@@ -265,11 +265,9 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     internal fun deleteClient(clientId: String, callback: () -> Unit) {
         stopNymRunWork()
         viewModelScope.launch {
-            val clientsDir = getClientsDir()
             withContext(Dispatchers.IO) {
+                val clientsDir = getClientsDir()
                 clientsDir.resolve(clientId).deleteRecursively()
-            }
-            viewModelScope.launch(Dispatchers.IO) {
                 keyStringValuePairRepository.remove(
                     listOf(
                         RUNNING_CLIENT_ID_KSVP_KEY,
@@ -277,7 +275,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                     )
                 )
             }
-            callback()
+            callback()  // must be called on main thread
         }
     }
 }

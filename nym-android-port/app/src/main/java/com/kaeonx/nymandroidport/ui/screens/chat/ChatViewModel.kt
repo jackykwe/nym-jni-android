@@ -3,13 +3,16 @@ package com.kaeonx.nymandroidport.ui.screens.chat
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymandroidport.database.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
 import com.kaeonx.nymandroidport.repositories.MessageRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,17 +47,34 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     internal fun sendMessage(toAddress: String, message: String, callback: (Boolean) -> Unit) {
         viewModelScope.launch {
-            messageRepository.sendMessageFromSelectedClient(toAddress, message)
-            callback(true)
+            withContext(Dispatchers.IO) {
+                messageRepository.sendMessageFromSelectedClient(toAddress, message)
+            }
+            callback(true)  // must be called on main thread
         }
     }
 
     internal fun debugGenerateMessage(fromAddress: String) {
-        viewModelScope.launch {
-            messageRepository.debugSendMessageToSelectedClient(
+        viewModelScope.launch(Dispatchers.IO) {
+            messageRepository.sendMessageToSelectedClient(
                 fromAddress,
                 Random.nextInt().toString()
             )
+        }
+    }
+
+    internal fun deleteContact(contactAddress: String, callback: () -> Unit) {
+        viewModelScope.launch {
+            // TODO (clarify): is there a more sensible way to do this? Kinda of bypassed the repository here..
+            withContext(Dispatchers.IO) {
+                AppDatabase.getInstance(getAppContext()).run {
+                    withTransaction {
+                        messageDao().deleteBetweenSelectedClientAndContact(contactAddress)
+                        contactDao().deleteForSelectedClient(contactAddress)
+                    }
+                }
+            }
+            callback()  // must be called on main thread
         }
     }
 }

@@ -55,7 +55,7 @@ class ContactsViewModel(application: Application) : AndroidViewModel(application
             contactRepository.addContactOfSelectedClient(
                 newContactAddress = newContactNymAddress
             )
-            callback(true)
+            callback(true)  // must be called on main thread
         }
     }
 }

@@ -19,13 +19,11 @@ class MessageRepository(private val messageDAO: MessageDAO) {
         return messageDAO.getAllWithSelectedClient(contactAddress).distinctUntilChanged()
     }
 
-    // TODO: Make message a class that contains more information; interact with dataSource
     internal suspend fun sendMessageFromSelectedClient(toAddress: String, message: String) {
         messageDAO.insertFromSelectedClient(toAddress, message)
     }
 
-    // TODO remove debug functions
-    internal suspend fun debugSendMessageToSelectedClient(fromAddress: String, message: String) {
-        messageDAO.debugInsertToSelectedClient(fromAddress, message)
+    internal suspend fun sendMessageToSelectedClient(fromAddress: String, message: String) {
+        messageDAO.insertToSelectedClient(fromAddress, message)
     }
 }

@@ -10,7 +10,7 @@ internal data class NymAddress(
             return NymAddress(
                 userIdentityKey = address.substringBefore('.'),
                 userEncryptionKey = address.substringAfter('.').substringBefore('@'),
-                gatewayIdentityKey = address.substringBefore('@')
+                gatewayIdentityKey = address.substringAfter('@')
             )
         }
     }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaeonx.nymandroidport.LocalSnackbarHostState
@@ -29,12 +30,20 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(contactAddress: String, chatViewModel: ChatViewModel = viewModel()) {
+fun ChatScreen(
+    contactAddress: String,
+    onContactDeleted: () -> Unit,
+    chatViewModel: ChatViewModel = viewModel()
+) {
     chatViewModel.initContactAddress(contactAddress)
 
     // For text field
     var newMessageContent by remember { mutableStateOf(TextFieldValue("")) }
     var newMessageLoading by remember { mutableStateOf(false) }
+
+    // For AlertDialogs
+    var deleteContactDialogOpen by remember { mutableStateOf(false) }
+    var deleteContactDialogLoading by remember { mutableStateOf(false) }
 
     // For managing keyboard focus
     val localFocusManager = LocalFocusManager.current
@@ -62,6 +71,19 @@ fun ChatScreen(contactAddress: String, chatViewModel: ChatViewModel = viewModel(
                 textAlign = TextAlign.Center
             )
         } else {
+            Button(
+                onClick = { deleteContactDialogOpen = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text(
+                    text = "Delete this contact and conversation",
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             Text(
                 text = "Conversation between you:",
                 style = MaterialTheme.typography.bodySmall
@@ -147,6 +169,36 @@ fun ChatScreen(contactAddress: String, chatViewModel: ChatViewModel = viewModel(
                 maxLines = 3
             )
         }
+    }
+
+    if (deleteContactDialogOpen) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(text = "Delete Contact and Conversation") },
+            text = { Text(text = "All messages sent to and received from the contact (\"$contactAddress\") is not recoverable after this operation. Continue?") },
+            confirmButton = {
+                if (deleteContactDialogLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    TextButton(
+                        onClick = {
+                            deleteContactDialogLoading = true
+                            chatViewModel.deleteContact(contactAddress) {
+                                deleteContactDialogOpen = false
+                                deleteContactDialogLoading = false
+                                onContactDeleted()
+                            }
+                        },
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteContactDialogOpen = false }) {
+                    Text("Cancel")
+                }
+            })
     }
 }
 

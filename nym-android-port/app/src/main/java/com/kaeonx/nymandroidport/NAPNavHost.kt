@@ -13,7 +13,7 @@ import com.kaeonx.nymandroidport.ui.screens.contacts.ContactsScreen
 
 @Composable
 fun NAPNavHost(
-    navController: NavHostController,
+    navController: NavHostController,  // hoisting navController out of NavHost
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -21,6 +21,8 @@ fun NAPNavHost(
         startDestination = NAPDestination.ClientInfo.route,
         modifier = modifier.padding(16.dp)  // .padding() adds padding, not overwrite
     ) {
+        // This pattern of using callbacks to get the navController in NymAndroidPortApp to navigate
+        // is exemplified here: <https://developer.android.com/jetpack/compose/navigation#nav-from-composable>
         composable(route = NAPDestination.ClientInfo.route) {
             ClientInfoScreen()
         }
@@ -33,7 +35,8 @@ fun NAPNavHost(
         }
         composable(route = "${NAPDestination.Chat.route}/{contactAddress}") { backStackEntry ->
             ChatScreen(
-                contactAddress = backStackEntry.arguments?.getString("contactAddress")!!
+                contactAddress = backStackEntry.arguments?.getString("contactAddress")!!,
+                onContactDeleted = { navController.popBackStack() }
             )
         }
     }

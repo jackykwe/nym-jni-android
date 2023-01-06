@@ -1,7 +1,6 @@
 package com.kaeonx.nymandroidport.database
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -36,13 +35,20 @@ interface MessageDAO {
     @Query(
         "INSERT INTO message (fromAddress, toAddress, message) VALUES (:fromAddress, (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey), :message);"
     )
-    suspend fun debugInsertToSelectedClient(
+    suspend fun insertToSelectedClient(
         fromAddress: String,
         message: String,
         selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     ): Long
 
     // Returns number of rows successfully deleted
-    @Delete
-    suspend fun delete(message: Message): Int
+    @Query(
+        "DELETE FROM message " +
+                "WHERE (fromAddress = :contactAddress AND toAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey)) " +
+                "OR (fromAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey) AND toAddress = :contactAddress);"
+    )
+    suspend fun deleteBetweenSelectedClientAndContact(
+        contactAddress: String,
+        selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
+    ): Int
 }
