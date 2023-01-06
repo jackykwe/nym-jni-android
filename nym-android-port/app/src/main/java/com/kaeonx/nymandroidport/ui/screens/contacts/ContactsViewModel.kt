@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 
 // Lasts as long as the app, isn't cleared when navigating away from ContactsScreen
 class ContactsViewModel(application: Application) : AndroidViewModel(application) {
+    // TODO: Other fields store reference to this leakable object
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,
     // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
     // guarded behind a function call.
@@ -52,7 +53,7 @@ class ContactsViewModel(application: Application) : AndroidViewModel(application
 
     internal fun addContact(newContactNymAddress: String, callback: (Boolean) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            contactRepository.addContactOfSelectedClient(
+            contactRepository.addIfNotExistsContactOfSelectedClient(
                 newContactAddress = newContactNymAddress
             )
             callback(true)  // must be called on main thread

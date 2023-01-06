@@ -26,7 +26,7 @@ class ContactRepository(private val contactDAO: ContactDAO) {
         return contactDAO.getAllBySelectedClient().distinctUntilChanged()
     }
 
-    internal suspend fun addContactOfSelectedClient(newContactAddress: String) {
-        contactDAO.insertForSelectedClient(newContactAddress)
+    internal suspend fun addIfNotExistsContactOfSelectedClient(newContactAddress: String) {
+        contactDAO.insertOrIgnoreForSelectedClient(newContactAddress)
     }
 }

@@ -16,14 +16,16 @@ import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
+    // TODO: Other fields store reference to this leakable object
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,
     // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
     // guarded behind a function call.
     private fun getAppContext() = getApplication<Application>().applicationContext
 
+    private val appDatabaseInstance = AppDatabase.getInstance(getAppContext())
     private val keyStringValuePairRepository =
         KeyStringValuePairRepository(
-            AppDatabase.getInstance(getAppContext()).keyStringValuePairDao()
+            appDatabaseInstance.keyStringValuePairDao()
         )
 
     internal val selectedClientAddress = keyStringValuePairRepository.get(
@@ -32,7 +34,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private val messageRepository =
         MessageRepository(
-            AppDatabase.getInstance(getAppContext()).messageDao()
+            appDatabaseInstance.messageDao()
         )
 
     private val _contactAddress = MutableStateFlow("")
@@ -67,7 +69,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             // TODO (clarify): is there a more sensible way to do this? Kinda of bypassed the repository here..
             withContext(Dispatchers.IO) {
-                AppDatabase.getInstance(getAppContext()).run {
+                appDatabaseInstance.run {
                     withTransaction {
                         messageDao().deleteBetweenSelectedClientAndContact(contactAddress)
                         contactDao().deleteForSelectedClient(contactAddress)

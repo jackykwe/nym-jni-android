@@ -210,6 +210,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                         onValueChange = {
                             createClientDialogNewName = it
                         },
+                        modifier = Modifier.fillMaxWidth(),
                         label = { Text("New Nym Client Name") }
                     )
                     Text(

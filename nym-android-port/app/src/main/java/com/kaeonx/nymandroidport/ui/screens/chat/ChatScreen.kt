@@ -267,6 +267,9 @@ fun MeMessageCard(message: Message) {
                 .border(1.5.dp, MaterialTheme.colorScheme.secondary, CircleShape),
             contentAlignment = Alignment.Center
         ) {
+            if (!message.sent) {
+                CircularProgressIndicator()
+            }
             Text(
                 text = "me",
                 color = MaterialTheme.colorScheme.onSecondaryContainer,

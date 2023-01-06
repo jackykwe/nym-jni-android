@@ -13,9 +13,9 @@ interface ContactDAO {
     fun getAllBySelectedClient(selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY): Flow<List<Contact>>  // empty list if no client is selected
 
     @Query(
-        "INSERT INTO contact VALUES ((SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey), :newContactAddress);"
+        "INSERT OR IGNORE INTO contact VALUES ((SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey), :newContactAddress);"
     )
-    suspend fun insertForSelectedClient(
+    suspend fun insertOrIgnoreForSelectedClient(
         newContactAddress: String,
         selectedClientAddressKey: String = RUNNING_CLIENT_ADDRESS_KSVP_KEY
     )

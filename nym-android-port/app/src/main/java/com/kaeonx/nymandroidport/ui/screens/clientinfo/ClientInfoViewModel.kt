@@ -39,6 +39,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     // BASIC VIEWMODEL FUNCTIONS //
     ///////////////////////////////
 
+    // TODO: Other fields store reference to this leakable object
     // This is a leakable object, so only generate when needed, and GC when done. Therefore,
     // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
     // guarded behind a function call.
@@ -70,16 +71,17 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     private val nymRunWorkInfoFlow = workManager.getWorkInfosForUniqueWorkLiveData(
         NYM_RUN_UNIQUE_WORK_NAME
     ).asFlow().map {
-//        if (it.size > 1) throw IllegalStateException(">1 WorkInfos co-existing")  // required for correctness of next line, and all code dependent on it
+        if (it.size > 1) throw IllegalStateException(">1 WorkInfos co-existing")  // required for correctness of next line, and all code dependent on it
         it.getOrNull(0)
     }
     internal val nymRunWorkInfoAllDebugFlow = workManager.getWorkInfosForUniqueWorkLiveData(
         NYM_RUN_UNIQUE_WORK_NAME
     ).asFlow().stateIn(viewModelScope, SharingStarted.Lazily, listOf())
 
-    init {
-        workManager.cancelAllWork()
-    }
+    // For debugging only
+//    init {
+//        workManager.cancelAllWork()
+//    }
 
     private suspend fun getClientsList(): List<String> {
         return withContext(Dispatchers.IO) {

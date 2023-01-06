@@ -13,10 +13,17 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * distinctUntilChanged() operator at the observation site.
  * <https://developer.android.com/training/data-storage/room/async-queries#observable>
  */
-// TODO: Websocket interaction to push messages into database (both from others and from "me")
 class MessageRepository(private val messageDAO: MessageDAO) {
     internal fun getMessagesWithSelectedClient(contactAddress: String): Flow<List<Message>> {
         return messageDAO.getAllWithSelectedClient(contactAddress).distinctUntilChanged()
+    }
+
+    internal fun getEarliestPendingSendFromSelectedClient(): Flow<Message?> {
+        return messageDAO.getEarliestPendingSendFromSelectedClient()
+    }
+
+    internal suspend fun updateEarliestPendingSendById(id: Int) {
+        return messageDAO.updateEarliestPendingSendById(id)
     }
 
     internal suspend fun sendMessageFromSelectedClient(toAddress: String, message: String) {

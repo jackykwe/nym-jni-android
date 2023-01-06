@@ -102,6 +102,7 @@ fun ContactsScreen(
                         onValueChange = {
                             addContactDialogAddress = it
                         },
+                        modifier = Modifier.fillMaxWidth(),
                         label = { Text("New contact's Nym address") }
                     )
                     Text(

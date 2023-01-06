@@ -1,11 +1,12 @@
 package com.kaeonx.nymandroidport.services
 
 import android.util.Log
+import com.kaeonx.nymandroidport.utils.NymBinaryMessageReceived
+import com.kaeonx.nymandroidport.utils.NymTextMessageReceived
 import okhttp3.*
 import okio.ByteString
 import okio.EOFException
 import java.net.ConnectException
-import java.nio.charset.Charset
 
 private const val TAG = "webSocketClient"
 internal const val NYM_RUN_PORT: UShort = 1977u
@@ -22,7 +23,8 @@ class NymWebSocketClient private constructor() {
 
     private lateinit var webSocketInstance: WebSocket
     internal fun connectToWebSocket(
-        onSuccess: () -> Unit  // write to KSVP
+        onSuccess: () -> Unit,  // write to KSVP
+        onReceive: (senderAddress: String, message: String) -> Unit,
     ) {
         webSocketInstance = okHttpClient.newWebSocket(
             request = Request.Builder()
@@ -40,15 +42,21 @@ class NymWebSocketClient private constructor() {
                     onSuccess()
                 }
 
+                // TODO (clarify): Why is this sometimes called? (esp. first (few) message(s))
+                // TODO (clarify): There is a first 10 bytes of "garbage", what are these?
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                    Log.i(
-                        TAG,
-                        "webSocketListener: onMessage [bytes: ByteString] ${bytes.string(Charset.defaultCharset())}"
-                    )
+//                    Log.w(TAG, "received BYTES message via onMessage(): >${bytes.substring(10).utf8()}<")
+                    NymBinaryMessageReceived
+                        .from(bytes.substring(10).utf8())
+                        .let { onReceive(it.senderAddress, it.trueMessage) }
                 }
 
+                // TODO (clarify): Why is this sometimes not called? (esp. first (few) message(s))
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    Log.i(TAG, "webSocketListener: onMessage [text: String] $text")
+//                    Log.w(TAG, "received TEXT message via onMessage(): >$text<")
+                    NymTextMessageReceived
+                        .from(text)
+                        .let { onReceive(it.senderAddress, it.trueMessage) }
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -61,7 +69,7 @@ class NymWebSocketClient private constructor() {
                             )
                             Log.w(TAG, t.stackTraceToString())
                             Log.w(TAG, "Retrying...")
-                            connectToWebSocket(onSuccess)
+                            connectToWebSocket(onSuccess, onReceive)
                         }
                         is EOFException -> {
                             Log.w(
@@ -92,6 +100,17 @@ class NymWebSocketClient private constructor() {
             }
         )
     }
+
+    /**
+     * From the documentation of `WebSocket::send()`:
+     * > This method returns true if the message was enqueued. Messages that would overflow the
+     * > outgoing message buffer will be rejected and trigger a graceful shutdown of this web socket.
+     * > This method returns false in that case, and in any other case where this web socket is
+     * > closing, closed, or canceled.
+     *
+     * > This method returns immediately.
+     */
+    internal fun sendMessageThroughWebSocket(message: String) = webSocketInstance.send(message)
 
     companion object {
         @Volatile
