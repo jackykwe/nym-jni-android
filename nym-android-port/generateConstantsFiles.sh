@@ -6,6 +6,6 @@ echo "$currentDir"
 cd ../sphinx-jni || exit 1
 cargo run
 cd "$currentDir" || exit 1
-cp ../sphinx-jni/generated/SphinxConstants.kt app/src/main/java/com/kaeonx/nymandroidport
+cp ../sphinx-jni/generated/SphinxConstants.kt app/src/main/java/com/kaeonx/nymchatprototype
 
 echo "generateConstantsFiles: OK"

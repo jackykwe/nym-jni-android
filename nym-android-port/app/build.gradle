@@ -7,12 +7,12 @@ plugins {
 }
 
 android {
-    namespace 'com.kaeonx.nymandroidport'
+    namespace 'com.kaeonx.nymchatprototype'
     compileSdk 33
     ndkVersion '25.1.8937393'  // This is how the NDK is detected
 
     defaultConfig {
-        applicationId 'com.kaeonx.nymandroidport'
+        applicationId 'com.kaeonx.nymchatprototype'
         minSdk 31
         // Why 31 is chosen: https://developer.android.com/google/play/requirements/target-sdk
         targetSdk 33
@@ -81,12 +81,12 @@ dependencies {
     implementation 'androidx.work:work-runtime-ktx:2.7.1'
 
     // Room
-    implementation 'androidx.room:room-runtime:2.4.3'
-    annotationProcessor 'androidx.room:room-compiler:2.4.3'
+    implementation 'androidx.room:room-runtime:2.5.0'
+    annotationProcessor 'androidx.room:room-compiler:2.5.0'
     // To use Kotlin annotation processing tool (kapt)
-    kapt 'androidx.room:room-compiler:2.4.3'
+    kapt 'androidx.room:room-compiler:2.5.0'
     // optional - Kotlin Extensions and Coroutines support for Room
-    implementation 'androidx.room:room-ktx:2.4.3'
+    implementation 'androidx.room:room-ktx:2.5.0'
 //    // optional - Paging 3 Integration
 //    implementation 'androidx.room:room-paging:2.4.3'
 
