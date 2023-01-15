@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MessageDAO {
-    // TODO: Use paging
+    // DONE: Use paging (not necessary; late stage optimisation)
     // DONE: Consider having 1 database per user, right now all users share 1 database (need to see
     // this when hooking up database singleton). There's no need for this: access to database is
     // handled by Kotlin code. The end user cannot normally access the database directly.

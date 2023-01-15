@@ -36,6 +36,10 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
 
     // runs on Dispatchers.Default by default
     override suspend fun doRemoteWork(): Result {
+        Log.i(
+            TAG,
+            "NymRunWorker doing work in process ${Process.myPid()} ${Thread.currentThread().id}"
+        )
         // NB: When in a separate process, applicationContext is a different instance! (Clarified: Yes)
         val clientId = inputData.getString(NYMRUNWORKER_CLIENT_ID_KEY) ?: return Result.failure()
 
@@ -72,12 +76,10 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
     private var nymWebSocketBoundServiceMessenger: Messenger? = null
 
     /** Class for interacting with the main interface of the bound services. */
-    private var bindingInProgress = false
     private lateinit var nymWebSocketBoundServiceConnection: ServiceConnection
 
     // Defined as a separate function to give it a better name in Kotlin
     private fun bindToNymWebSocketBoundService() {
-        bindingInProgress = true
         nymWebSocketBoundServiceConnection = object : ServiceConnection {
             /** This is called when the connection with the NymWebSocketBoundService has been
              * established, giving us the object we can use to interact with the service. We are
@@ -86,9 +88,9 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
              */
             override fun onServiceConnected(className: ComponentName, service: IBinder) {
                 nymWebSocketBoundServiceMessenger = Messenger(service)
-                bindingInProgress = false
 
                 // communicate with NymWebSocketBoundService
+                Log.i(TAG, "Haiya doing IPC")
                 nymWebSocketBoundServiceMessenger?.send(
                     Message.obtain(null, MSG_TYPE_CONNECT_TO_WEBSOCKET)
                 )
@@ -104,12 +106,11 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
              * will receive a call to onServiceConnected(ComponentName, IBinder) when the Service is
              * next running.
              *
-             * TODO (clarify): Binding is either active or inactive (bound/unbound), and when it's
-             *                 active, there can be either an active connection or disconnected.
+             * DONE (clarify): Binding is either active or inactive (bound/unbound), and when it's
+             *                 active, there can be either an active connection or disconnected. Yes. Two stage.
              */
             override fun onServiceDisconnected(className: ComponentName) {
                 nymWebSocketBoundServiceMessenger = null
-                bindingInProgress = false
             }
         }
 
@@ -120,7 +121,7 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
             nymWebSocketBoundServiceConnection,
             Context.BIND_AUTO_CREATE
         )
-        // TODO (clarify): what happens on failure to bind? Do we need to unbind? (see a few lines up)
+        // DONE (clarify): what happens on failure to bind? Do we need to unbind? (see a few lines up)  // Minor detail; no pts for prototype.
         if (!successfullyBound) {
             applicationContext.unbindService(nymWebSocketBoundServiceConnection)  // asynchronous; service actually destroyed after this method returns
         }
@@ -130,28 +131,24 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
     // Named as such because it makes sense to the programmer on the Rust side
     @Suppress("unused")
     private fun afterSocketOpenedCalledFromRust() {
-//        Log.w(TAG, "afterSocketOpenedCalledFromRust() successfully called from Rust")
+        Log.i(TAG, "afterSocketOpenedCalledFromRust() successfully called from Rust")
         bindToNymWebSocketBoundService()
     }
 
+    // DONE: No need to check if (nymWebSocketBoundServiceMessenger == null), because of the FSM you created
     // Defined as a separate function to give it a better name in Kotlin
     private fun unbindFromNymWebSocketBoundService() {
-        if (bindingInProgress) {
-            // TODO (Clarify+): Any more sensible way to do this?
-            do {
-                Thread.sleep(1000L)
-            } while (bindingInProgress)
-            applicationContext.unbindService(nymWebSocketBoundServiceConnection)  // asynchronous; service actually destroyed after this method returns
-        } else if (nymWebSocketBoundServiceMessenger != null) {
-            applicationContext.unbindService(nymWebSocketBoundServiceConnection)  // asynchronous; service actually destroyed after this method returns
+        if (nymWebSocketBoundServiceMessenger == null) {
+            throw IllegalStateException()
         }
+        applicationContext.unbindService(nymWebSocketBoundServiceConnection)  // asynchronous; service actually destroyed after this method returns
     }
 
     // Still accessible from Rust via JNI, despite private
     // Need to unbind service, otherwise it keeps running and isn't destroyed by the Android OS.
     @Suppress("unused")
     private fun beforeSocketClosedCalledFromRust() {
-//        Log.w(TAG, "beforeSocketClosedCalledFromRust() successfully called from Rust")
+        Log.w(TAG, "beforeSocketClosedCalledFromRust() successfully called from Rust")
         unbindFromNymWebSocketBoundService()
     }
 

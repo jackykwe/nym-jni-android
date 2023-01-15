@@ -17,20 +17,17 @@ import kotlinx.coroutines.launch
 
 // Lasts as long as the app, isn't cleared when navigating away from ContactsScreen
 class ContactsViewModel(application: Application) : AndroidViewModel(application) {
-    // TODO: Other fields store reference to this leakable object
-    // This is a leakable object, so only generate when needed, and GC when done. Therefore,
-    // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
-    // guarded behind a function call.
-    private fun getAppContext() = getApplication<Application>().applicationContext
+    // DONE: Other fields store reference to this leakable object; It's OK, lasts till END of app. Problem is with activityContext.
+    private val applicationContext = application
 
     private val keyStringValuePairRepository =
         KeyStringValuePairRepository(
-            AppDatabase.getInstance(getAppContext()).keyStringValuePairDao()
+            AppDatabase.getInstance(applicationContext).keyStringValuePairDao()
         )
 
     private val contactRepository =
         ContactRepository(
-            AppDatabase.getInstance(getAppContext()).contactDao()
+            AppDatabase.getInstance(applicationContext).contactDao()
         )
 
     internal val contactsScreenUIState =

@@ -18,6 +18,11 @@ import kotlin.system.exitProcess
 private const val TAG = "nymWebSocketBoundService"
 
 class NymWebSocketBoundService : Service() {
+    override fun onCreate() {
+        Log.i(TAG, "NymWebSocketBoundService created with pid ${Process.myPid()}")
+        super.onCreate()
+    }
+
     // Courtesy of <https://stackoverflow.com/a/63407811>
     private val supervisorJob by lazy { SupervisorJob() }
     private val serviceScope by lazy { CoroutineScope(Dispatchers.IO + supervisorJob) }
@@ -51,15 +56,17 @@ class NymWebSocketBoundService : Service() {
             override fun handleMessage(msg: Message) {
                 when (msg.what) {
                     MSG_TYPE_CONNECT_TO_WEBSOCKET -> {
+                        Log.w(TAG, "attempting to connect to websocket...")
                         // Instantiate and connect to web socket.
                         // NB: This code could've well resided in this class's onBind(), but I put
                         // it here because I want to send a message back to NymRunService when the
-                        // socket's successfully opened.
-                        // TODO (clarify): Why doesn't Kotlin capture and preserve references? If I don't pass msg.replyTo as an additional argument, it gets deleted by GC and becomes null...?
-                        //                 nymWebSocketClient.connectToWebSocket(msg.replyTo) { replyTo ->
+                        // socket's successfully opened
+                        // DONE (clarify): Why doesn't Kotlin capture and preserve references? If I don't pass msg.replyTo as an additional argument, it gets deleted by GC and becomes null...?
+                        //                 nymWebSocketClient.connectToWebSocket(msg.replyTo) { replyTo ->  // Messenger not passable, nuance with DIFFERENT PROCESSES
                         nymWebSocketClient.connectToWebSocket(
                             onSuccess = {
                                 serviceScope.launch {
+                                    Log.i(TAG, "writing to db... SOCKET OPEN")
                                     keyStringValuePairRepository.put(
                                         listOf(
                                             NYM_RUN_STATE_KSVP_KEY to NymRunState.SOCKET_OPEN.name
@@ -67,7 +74,7 @@ class NymWebSocketBoundService : Service() {
                                     )
                                 }
                             },
-                            onReceive = { senderAddress, message ->
+                            onReceive = { senderAddress, message, recvTs ->
                                 serviceScope.launch {
                                     appDatabaseInstance.run {
                                         withTransaction {
@@ -76,7 +83,7 @@ class NymWebSocketBoundService : Service() {
                                             )
                                             messageDao().insertToSelectedClient(
                                                 fromAddress = senderAddress,
-                                                message = message
+                                                message = "$message.$recvTs"
                                             )
                                         }
                                     }

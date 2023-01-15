@@ -8,20 +8,16 @@ import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymandroidport.database.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
 import com.kaeonx.nymandroidport.repositories.MessageRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+
+private const val TAG = "chatViewModel"
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
-    // TODO: Other fields store reference to this leakable object
-    // This is a leakable object, so only generate when needed, and GC when done. Therefore,
-    // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
-    // guarded behind a function call.
-    private fun getAppContext() = getApplication<Application>().applicationContext
+    // DONE: Other fields store reference to this leakable object; It's OK, lasts till END of app. Problem is with activityContext.
+    private val applicationContext = application
 
-    private val appDatabaseInstance = AppDatabase.getInstance(getAppContext())
+    private val appDatabaseInstance = AppDatabase.getInstance(applicationContext)
     private val keyStringValuePairRepository =
         KeyStringValuePairRepository(
             appDatabaseInstance.keyStringValuePairDao()
@@ -78,4 +74,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             callback()  // must be called on main thread
         }
     }
+
+    // For data collection
+//    init {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            while (true) {
+//                delay(1000L)
+//                messageRepository.sendMessageFromSelectedClient(
+//                    selectedClientAddress.value!!,
+//                    System.currentTimeMillis().toString()
+//                )
+//            }
+//        }
+//    }
 }

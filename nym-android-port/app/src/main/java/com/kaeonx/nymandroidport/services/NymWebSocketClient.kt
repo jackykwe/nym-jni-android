@@ -24,7 +24,8 @@ class NymWebSocketClient private constructor() {
     private lateinit var webSocketInstance: WebSocket
     internal fun connectToWebSocket(
         onSuccess: () -> Unit,  // write to KSVP
-        onReceive: (senderAddress: String, message: String) -> Unit,
+        onReceive: (senderAddress: String, message: String, recvTs: Long) -> Unit,
+        backoffMillis: Long = 1L
     ) {
         webSocketInstance = okHttpClient.newWebSocket(
             request = Request.Builder()
@@ -42,34 +43,42 @@ class NymWebSocketClient private constructor() {
                     onSuccess()
                 }
 
-                // TODO (clarify): Why is this sometimes called? (esp. first (few) message(s))
-                // TODO (clarify): There is a first 10 bytes of "garbage", what are these?
+                // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
+                // DONE (clarify): There is a first 10 bytes of "garbage", what are these?; Nym-side bug
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                    val now = System.currentTimeMillis()
 //                    Log.w(TAG, "received BYTES message via onMessage(): >${bytes.substring(10).utf8()}<")
                     NymBinaryMessageReceived
                         .from(bytes.substring(10).utf8())
-                        .let { onReceive(it.senderAddress, it.trueMessage) }
+                        .let { onReceive(it.senderAddress, it.trueMessage, now) }
                 }
 
-                // TODO (clarify): Why is this sometimes not called? (esp. first (few) message(s))
+                // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
                 override fun onMessage(webSocket: WebSocket, text: String) {
+                    val now = System.currentTimeMillis()
 //                    Log.w(TAG, "received TEXT message via onMessage(): >$text<")
                     NymTextMessageReceived
                         .from(text)
-                        .let { onReceive(it.senderAddress, it.trueMessage) }
+                        .let { onReceive(it.senderAddress, it.trueMessage, now) }
                 }
 
+                // DONE: Backoff with sleeping
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     when (t) {
                         is ConnectException -> {
-                            // TODO: Non-deterministically fails :(
+                            // DONE: Non-deterministically fails. Because Nym opens up socket asynchronously!
                             Log.w(
                                 TAG,
                                 "Web socket to Nym Run closed due to non-deterministic error:"
                             )
-                            Log.w(TAG, t.stackTraceToString())
-                            Log.w(TAG, "Retrying...")
-                            connectToWebSocket(onSuccess, onReceive)
+//                            Log.w(TAG, t.stackTraceToString())
+                            Log.w(TAG, "Retrying... (backing off: $backoffMillis ms)")
+                            Thread.sleep(backoffMillis)
+                            connectToWebSocket(
+                                onSuccess,
+                                onReceive,
+                                backoffMillis * 2
+                            )  // because Rust opens socket asynchronously
                         }
                         is EOFException -> {
                             Log.w(

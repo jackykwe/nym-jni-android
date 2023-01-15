@@ -3,6 +3,7 @@ package com.kaeonx.nymandroidport.ui.screens.clientinfo
 import android.app.ActivityManager
 import android.app.Application
 import android.content.ComponentName
+import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.asFlow
@@ -31,7 +32,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-//private const val TAG = "clientInfoViewModel"
+private const val TAG = "clientInfoViewModel"
 private const val NYM_RUN_UNIQUE_WORK_NAME = "nymRunUWN"
 
 class ClientInfoViewModel(application: Application) : AndroidViewModel(application) {
@@ -39,12 +40,9 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     // BASIC VIEWMODEL FUNCTIONS //
     ///////////////////////////////
 
-    // TODO: Other fields store reference to this leakable object
-    // This is a leakable object, so only generate when needed, and GC when done. Therefore,
-    // not stored as a persistent field in an AndroidViewModel (can cause leak). Instead, it is
-    // guarded behind a function call.
-    private fun getAppContext() = getApplication<Application>().applicationContext
-    private fun getClientsDir() = getAppContext().filesDir
+    // DONE: Other fields store reference to this leakable object; It's OK, lasts till END of app. Problem is with activityContext.
+    private val applicationContext = application
+    private fun getClientsDir() = applicationContext.filesDir
         .toPath().resolve(".nym").resolve("clients")
         .toFile()
 
@@ -53,7 +51,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     /////////////////////////////////////////
 
     private val keyStringValuePairRepository = KeyStringValuePairRepository(
-        AppDatabase.getInstance(getAppContext()).keyStringValuePairDao()
+        AppDatabase.getInstance(applicationContext).keyStringValuePairDao()
     )
     private val ksvpFlow = keyStringValuePairRepository.get(
         listOf(
@@ -98,11 +96,14 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             nymRunWorkInfoFlow,
             nymRunStateFlow
         ) { ksvpMap, nymRunWorkInfo, nymRunState ->
+            Log.i(TAG, "one of 3 flows changed")
             viewModelScope.launch(Dispatchers.IO) {
+                Log.i(TAG, "one of 3 flows changed (inside IO dispatcher)")
                 if (
                     nymRunState == NymRunState.TEARING_DOWN
                     && nymRunWorkInfo?.state?.isFinished == true
                 ) {
+                    Log.i(TAG, "one of 3 flows changed (inside IO dispatcher) (success)")
                     keyStringValuePairRepository.put(
                         listOf(
                             NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name
@@ -140,7 +141,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         // coroutines are launched on UI thread (Dispatches.Main) by default
         viewModelScope.launch(Dispatchers.Default) {
             // sets up logging on Rust side
-            topLevelInit(getAppContext().filesDir.absolutePath)
+            topLevelInit(applicationContext.filesDir.absolutePath)
         }
     }
 
@@ -172,9 +173,12 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     internal fun enqueueNymRunWork() {
+        Log.i(TAG, "enqueuing work...")
         viewModelScope.launch {
+            Log.i(TAG, "enqueuing work... (inside coroutine Main/UI)")
             workManager.pruneWork()  // necessary to preserve the invariant that there exists at most 1 WorkInfo
             withContext(Dispatchers.IO) {
+                Log.i(TAG, "enqueuing work... (inside coroutine, inside withContext IO)")
                 keyStringValuePairRepository.put(
                     listOf(
                         NYM_RUN_STATE_KSVP_KEY to NymRunState.SETTING_UP.name
@@ -183,7 +187,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             }
 
             val nymRunServiceName = NymRunService::class.java.name
-            val componentName = ComponentName(getAppContext().packageName, nymRunServiceName)
+            val componentName = ComponentName(applicationContext.packageName, nymRunServiceName)
 
             // TODO: empty constraints; enable during evaluation
             val constraints = Constraints.Builder().build()
@@ -224,9 +228,11 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             }
 
             val nymRunServicePid =
-                getAppContext().getSystemService<ActivityManager>()?.runningAppProcesses?.getOrNull(
-                    1
-                )?.pid
+                applicationContext
+                    .getSystemService<ActivityManager>()
+                    ?.runningAppProcesses
+                    ?.getOrNull(1)
+                    ?.pid
             if (nymRunServicePid != null) {
 //                Log.w(TAG, "[stopNymRunWork()] SIGINT-ing PID: $nymRunServicePid")
                 android.os.Process.sendSignal(nymRunServicePid, 2)  // SIGINT

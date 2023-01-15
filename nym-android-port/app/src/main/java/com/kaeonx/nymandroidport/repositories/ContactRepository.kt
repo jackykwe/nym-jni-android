@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 // Also, the data layer should expose suspend functions and Flows, instead of launching coroutines.
 // The launch of coroutines is done in the UI layer (ViewModel).
 // <https://developer.android.com/kotlin/coroutines/coroutines-best-practices#coroutines-data-layer>
-// TODO (clarify): I inject the DAO directly into the repository, as the DataSource pattern seems to be an additional layer of unnecessary, repeated indirection.
+// DONE (clarify): I inject the DAO directly into the repository, as the DataSource pattern seems to be an additional layer of unnecessary, repeated indirection.
 // <https://developer.android.com/topic/architecture/data-layer#room_as_a_data_source>
 /*
  * Reminder: use distinctUntilChanged()
