@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.kaeonx.nymchatprototype.jni.instrumentedtesthelpers
+package com.kaeonx.nymandroidport.jni.instrumentedtesthelpers
 
 internal fun _testReceiveBooleanTrue(): Boolean = _testReceiveBooleanTrueImpl()
 private external fun _testReceiveBooleanTrueImpl(): Boolean

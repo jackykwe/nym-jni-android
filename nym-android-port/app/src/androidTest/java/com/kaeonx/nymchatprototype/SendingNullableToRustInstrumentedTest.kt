@@ -2,8 +2,9 @@ package com.kaeonx.nymchatprototype
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.kaeonx.nymandroidport.jni.instrumentedtesthelpers.*
 import com.kaeonx.nymchatprototype.jni.instrumentedtesthelpers.*
-import com.kaeonx.nymchatprototype.jni.topLevelInit
+import com.kaeonx.nymandroidport.jni.topLevelInit
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

@@ -1,6 +1,6 @@
-package com.kaeonx.nymchatprototype.jni
+package com.kaeonx.nymandroidport.jni
 
-import com.kaeonx.nymchatprototype.services.NymRunWorker
+import com.kaeonx.nymandroidport.services.NymRunWorker
 
 internal fun topLevelInit(storageAbsPath: String, configEnvFile: String? = null) =
     topLevelInitImpl(storageAbsPath, configEnvFile)

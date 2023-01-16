@@ -11,18 +11,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_CLASS_NAME
 import androidx.work.multiprocess.RemoteListenableWorker.ARGUMENT_PACKAGE_NAME
-import com.kaeonx.nymchatprototype.database.AppDatabase
+import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymchatprototype.database.NYM_RUN_STATE_KSVP_KEY
 import com.kaeonx.nymchatprototype.database.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import com.kaeonx.nymchatprototype.database.RUNNING_CLIENT_ID_KSVP_KEY
-import com.kaeonx.nymchatprototype.jni.getAddress
-import com.kaeonx.nymchatprototype.jni.nymInit
-import com.kaeonx.nymchatprototype.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymchatprototype.services.NYMRUNWORKER_CLIENT_ID_KEY
-import com.kaeonx.nymchatprototype.services.NYM_RUN_PORT
-import com.kaeonx.nymchatprototype.services.NymRunService
-import com.kaeonx.nymchatprototype.services.NymRunWorker
-import com.kaeonx.nymchatprototype.utils.NymRunState
+import com.kaeonx.nymandroidport.jni.getAddress
+import com.kaeonx.nymandroidport.jni.nymInit
+import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
+import com.kaeonx.nymandroidport.services.NYMRUNWORKER_CLIENT_ID_KEY
+import com.kaeonx.nymandroidport.services.NYM_RUN_PORT
+import com.kaeonx.nymandroidport.services.NymRunService
+import com.kaeonx.nymandroidport.services.NymRunWorker
+import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -140,6 +140,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         // coroutines are launched on UI thread (Dispatches.Main) by default
         viewModelScope.launch(Dispatchers.Default) {
             // sets up logging on Rust side
+            // TODO: Reactivate when moduling is done
 //            topLevelInit(applicationContext.filesDir.absolutePath)
         }
     }

@@ -1,4 +1,4 @@
-package com.kaeonx.nymchatprototype.database
+package com.kaeonx.nymandroidport.database
 
 import android.content.Context
 import android.util.Log
@@ -10,16 +10,14 @@ private const val TAG = "appDatabase"
 
 @Database(
     entities = [
-        Contact::class,
         KeyStringValuePair::class,
-        Message::class
+        NymEnqueuedOutgoingTextMessage::class,
     ],
     version = 1
 )
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun contactDao(): ContactDAO
+abstract class NymDatabase : RoomDatabase() {
     abstract fun keyStringValuePairDao(): KeyStringValuePairDAO
-    abstract fun messageDao(): MessageDAO
+    abstract fun nymTextMessageToSendDao(): NymEnqueuedOutgoingTextMessageDAO
 
     // Handling singleton within an abstract class instead of object (more Kotlin-like)
     // <https://developer.android.com/codelabs/android-room-with-a-view-kotlin#7>
@@ -27,16 +25,16 @@ abstract class AppDatabase : RoomDatabase() {
     // optimisation has been done: double-checked locking.
     companion object {
         @Volatile
-        private var instance: AppDatabase? = null
+        private var instance: NymDatabase? = null
 
-        fun getInstance(applicationContext: Context): AppDatabase {
+        fun getInstance(applicationContext: Context): NymDatabase {
             return instance ?: synchronized(this) {
                 if (instance == null) {  // double null check necessary!
-                    Log.w(TAG, "Requesting AppDatabase instance")
+                    Log.w(TAG, "Requesting NymDatabase instance")
                     instance = Room.databaseBuilder(
                         applicationContext,
-                        AppDatabase::class.java,
-                        "nym-chat-prototype-db"
+                        NymDatabase::class.java,
+                        "nym-android-port-db"
                     ).enableMultiInstanceInvalidation()
                         .build()
                 }

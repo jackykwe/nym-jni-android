@@ -39,13 +39,13 @@
             tools:node="remove" />
 
         <service
-            android:name=".services.NymRunService"
+            android:name="com.kaeonx.nymandroidport.services.NymRunService"
             android:description="@string/nym_run_service_description"
             android:exported="false"
             android:process="@string/nym_run_service_process_name" />
 
         <service
-            android:name=".services.NymWebSocketBoundService"
+            android:name="com.kaeonx.nymandroidport.services.NymWebSocketBoundService"
             android:description="@string/nym_websocket_bound_service_description"
             android:exported="false"
             android:process="@string/nym_websocket_bound_service_process_name" />

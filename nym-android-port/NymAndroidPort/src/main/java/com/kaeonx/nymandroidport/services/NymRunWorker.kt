@@ -1,4 +1,4 @@
-package com.kaeonx.nymchatprototype.services
+package com.kaeonx.nymandroidport.services
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -13,12 +13,16 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.multiprocess.RemoteCoroutineWorker
 import com.kaeonx.nymchatprototype.R
-import com.kaeonx.nymchatprototype.database.AppDatabase
+import com.kaeonx.nymandroidport.database.AppDatabase
+import com.kaeonx.nymandroidport.database.NYM_RUN_STATE_KSVP_KEY
+import com.kaeonx.nymandroidport.database.NymDatabase
+import com.kaeonx.nymandroidport.jni.nymRun
+import com.kaeonx.nymandroidport.jni.topLevelInit
 import com.kaeonx.nymchatprototype.database.NYM_RUN_STATE_KSVP_KEY
 import com.kaeonx.nymchatprototype.jni.nymRun
 import com.kaeonx.nymchatprototype.jni.topLevelInit
-import com.kaeonx.nymchatprototype.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymchatprototype.utils.NymRunState
+import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
+import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -30,7 +34,7 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
 
     private val keyStringValuePairRepository by lazy {
         KeyStringValuePairRepository(
-            AppDatabase.getInstance(applicationContext).keyStringValuePairDao()
+            NymDatabase.getInstance(applicationContext).keyStringValuePairDao()
         )
     }
 
@@ -155,6 +159,8 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
     //////////////////////////////////////////////////
     // FOREGROUND SERVICE NOTIFICATIONS BOILERPLATE //
     //////////////////////////////////////////////////
+
+    // TODO (Stuck; clarify): Can dependency libraries call functions from it's parent?
 
     private val notificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.kaeonx.nymchatprototype.jni.instrumentedtesthelpers
+package com.kaeonx.nymandroidport.jni.instrumentedtesthelpers
 
 /**
  * Sends a `Boolean?` from Kotlin to Rust, then receive back a `String` reporting what Rust received.

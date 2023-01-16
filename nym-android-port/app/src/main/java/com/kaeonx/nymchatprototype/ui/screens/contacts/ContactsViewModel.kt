@@ -3,10 +3,10 @@ package com.kaeonx.nymchatprototype.ui.screens.contacts
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaeonx.nymchatprototype.database.AppDatabase
+import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymchatprototype.database.RUNNING_CLIENT_ID_KSVP_KEY
 import com.kaeonx.nymchatprototype.repositories.ContactRepository
-import com.kaeonx.nymchatprototype.repositories.KeyStringValuePairRepository
+import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine

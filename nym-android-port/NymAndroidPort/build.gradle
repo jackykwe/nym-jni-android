@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.kapt'
 //    id 'org.jetbrains.kotlin.jvm' version '1.8.0'  // for JSON serialisation
@@ -7,19 +7,15 @@ plugins {
 }
 
 android {
-    namespace 'com.kaeonx.nymchatprototype'
+    namespace 'com.kaeonx.nymandroidport'
     compileSdk 33
-    ndkVersion '25.1.8937393'  // This is how the NDK is detected
 
     defaultConfig {
-        applicationId 'com.kaeonx.nymchatprototype'
         minSdk 31
-        // Why 31 is chosen: https://developer.android.com/google/play/requirements/target-sdk
         targetSdk 33
-        versionCode 1
-        versionName '1.0'
 
-        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
@@ -35,17 +31,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-    buildFeatures {
-        compose true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = '1.3.2'
-    }
 }
 
 dependencies {
-    api project(path: ':NymAndroidPort')
-
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.activity:activity-compose:1.6.1'
     implementation 'androidx.work:work-multiprocess:2.7.1'  // for RemoteCoroutineWorker
@@ -98,15 +86,4 @@ dependencies {
 
     // JSON Serialisation
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1'
-}
-
-task beforeAppBuild(type: Exec) {
-    workingDir '../'
-    commandLine './beforeAppBuild.sh'
-}
-
-afterEvaluate {
-    tasks.named('preBuild') {
-        it.dependsOn 'beforeAppBuild'
-    }
 }

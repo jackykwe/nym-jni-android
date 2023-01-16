@@ -1,16 +1,18 @@
-package com.kaeonx.nymchatprototype.services
+package com.kaeonx.nymandroidport.services
 
 import android.app.Service
 import android.content.Intent
 import android.os.*
 import android.util.Log
 import androidx.room.withTransaction
-import com.kaeonx.nymchatprototype.database.AppDatabase
+import com.kaeonx.nymandroidport.database.AppDatabase
+import com.kaeonx.nymandroidport.database.NYM_RUN_STATE_KSVP_KEY
+import com.kaeonx.nymandroidport.database.NymDatabase
 import com.kaeonx.nymchatprototype.database.NYM_RUN_STATE_KSVP_KEY
-import com.kaeonx.nymchatprototype.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymchatprototype.repositories.MessageRepository
-import com.kaeonx.nymchatprototype.utils.NymMessageToSend
-import com.kaeonx.nymchatprototype.utils.NymRunState
+import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
+import com.kaeonx.nymandroidport.repositories.MessageRepository
+import com.kaeonx.nymandroidport.database.NymEnqueuedOutgoingTextMessage
+import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.system.exitProcess
@@ -27,7 +29,7 @@ class NymWebSocketBoundService : Service() {
     private val supervisorJob by lazy { SupervisorJob() }
     private val serviceScope by lazy { CoroutineScope(Dispatchers.IO + supervisorJob) }
 
-    private val appDatabaseInstance by lazy { AppDatabase.getInstance(applicationContext) }
+    private val appDatabaseInstance by lazy { NymDatabase.getInstance(applicationContext) }
     private val keyStringValuePairRepository by lazy {
         KeyStringValuePairRepository(
             appDatabaseInstance.keyStringValuePairDao()
@@ -39,7 +41,7 @@ class NymWebSocketBoundService : Service() {
         }
     }
     private val messageRepository by lazy {
-        MessageRepository(
+        NymRepository(
             appDatabaseInstance.messageDao()
         )
     }
@@ -112,7 +114,7 @@ class NymWebSocketBoundService : Service() {
                 if (nymRunState == NymRunState.SOCKET_OPEN && earliestPendingSendMessage != null) {
                     // successfully enqueued into web socket outgoing queue
                     val successfullyEnqueued = nymWebSocketClient.sendMessageThroughWebSocket(
-                        NymMessageToSend.from(earliestPendingSendMessage).encodeToString()
+                        NymEnqueuedOutgoingTextMessage.from(earliestPendingSendMessage).encodeToString()
                     )
                     if (successfullyEnqueued) {
                         // prepare to send next pending-send message

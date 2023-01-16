@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import com.kaeonx.nymchatprototype.database.AppDatabase
 import com.kaeonx.nymchatprototype.database.RUNNING_CLIENT_ADDRESS_KSVP_KEY
-import com.kaeonx.nymchatprototype.repositories.KeyStringValuePairRepository
-import com.kaeonx.nymchatprototype.repositories.MessageRepository
+import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
+import com.kaeonx.nymandroidport.repositories.MessageRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 

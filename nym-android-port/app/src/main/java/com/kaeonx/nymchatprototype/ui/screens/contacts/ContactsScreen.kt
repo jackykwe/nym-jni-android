@@ -15,7 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaeonx.nymchatprototype.LocalSnackbarHostState
-import com.kaeonx.nymchatprototype.utils.NymAddress
+import com.kaeonx.nymandroidport.utils.NymAddress
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

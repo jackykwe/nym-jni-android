@@ -1,6 +1,4 @@
-package com.kaeonx.nymchatprototype.utils
-
-import com.kaeonx.nymandroidport.utils.NymAddress
+package com.kaeonx.nymandroidport.utils
 
 internal data class NymAddress(
     internal val userIdentityKey: String,
@@ -9,7 +7,7 @@ internal data class NymAddress(
 ) {
     companion object {
         internal fun from(address: String): NymAddress {
-            return com.kaeonx.nymandroidport.utils.NymAddress(
+            return NymAddress(
                 userIdentityKey = address.substringBefore('.'),
                 userEncryptionKey = address.substringAfter('.').substringBefore('@'),
                 gatewayIdentityKey = address.substringAfter('@')

@@ -18,7 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.WorkInfo
 import com.kaeonx.nymchatprototype.LocalSnackbarHostState
 import com.kaeonx.nymchatprototype.R
-import com.kaeonx.nymchatprototype.utils.NymRunState
+import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.launch
 
 private const val NONE_OPTION = "<none>"

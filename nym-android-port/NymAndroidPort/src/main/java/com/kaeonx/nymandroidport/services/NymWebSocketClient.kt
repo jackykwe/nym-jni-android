@@ -1,8 +1,8 @@
-package com.kaeonx.nymchatprototype.services
+package com.kaeonx.nymandroidport.services
 
 import android.util.Log
-import com.kaeonx.nymchatprototype.utils.NymBinaryMessageReceived
-import com.kaeonx.nymchatprototype.utils.NymTextMessageReceived
+import com.kaeonx.nymandroidport.database.NymBinaryMessageReceived
+import com.kaeonx.nymandroidport.database.NymTextMessageReceived
 import okhttp3.*
 import okio.ByteString
 import okio.EOFException

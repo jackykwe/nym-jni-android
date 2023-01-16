@@ -1,6 +1,6 @@
 @file:Suppress("FunctionName")
 
-package com.kaeonx.nymchatprototype.jni.instrumentedtesthelpers
+package com.kaeonx.nymandroidport.jni.instrumentedtesthelpers
 
 /*
  * The instrumented tests are meant to test that the data flows from Kotlin and vice-versa
