@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.room.withTransaction
 import com.kaeonx.nymandroidport.database.AppDatabase
 import com.kaeonx.nymandroidport.database.NYM_RUN_STATE_KSVP_KEY
+import com.kaeonx.nymandroidport.database.RUNNING_CLIENT_ADDRESS_KSVP_KEY
 import com.kaeonx.nymandroidport.repositories.KeyStringValuePairRepository
 import com.kaeonx.nymandroidport.repositories.MessageRepository
 import com.kaeonx.nymandroidport.utils.NymMessageToSend
@@ -50,6 +51,13 @@ class NymWebSocketBoundService : Service() {
     @Suppress("unused")  // unused variable but the flow is continuously collected
     private lateinit var _sendPendingSendMessageIfExists: Flow<Unit>
 
+    // For data collection
+    internal val selectedClientAddress by lazy {
+        keyStringValuePairRepository.get(
+            RUNNING_CLIENT_ADDRESS_KSVP_KEY
+        ).stateIn(serviceScope, SharingStarted.Eagerly, null)
+    }
+
     // Boilerplate for bound services
     private val messenger by lazy {
         Messenger(object : Handler(Looper.getMainLooper()) {
@@ -64,7 +72,7 @@ class NymWebSocketBoundService : Service() {
                         // DONE (clarify): Why doesn't Kotlin capture and preserve references? If I don't pass msg.replyTo as an additional argument, it gets deleted by GC and becomes null...?
                         //                 nymWebSocketClient.connectToWebSocket(msg.replyTo) { replyTo ->  // Messenger not passable, nuance with DIFFERENT PROCESSES
                         nymWebSocketClient.connectToWebSocket(
-                            onSuccess = {
+                            onSuccessfulConnection = {
                                 serviceScope.launch {
                                     Log.i(TAG, "writing to db... SOCKET OPEN")
                                     keyStringValuePairRepository.put(
@@ -73,8 +81,28 @@ class NymWebSocketBoundService : Service() {
                                         )
                                     )
                                 }
+                                serviceScope.launch(Dispatchers.IO) {
+                                    var messageLogId = 0UL
+                                    while (true) {
+                                        val selectedClientAddress = selectedClientAddress.value!!
+                                        val tM = System.nanoTime()  // Monotonic
+//                                        val tW = System.currentTimeMillis()  // Wall
+                                        Log.i(
+                                            TAG,
+//                                            "0(Kotlin: creation) <$message> [tM=$tM, tW=$tW]"
+                                            "0(Kotlin: creation) <$messageLogId> [tM=$tM]"
+                                        )
+                                        messageRepository.sendMessageFromSelectedClient(
+                                            selectedClientAddress,
+                                            messageLogId.toString()
+//                                            System.currentTimeMillis().toString()
+                                        )
+                                        messageLogId += 1UL
+                                        delay(10_000L)
+                                    }
+                                }
                             },
-                            onReceive = { senderAddress, message, recvTs ->
+                            onReceiveMessage = { senderAddress, message, recvTs ->
                                 serviceScope.launch {
                                     appDatabaseInstance.run {
                                         withTransaction {
@@ -86,9 +114,25 @@ class NymWebSocketBoundService : Service() {
                                                 message = "$message.$recvTs"
                                             )
                                         }
+                                        val tM = System.nanoTime()  // Monotonic
+//                                        val tW = System.currentTimeMillis()  // Wall
+//                                        Log.i(TAG, "8(Kotlin: delivered) <$message> [tM=$tM, tW=$tW]")
+                                        Log.i(TAG, "8(Kotlin: delivered) <$message> [tM=$tM]")
                                     }
                                 }
+                            },
+                            onTeardown = {
+                                serviceScope.launch {
+                                    keyStringValuePairRepository.put(
+                                        listOf(
+                                            NYM_RUN_STATE_KSVP_KEY to NymRunState.TEARING_DOWN.name
+                                        )
+                                    )
+                                    stopSelf()  // doesn't cause NymWebSocketBoundService to be unbound from NymRunService...
+                                    onDestroy()  // so we call onDestroy() to terminate this process directly.
+                                }
                             }
+
                         )
                     }
                     else -> throw IllegalStateException("Unexpected IPC message type")
@@ -112,7 +156,12 @@ class NymWebSocketBoundService : Service() {
                 if (nymRunState == NymRunState.SOCKET_OPEN && earliestPendingSendMessage != null) {
                     // successfully enqueued into web socket outgoing queue
                     val successfullyEnqueued = nymWebSocketClient.sendMessageThroughWebSocket(
-                        NymMessageToSend.from(earliestPendingSendMessage).encodeToString()
+                        messageLogId = earliestPendingSendMessage.message,
+                        message = "${earliestPendingSendMessage.message}${
+                            NymMessageToSend.from(
+                                earliestPendingSendMessage
+                            ).encodeToString()
+                        }"
                     )
                     if (successfullyEnqueued) {
                         // prepare to send next pending-send message

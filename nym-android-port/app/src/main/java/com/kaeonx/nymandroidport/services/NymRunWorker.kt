@@ -34,6 +34,8 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
         )
     }
 
+    private var tearingDownDueToError = false
+
     // runs on Dispatchers.Default by default
     override suspend fun doRemoteWork(): Result {
         Log.i(
@@ -48,21 +50,26 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
 
         System.loadLibrary("nym_jni")
         topLevelInit(applicationContext.filesDir.absolutePath)
+        val result: Result
         try {
             nymRun(this, clientId, port = NYM_RUN_PORT)
         } catch (e: Exception) {
+            // JNI Exception thrown from Nym
             Log.e(TAG, e.stackTraceToString())
-            unbindFromNymWebSocketBoundService()
+            tearingDownDueToError = true
             keyStringValuePairRepository.put(
                 listOf(
-                    NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name
+                    NYM_RUN_STATE_KSVP_KEY to NymRunState.TEARING_DOWN.name
                 )
             )
-            return Result.failure()
-        }
+            unbindFromNymWebSocketBoundService()
+        } finally {
+            setForegroundAsync(createForegroundInfo("Nym Run has finished execution.", false))
 
-        setForegroundAsync(createForegroundInfo("Nym Run has finished execution.", false))
-        return Result.success()
+            result = if (tearingDownDueToError) Result.failure() else Result.success()
+            tearingDownDueToError = false  // consume flag
+        }
+        return result
     }
 
     ////////////////////////////
@@ -110,7 +117,8 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
              *                 active, there can be either an active connection or disconnected. Yes. Two stage.
              */
             override fun onServiceDisconnected(className: ComponentName) {
-                nymWebSocketBoundServiceMessenger = null
+                tearingDownDueToError = true
+                Process.sendSignal(Process.myPid(), 2)
             }
         }
 

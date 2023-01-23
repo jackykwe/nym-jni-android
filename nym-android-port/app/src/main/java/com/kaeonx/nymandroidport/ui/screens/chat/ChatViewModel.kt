@@ -11,7 +11,7 @@ import com.kaeonx.nymandroidport.repositories.MessageRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-private const val TAG = "chatViewModel"
+//private const val TAG = "chatViewModel"
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
     // DONE: Other fields store reference to this leakable object; It's OK, lasts till END of app. Problem is with activityContext.
@@ -74,17 +74,4 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             callback()  // must be called on main thread
         }
     }
-
-    // For data collection
-//    init {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            while (true) {
-//                delay(1000L)
-//                messageRepository.sendMessageFromSelectedClient(
-//                    selectedClientAddress.value!!,
-//                    System.currentTimeMillis().toString()
-//                )
-//            }
-//        }
-//    }
 }

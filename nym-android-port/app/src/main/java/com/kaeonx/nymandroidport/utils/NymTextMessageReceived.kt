@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 internal class NymTextMessageReceived private constructor(
     internal val type: String,
     internal val message: String,
-    internal val senderTag: String?
+    internal val senderTag: String? = null  // having default value means optional when decodeFromString() is executed
 ) {
     internal val senderAddress
         get() = message.substringBefore('|')

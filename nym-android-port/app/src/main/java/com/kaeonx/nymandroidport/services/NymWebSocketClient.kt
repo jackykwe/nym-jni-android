@@ -23,8 +23,9 @@ class NymWebSocketClient private constructor() {
 
     private lateinit var webSocketInstance: WebSocket
     internal fun connectToWebSocket(
-        onSuccess: () -> Unit,  // write to KSVP
-        onReceive: (senderAddress: String, message: String, recvTs: Long) -> Unit,
+        onSuccessfulConnection: () -> Unit,  // write to KSVP
+        onReceiveMessage: (senderAddress: String, message: String, recvTs: Long) -> Unit,
+        onTeardown: () -> Unit,  // write to KSVP and teardown
         backoffMillis: Long = 1L
     ) {
         webSocketInstance = okHttpClient.newWebSocket(
@@ -40,26 +41,33 @@ class NymWebSocketClient private constructor() {
             listener = object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     Log.i(TAG, "Web socket to Nym Run successfully opened.")
-                    onSuccess()
+                    onSuccessfulConnection()
                 }
 
                 // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
                 // DONE (clarify): There is a first 10 bytes of "garbage", what are these?; Nym-side bug
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                    val now = System.currentTimeMillis()
+                    val tM = System.nanoTime()  // Monotonic
+                    val tW = System.currentTimeMillis()  // Wall
+                    val message = bytes.substring(10).utf8()
+//                    Log.i(TAG, "7(Kotlin: entered) <$message> [tM=$tM, tW=$tW]")
+                    Log.i(TAG, "7(Kotlin: entered) <$message> [tM=$tM]")
 //                    Log.w(TAG, "received BYTES message via onMessage(): >${bytes.substring(10).utf8()}<")
                     NymBinaryMessageReceived
-                        .from(bytes.substring(10).utf8())
-                        .let { onReceive(it.senderAddress, it.trueMessage, now) }
+                        .from(message)
+                        .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
                 // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    val now = System.currentTimeMillis()
+                    val tM = System.nanoTime()  // Monotonic
+                    val tW = System.currentTimeMillis()  // Wall
+//                    Log.i(TAG, "7(Kotlin: entered) <$text> [tM=$tM, tW=$tW]")
+                    Log.i(TAG, "7(Kotlin: entered) <$text> [tM=$tM]")
 //                    Log.w(TAG, "received TEXT message via onMessage(): >$text<")
                     NymTextMessageReceived
                         .from(text)
-                        .let { onReceive(it.senderAddress, it.trueMessage, now) }
+                        .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
                 // DONE: Backoff with sleeping
@@ -75,20 +83,25 @@ class NymWebSocketClient private constructor() {
                             Log.w(TAG, "Retrying... (backing off: $backoffMillis ms)")
                             Thread.sleep(backoffMillis)
                             connectToWebSocket(
-                                onSuccess,
-                                onReceive,
+                                onSuccessfulConnection,
+                                onReceiveMessage,
+                                onTeardown,
                                 backoffMillis * 2
                             )  // because Rust opens socket asynchronously
                         }
                         is EOFException -> {
-                            Log.w(
-                                TAG,
-                                "Silenced EOFException due to socket closed from peer's side"
-                            )
+                            Log.e(TAG, "Socket closed from the peer's side:")
+                            Log.e(TAG, t.stackTraceToString())
+                            onTeardown()
+//                            Log.w(
+//                                TAG,
+//                                "Silenced EOFException due to socket closed from peer's side"
+//                            )
                         }  // OK, socket closed from peer
                         else -> {
                             Log.e(TAG, "Web socket to Nym Run closed due to unexpected error:")
                             Log.e(TAG, t.stackTraceToString())
+                            onTeardown()
                         }
                     }
                 }
@@ -119,7 +132,18 @@ class NymWebSocketClient private constructor() {
      *
      * > This method returns immediately.
      */
-    internal fun sendMessageThroughWebSocket(message: String) = webSocketInstance.send(message)
+    internal fun sendMessageThroughWebSocket(messageLogId: String, message: String): Boolean {
+        val tM = System.nanoTime()  // Monotonic
+//        val tW = System.currentTimeMillis()  // Wall
+//        Log.i(TAG, "1(Kotlin: leaving) <$message> [tM=$tM, tW=$tW]")
+        val successfullyEnqueued = webSocketInstance.send(message)
+        if (successfullyEnqueued) {
+            Log.i(TAG, "1(Kotlin: leaving) <$messageLogId> [tM=$tM]")
+        } else {
+            Log.e(TAG, "1(Kotlin: FAILED TO LEAVE) <$messageLogId> [tM=$tM]")
+        }
+        return successfullyEnqueued
+    }
 
     companion object {
         @Volatile

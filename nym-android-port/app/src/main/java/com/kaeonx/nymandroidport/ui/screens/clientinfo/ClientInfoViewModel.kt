@@ -66,6 +66,12 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     // Under the hood, WorkManager manages and runs a foreground service on your behalf to execute
     // the WorkRequest.
     private val workManager = WorkManager.getInstance(application)
+
+//    // For debugging only: if state machine misbehaves
+//    init {
+//        workManager.cancelAllWork()
+//    }
+
     private val nymRunWorkInfoFlow = workManager.getWorkInfosForUniqueWorkLiveData(
         NYM_RUN_UNIQUE_WORK_NAME
     ).asFlow().map {
@@ -76,10 +82,6 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         NYM_RUN_UNIQUE_WORK_NAME
     ).asFlow().stateIn(viewModelScope, SharingStarted.Lazily, listOf())
 
-    // For debugging only
-//    init {
-//        workManager.cancelAllWork()
-//    }
 
     private suspend fun getClientsList(): List<String> {
         return withContext(Dispatchers.IO) {
