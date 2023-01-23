@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-//private const val TAG = "contactsViewModel"
+@Suppress("unused")
+private const val TAG = "contactsViewModel"
 
 // Lasts as long as the app, isn't cleared when navigating away from ContactsScreen
 class ContactsViewModel(application: Application) : AndroidViewModel(application) {

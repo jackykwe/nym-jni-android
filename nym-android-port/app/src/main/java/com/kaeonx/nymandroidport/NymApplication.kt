@@ -9,6 +9,6 @@ class NymApplication : Application(), Configuration.Provider {
     override fun getWorkManagerConfiguration() =
         Configuration.Builder()
             .setDefaultProcessName(applicationContext.packageName)
-            .setMinimumLoggingLevel(Log.INFO)
+            .setMinimumLoggingLevel(Log.VERBOSE)
             .build()
 }

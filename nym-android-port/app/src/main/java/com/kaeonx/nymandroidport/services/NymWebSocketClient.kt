@@ -22,11 +22,23 @@ class NymWebSocketClient private constructor() {
      */
     private val okHttpClient by lazy { OkHttpClient() }
 
+    /**
+     * From WebSocket's close() method:
+     * Attempts to initiate a graceful shutdown of this web socket. Any already-enqueued messages
+     * will be transmitted before the close message is sent but subsequent calls to send will return
+     * false and their messages will not be enqueued.
+     * This returns true if a graceful shutdown was initiated by this call. It returns false if a
+     * graceful shutdown was already underway or if the web socket is already closed or canceled.
+     */
+    internal fun close(): Boolean =
+        ::webSocketInstance.isInitialized && webSocketInstance.close(1000, null)
+
+
     private lateinit var webSocketInstance: WebSocket
     internal fun connectToWebSocket(
         onSuccessfulConnection: () -> Unit,  // write to KSVP
         onReceiveMessage: (senderAddress: String, message: String, recvTs: Long) -> Unit,
-        onTeardown: () -> Unit,  // write to KSVP and teardown
+        onWebSocketUnexpectedlyClosed: () -> Unit,  // write to KSVP and teardown
         backoffMillis: Long = 1L
     ) {
         webSocketInstance = okHttpClient.newWebSocket(
@@ -55,15 +67,13 @@ class NymWebSocketClient private constructor() {
                     NymBinaryMessageReceived
                         .from(message)
                         .also {
-                            Log.i(
-                                TAG,
-                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}"
-                            )
+                            Log.i(TAG, "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}")
                         }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
-                // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
+                // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s));
+                // Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
@@ -71,10 +81,7 @@ class NymWebSocketClient private constructor() {
                     NymTextMessageReceived
                         .from(text)
                         .also {
-                            Log.i(
-                                TAG,
-                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}"
-                            )
+                            Log.i(TAG, "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}")
                         }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
@@ -89,19 +96,22 @@ class NymWebSocketClient private constructor() {
                                 "Web socket to Nym Run closed due to non-deterministic error:"
                             )
 //                            Log.w(TAG, t.stackTraceToString())
-                            Log.w(TAG, "Retrying... (backing off: $backoffMillis ms)")
+                            Log.w(
+                                TAG,
+                                "Retrying connecting to web socket to Nym Run... (backing off: $backoffMillis ms)"
+                            )
                             Thread.sleep(backoffMillis)
                             connectToWebSocket(
                                 onSuccessfulConnection,
                                 onReceiveMessage,
-                                onTeardown,
+                                onWebSocketUnexpectedlyClosed,
                                 backoffMillis * 2
                             )  // because Rust opens socket asynchronously
                         }
                         is EOFException -> {
                             Log.e(TAG, "Socket closed from the peer's side:")
                             Log.e(TAG, t.stackTraceToString())
-                            onTeardown()
+                            onWebSocketUnexpectedlyClosed()
 //                            Log.w(
 //                                TAG,
 //                                "Silenced EOFException due to socket closed from peer's side"
@@ -111,7 +121,7 @@ class NymWebSocketClient private constructor() {
                         else -> {
                             Log.e(TAG, "Web socket to Nym Run closed due to unexpected error:")
                             Log.e(TAG, t.stackTraceToString())
-                            onTeardown()
+                            onWebSocketUnexpectedlyClosed()
                         }
                     }
                 }

@@ -19,7 +19,7 @@ class MessageRepository(private val messageDAO: MessageDAO) {
     }
 
     internal fun getEarliestPendingSendFromSelectedClient(): Flow<Message?> {
-        return messageDAO.getEarliestPendingSendFromSelectedClient()
+        return messageDAO.getEarliestPendingSendFromSelectedClient().distinctUntilChanged()
     }
 
     internal suspend fun updateEarliestPendingSendById(id: Int) {
@@ -29,8 +29,4 @@ class MessageRepository(private val messageDAO: MessageDAO) {
     internal suspend fun sendMessageFromSelectedClient(toAddress: String, message: String) {
         messageDAO.insertFromSelectedClient(toAddress, message)
     }
-
-//    internal suspend fun debugSendMessageToSelectedClient(fromAddress: String, message: String) {
-//        messageDAO.insertToSelectedClient(fromAddress, message)
-//    }
 }
