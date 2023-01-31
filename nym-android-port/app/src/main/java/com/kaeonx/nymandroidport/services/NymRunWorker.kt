@@ -131,6 +131,7 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
         )
         // DONE (clarify): what happens on failure to bind? Do we need to unbind? (see a few lines up)  // Minor detail; no pts for prototype.
         if (!successfullyBound) {
+            Log.e(TAG, "Did not successfully bind to NymWebSocketBoundService")
             applicationContext.unbindService(nymWebSocketBoundServiceConnection)  // asynchronous; service actually destroyed after this method returns
         }
     }
@@ -147,7 +148,11 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
     // Defined as a separate function to give it a better name in Kotlin
     private fun unbindFromNymWebSocketBoundService() {
         if (nymWebSocketBoundServiceMessenger == null) {
-            throw IllegalStateException()
+            // This method is called from doRemoteWork() due to crashing of nymRun() (Rust code) before connection is successfully established
+            // I.e. Failure during setup, perhaps due to
+            //     client_core::client::base_client: Could not authenticate and start up the gateway connection - Gateway returned an error response - There is already an open connection to this client
+            //     java.lang.RuntimeException: client-core error: Gateway client error: Gateway returned an error response - There is already an open connection to this client
+            return
         }
         applicationContext.unbindService(nymWebSocketBoundServiceConnection)  // asynchronous; service actually destroyed after this method returns
     }

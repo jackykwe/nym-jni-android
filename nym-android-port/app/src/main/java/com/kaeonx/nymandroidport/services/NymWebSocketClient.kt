@@ -50,11 +50,18 @@ class NymWebSocketClient private constructor() {
                     val tM = System.nanoTime()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
                     val message = bytes.substring(10).utf8()
-//                    Log.i(TAG, "7(Kotlin: entered) <$message> [tM=$tM, tW=$tW]")
-                    Log.i(TAG, "7(Kotlin: entered) <$message> [tM=$tM]")
-//                    Log.w(TAG, "received BYTES message via onMessage(): >${bytes.substring(10).utf8()}<")
+
+                    val index = message.indexOf('{')
+                    val logAufId = message.substring(0, index)
+                    val json = message.substring(index)
                     NymBinaryMessageReceived
-                        .from(message)
+                        .from(json)
+                        .also {
+                            Log.i(
+                                TAG,
+                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage} aufId=$logAufId"
+                            )
+                        }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
@@ -62,11 +69,18 @@ class NymWebSocketClient private constructor() {
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     val tM = System.nanoTime()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
-//                    Log.i(TAG, "7(Kotlin: entered) <$text> [tM=$tM, tW=$tW]")
-                    Log.i(TAG, "7(Kotlin: entered) <$text> [tM=$tM]")
-//                    Log.w(TAG, "received TEXT message via onMessage(): >$text<")
+
+                    val index = text.indexOf('{')
+                    val logAufId = text.substring(0, index)
+                    val json = text.substring(index)
                     NymTextMessageReceived
-                        .from(text)
+                        .from(json)
+                        .also {
+                            Log.i(
+                                TAG,
+                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage} aufId=$logAufId"
+                            )
+                        }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
@@ -97,7 +111,8 @@ class NymWebSocketClient private constructor() {
 //                                TAG,
 //                                "Silenced EOFException due to socket closed from peer's side"
 //                            )
-                        }  // OK, socket closed from peer
+////                            OK, socket closed from peer
+                        }
                         else -> {
                             Log.e(TAG, "Web socket to Nym Run closed due to unexpected error:")
                             Log.e(TAG, t.stackTraceToString())
@@ -135,12 +150,11 @@ class NymWebSocketClient private constructor() {
     internal fun sendMessageThroughWebSocket(messageLogId: String, message: String): Boolean {
         val tM = System.nanoTime()  // Monotonic
 //        val tW = System.currentTimeMillis()  // Wall
-//        Log.i(TAG, "1(Kotlin: leaving) <$message> [tM=$tM, tW=$tW]")
         val successfullyEnqueued = webSocketInstance.send(message)
         if (successfullyEnqueued) {
-            Log.i(TAG, "1(Kotlin: leaving) <$messageLogId> [tM=$tM]")
+            Log.i(TAG, "tK=1 l=KotlinLeaving tM=$tM mId=$messageLogId")
         } else {
-            Log.e(TAG, "1(Kotlin: FAILED TO LEAVE) <$messageLogId> [tM=$tM]")
+            Log.e(TAG, "tK=1 l=KotlinLeaveFail tM=$tM mId=$messageLogId")
         }
         return successfullyEnqueued
     }

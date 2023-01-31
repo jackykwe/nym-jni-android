@@ -19,6 +19,10 @@ class KeyStringValuePairRepository(private val keyStringValuePairDAO: KeyStringV
         return keyStringValuePairDAO.get(key).map { it?.value }.distinctUntilChanged()
     }
 
+    internal suspend fun getLatest(key: String): String? {
+        return keyStringValuePairDAO.getLatest(key)?.value
+    }
+
     /**
      * For each key in `keys`, the output map will map the key to:
      * - a String value if there exists a value stored for the key
@@ -29,6 +33,11 @@ class KeyStringValuePairRepository(private val keyStringValuePairDAO: KeyStringV
             keys.associateWith { key -> keyStringValuePairs.find { it.key == key }?.value }
         }.distinctUntilChanged()
     }
+
+//    internal suspend fun getLatest(keys: List<String>): Map<String, String?> {
+//        val keyStringValuePairs = keyStringValuePairDAO.getLatest(keys)
+//        return keys.associateWith { key -> keyStringValuePairs.find { it.key == key }?.value }
+//    }
 
     /**
      * This is always performed as a transaction, in the case that `keyStringValuePairs` contains

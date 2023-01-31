@@ -51,13 +51,6 @@ class NymWebSocketBoundService : Service() {
     @Suppress("unused")  // unused variable but the flow is continuously collected
     private lateinit var _sendPendingSendMessageIfExists: Flow<Unit>
 
-    // For data collection
-    internal val selectedClientAddress by lazy {
-        keyStringValuePairRepository.get(
-            RUNNING_CLIENT_ADDRESS_KSVP_KEY
-        ).stateIn(serviceScope, SharingStarted.Eagerly, null)
-    }
-
     // Boilerplate for bound services
     private val messenger by lazy {
         Messenger(object : Handler(Looper.getMainLooper()) {
@@ -84,13 +77,14 @@ class NymWebSocketBoundService : Service() {
                                 serviceScope.launch(Dispatchers.IO) {
                                     var messageLogId = 0UL
                                     while (true) {
-                                        val selectedClientAddress = selectedClientAddress.value!!
+                                        val selectedClientAddress =
+                                            keyStringValuePairRepository.getLatest(
+                                                RUNNING_CLIENT_ADDRESS_KSVP_KEY
+                                            )!!
                                         val tM = System.nanoTime()  // Monotonic
-//                                        val tW = System.currentTimeMillis()  // Wall
                                         Log.i(
                                             TAG,
-//                                            "0(Kotlin: creation) <$message> [tM=$tM, tW=$tW]"
-                                            "0(Kotlin: creation) <$messageLogId> [tM=$tM]"
+                                            "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId"
                                         )
                                         messageRepository.sendMessageFromSelectedClient(
                                             selectedClientAddress,
@@ -98,7 +92,7 @@ class NymWebSocketBoundService : Service() {
 //                                            System.currentTimeMillis().toString()
                                         )
                                         messageLogId += 1UL
-                                        delay(10_000L)
+                                        delay(3_000L)
                                     }
                                 }
                             },
@@ -115,9 +109,7 @@ class NymWebSocketBoundService : Service() {
                                             )
                                         }
                                         val tM = System.nanoTime()  // Monotonic
-//                                        val tW = System.currentTimeMillis()  // Wall
-//                                        Log.i(TAG, "8(Kotlin: delivered) <$message> [tM=$tM, tW=$tW]")
-                                        Log.i(TAG, "8(Kotlin: delivered) <$message> [tM=$tM]")
+                                        Log.i(TAG, "tK=9 l=KotlinDelivered tM=$tM mId=$message")
                                     }
                                 }
                             },

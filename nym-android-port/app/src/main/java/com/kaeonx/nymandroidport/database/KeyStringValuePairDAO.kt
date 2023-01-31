@@ -11,8 +11,14 @@ interface KeyStringValuePairDAO {
     @Query("SELECT * FROM keystringvaluepair WHERE `key` = :key;")
     fun get(key: String): Flow<KeyStringValuePair?>  // null returned if key isn't found in the table
 
+    @Query("SELECT * FROM keystringvaluepair WHERE `key` = :key;")
+    suspend fun getLatest(key: String): KeyStringValuePair?  // null returned if key isn't found in the table
+
     @Query("SELECT * FROM keystringvaluepair WHERE `key` in(:keys);")
     fun get(keys: List<String>): Flow<List<KeyStringValuePair>>
+
+//    @Query("SELECT * FROM keystringvaluepair WHERE `key` in(:keys);")
+//    suspend fun getLatest(keys: List<String>): List<KeyStringValuePair>
 
     // Upsert operation, replace if present
     /**
