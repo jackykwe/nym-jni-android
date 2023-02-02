@@ -1,5 +1,6 @@
 package com.kaeonx.nymandroidport.services
 
+import android.os.SystemClock
 import android.util.Log
 import com.kaeonx.nymandroidport.utils.NymBinaryMessageReceived
 import com.kaeonx.nymandroidport.utils.NymTextMessageReceived
@@ -44,22 +45,19 @@ class NymWebSocketClient private constructor() {
                     onSuccessfulConnection()
                 }
 
-                // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
+                // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary) / text(0x1: text) messages
                 // DONE (clarify): There is a first 10 bytes of "garbage", what are these?; Nym-side bug
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                    val tM = System.nanoTime()  // Monotonic
+                    val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
-                    val message = bytes.substring(10).utf8()
+                    val message = bytes.substring(10).utf8()  // just <recipientAddress>|<mId>
 
-                    val index = message.indexOf('{')
-                    val logAufId = message.substring(0, index)
-                    val json = message.substring(index)
                     NymBinaryMessageReceived
-                        .from(json)
+                        .from(message)
                         .also {
                             Log.i(
                                 TAG,
-                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage} aufId=$logAufId"
+                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}"
                             )
                         }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
@@ -67,18 +65,15 @@ class NymWebSocketClient private constructor() {
 
                 // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    val tM = System.nanoTime()  // Monotonic
+                    val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
 
-                    val index = text.indexOf('{')
-                    val logAufId = text.substring(0, index)
-                    val json = text.substring(index)
                     NymTextMessageReceived
-                        .from(json)
+                        .from(text)
                         .also {
                             Log.i(
                                 TAG,
-                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage} aufId=$logAufId"
+                                "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}"
                             )
                         }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
@@ -148,7 +143,7 @@ class NymWebSocketClient private constructor() {
      * > This method returns immediately.
      */
     internal fun sendMessageThroughWebSocket(messageLogId: String, message: String): Boolean {
-        val tM = System.nanoTime()  // Monotonic
+        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
 //        val tW = System.currentTimeMillis()  // Wall
         val successfullyEnqueued = webSocketInstance.send(message)
         if (successfullyEnqueued) {

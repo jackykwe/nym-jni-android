@@ -49,7 +49,7 @@ class NymWebSocketBoundService : Service() {
     }
 
     @Suppress("unused")  // unused variable but the flow is continuously collected
-    private lateinit var _sendPendingSendMessageIfExists: Flow<Unit>
+    private lateinit var _sendPendingSendMessageIfExists: StateFlow<Unit>
 
     // Boilerplate for bound services
     private val messenger by lazy {
@@ -81,7 +81,7 @@ class NymWebSocketBoundService : Service() {
                                             keyStringValuePairRepository.getLatest(
                                                 RUNNING_CLIENT_ADDRESS_KSVP_KEY
                                             )!!
-                                        val tM = System.nanoTime()  // Monotonic
+                                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                                         Log.i(
                                             TAG,
                                             "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId"
@@ -92,7 +92,7 @@ class NymWebSocketBoundService : Service() {
 //                                            System.currentTimeMillis().toString()
                                         )
                                         messageLogId += 1UL
-                                        delay(3_000L)
+                                        delay(1_000L)
                                     }
                                 }
                             },
@@ -108,7 +108,7 @@ class NymWebSocketBoundService : Service() {
                                                 message = "$message.$recvTs"
                                             )
                                         }
-                                        val tM = System.nanoTime()  // Monotonic
+                                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                                         Log.i(TAG, "tK=9 l=KotlinDelivered tM=$tM mId=$message")
                                     }
                                 }

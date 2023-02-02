@@ -58,8 +58,23 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             RUNNING_CLIENT_ID_KSVP_KEY,
             RUNNING_CLIENT_ADDRESS_KSVP_KEY,
         )
-    )
+    ).map {
+        Log.w(
+            TAG,
+            "STATE_CHANGE | running client ID is now ${it[RUNNING_CLIENT_ID_KSVP_KEY]}; running client address is now ${it[RUNNING_CLIENT_ADDRESS_KSVP_KEY]}"
+        )
+        it
+    }
+
+//    // For debugging only: if state machine misbehaves
+//    init {
+//        runBlocking {
+//            keyStringValuePairRepository.put(listOf(NYM_RUN_STATE_KSVP_KEY to NymRunState.SOCKET_OPEN.name))
+//        }
+//    }
+
     private val nymRunStateFlow = keyStringValuePairRepository.get(NYM_RUN_STATE_KSVP_KEY).map {
+        Log.w(TAG, "STATE_CHANGE | nymRunState is now $it")
         NymRunState.valueOf(it ?: NymRunState.IDLE.name)
     }
 
@@ -76,7 +91,9 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         NYM_RUN_UNIQUE_WORK_NAME
     ).asFlow().map {
         if (it.size > 1) throw IllegalStateException(">1 WorkInfos co-existing")  // required for correctness of next line, and all code dependent on it
-        it.getOrNull(0)
+        it.getOrNull(0)?.also { workInfo ->
+            Log.w(TAG, "STATE_CHANGE | nym run WorkInfo state is now ${workInfo.state.name}")
+        }
     }
     internal val nymRunWorkInfoAllDebugFlow = workManager.getWorkInfosForUniqueWorkLiveData(
         NYM_RUN_UNIQUE_WORK_NAME
@@ -98,14 +115,14 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
             nymRunWorkInfoFlow,
             nymRunStateFlow
         ) { ksvpMap, nymRunWorkInfo, nymRunState ->
-            Log.i(TAG, "one of 3 flows changed")
+//            Log.i(TAG, "one of 3 flows changed")
             viewModelScope.launch(Dispatchers.IO) {
-                Log.i(TAG, "one of 3 flows changed (inside IO dispatcher)")
+//                Log.i(TAG, "one of 3 flows changed (inside IO dispatcher)")
                 if (
                     nymRunState == NymRunState.TEARING_DOWN
                     && nymRunWorkInfo?.state?.isFinished == true
                 ) {
-                    Log.i(TAG, "one of 3 flows changed (inside IO dispatcher) (success)")
+//                    Log.i(TAG, "one of 3 flows changed (inside IO dispatcher) (success)")
                     keyStringValuePairRepository.put(
                         listOf(
                             NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name

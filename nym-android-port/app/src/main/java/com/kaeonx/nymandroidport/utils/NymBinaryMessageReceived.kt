@@ -7,6 +7,6 @@ internal class NymBinaryMessageReceived private constructor(internal val message
         get() = message.substringAfter('|')
 
     companion object {
-        internal fun from(rawJson: String) = NymBinaryMessageReceived(message = rawJson)
+        internal fun from(message: String) = NymBinaryMessageReceived(message = message)
     }
 }

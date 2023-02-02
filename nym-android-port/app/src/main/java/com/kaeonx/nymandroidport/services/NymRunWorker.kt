@@ -38,7 +38,7 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
 
     // runs on Dispatchers.Default by default
     override suspend fun doRemoteWork(): Result {
-        Log.i(
+        Log.w(
             TAG,
             "NymRunWorker doing work in process ${Process.myPid()} ${Thread.currentThread().id}"
         )
@@ -118,6 +118,7 @@ internal class NymRunWorker(appContext: Context, workerParams: WorkerParameters)
              */
             override fun onServiceDisconnected(className: ComponentName) {
                 tearingDownDueToError = true
+                Log.w(TAG, "onServiceDisconnected: SIGINT-ing")
                 Process.sendSignal(Process.myPid(), 2)
             }
         }
