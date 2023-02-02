@@ -39,6 +39,7 @@ class NymWebSocketBoundService : Service() {
             NymRunState.valueOf(it ?: NymRunState.IDLE.name)
         }
     }
+    private lateinit var _nymRunState: StateFlow<NymRunState>
     private val messageRepository by lazy {
         MessageRepository(
             appDatabaseInstance.messageDao()
@@ -120,8 +121,6 @@ class NymWebSocketBoundService : Service() {
                                             NYM_RUN_STATE_KSVP_KEY to NymRunState.TEARING_DOWN.name
                                         )
                                     )
-                                    stopSelf()  // doesn't cause NymWebSocketBoundService to be unbound from NymRunService...
-                                    onDestroy()  // so we call onDestroy() to terminate this process directly.
                                 }
                             }
 
@@ -139,6 +138,14 @@ class NymWebSocketBoundService : Service() {
         // after onCreate()
         // This only does work if the current NymRunState is SOCKET_OPEN, and is cancelled when
         // serviceScope is stopped (when supervisorJob is cancelled in onDestroy())
+        _nymRunState =
+            nymRunStateFlow.map {
+                if (it == NymRunState.TEARING_DOWN) {
+                    stopSelf()  // doesn't cause NymWebSocketBoundService to be unbound from NymRunService...
+                    onDestroy()  // so we call onDestroy() to terminate this process directly.
+                }
+                it
+            }.stateIn(serviceScope, SharingStarted.Eagerly, NymRunState.IDLE)
         _sendPendingSendMessageIfExists =
             combine(
                 nymRunStateFlow,
