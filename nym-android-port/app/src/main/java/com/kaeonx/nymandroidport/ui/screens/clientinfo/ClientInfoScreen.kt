@@ -15,10 +15,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.work.WorkInfo
 import com.kaeonx.nymandroidport.LocalSnackbarHostState
 import com.kaeonx.nymandroidport.R
-import com.kaeonx.nymandroidport.utils.NymRunState
 import kotlinx.coroutines.launch
 
 private const val NONE_OPTION = "<none>"
@@ -33,7 +31,6 @@ fun getDisplayClients(list: List<String>) = list.toMutableList().apply {
 @Composable
 fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
     val clientInfoScreenUIState by clientInfoViewModel.clientInfoScreenUIState.collectAsState()
-    val nymRunWorkInfoAllDebugFlow by clientInfoViewModel.nymRunWorkInfoAllDebugFlow.collectAsState()
 
     // For ExposedDropdownMenuBox
     var clientSelectionExpanded by remember { mutableStateOf(false) }
@@ -110,24 +107,11 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = clientInfoScreenUIState.let {
-                            nymRunStateAndWorkInfoToString(
-                                it.nymRunState,
-                                it.nymRunWorkInfo
-                            )
-                        },
+                        text = clientInfoScreenUIState.nymRunState.toString(),
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    nymRunWorkInfoAllDebugFlow.forEach {
-                        Text(
-                            text = "(Debug) WorkInfo state: ${it.state}",
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
                 }
                 val clipboard = LocalClipboardManager.current
                 Text(
@@ -175,7 +159,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(
-                onClick = { clientInfoViewModel.enqueueNymRunWork() },
+                onClick = { clientInfoViewModel.startNymRunForegroundService() },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = clientInfoScreenUIState.nymRunState.allowSelectRunAndDelete(),
                 colors = ButtonDefaults.buttonColors(
@@ -186,7 +170,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                 Text(text = "Run Nym client \"${clientInfoScreenUIState.selectedClientId}\"")
             }
             Button(
-                onClick = { clientInfoViewModel.stopNymRunWork() },
+                onClick = { clientInfoViewModel.stopNymRunForegroundService() },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = clientInfoScreenUIState.nymRunState.allowStop(),
                 colors = ButtonDefaults.buttonColors(
@@ -284,14 +268,5 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
                     Text("Cancel")
                 }
             })
-    }
-}
-
-private fun nymRunStateAndWorkInfoToString(nymRunState: NymRunState, workInfo: WorkInfo?): String {
-    return if (workInfo == null) {
-
-        nymRunState.name
-    } else {
-        "${nymRunState.name} (${workInfo.state})"
     }
 }
