@@ -103,7 +103,7 @@ fn version_check(cfg: &ConfigAndroid) -> bool {
 pub async fn execute(
     args: &Run,
     env: JNIEnv<'_>,
-    nym_run_worker: JObject<'_>,
+    nym_run_foreground_service: JObject<'_>,
 ) -> Result<(), anyhow::Error> {
     let id = &args.id;
 
@@ -128,7 +128,7 @@ pub async fn execute(
     }
 
     if let Err(client_err) = SocketClientAndroid::new(config)
-        .run_socket_forever(env, nym_run_worker)
+        .run_socket_forever(env, nym_run_foreground_service)
         .await
     {
         anyhow::bail!(client_err);

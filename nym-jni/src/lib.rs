@@ -157,7 +157,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_00
 pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_0002dpB8v_1Vc(
     env: JNIEnv,
     class: JClass,
-    nym_run_worker: JObject,
+    nym_run_foreground_service: JObject,
     id: JString,
     nymd_validators: JString,
     api_validators: JString,
@@ -172,7 +172,7 @@ pub extern "C" fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_000
         Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible,
         env,
         class,
-        nym_run_worker,
+        nym_run_foreground_service,
         id,
         nymd_validators,
         api_validators,
