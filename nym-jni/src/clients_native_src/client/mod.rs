@@ -134,17 +134,17 @@ impl SocketClientAndroid {
     pub async fn run_socket_forever(
         self,
         env: JNIEnv<'_>,
-        nym_run_worker: JObject<'_>,
+        nym_run_foreground_service: JObject<'_>,
     ) -> Result<(), anyhow::Error> {
         let mut shutdown = self.start_socket().await?;
 
         let method_id = env.get_method_id(
-            "com/kaeonx/nymandroidport/services/NymRunWorker",
+            "com/kaeonx/nymandroidport/services/NymRunForegroundService",
             "afterSocketOpenedCalledFromRust",
             "()V",
         )?;
         env.call_method_unchecked(
-            nym_run_worker,
+            nym_run_foreground_service,
             method_id,
             jni::signature::ReturnType::Primitive(Primitive::Void),
             &[],
@@ -153,12 +153,12 @@ impl SocketClientAndroid {
         wait_for_signal().await; // ? This is a suspending call! This function proceeds on receiving UNIX signals.
 
         let method_id = env.get_method_id(
-            "com/kaeonx/nymandroidport/services/NymRunWorker",
+            "com/kaeonx/nymandroidport/services/NymRunForegroundService",
             "beforeSocketClosedCalledFromRust",
             "()V",
         )?;
         env.call_method_unchecked(
-            nym_run_worker,
+            nym_run_foreground_service,
             method_id,
             jni::signature::ReturnType::Primitive(Primitive::Void),
             &[],
