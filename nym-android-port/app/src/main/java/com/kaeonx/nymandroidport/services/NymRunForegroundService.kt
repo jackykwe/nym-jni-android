@@ -1,10 +1,21 @@
 package com.kaeonx.nymandroidport.services
 
+import android.annotation.SuppressLint
 import android.app.*
 import android.app.Notification.FOREGROUND_SERVICE_IMMEDIATE
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.net.wifi.ScanResult
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
 import android.os.*
+import android.telephony.*
 import android.util.Log
 import androidx.room.withTransaction
 import com.kaeonx.nymandroidport.R
@@ -66,6 +77,7 @@ class NymRunForegroundService : Service() {
                 }
             }
         }
+        connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
     }
 
 
@@ -158,6 +170,240 @@ class NymRunForegroundService : Service() {
         exitProcess(0)
     }
 
+    ////////////////////////
+    // BATTERY STATISTICS //
+    ////////////////////////
+    private fun getCurrentBatteryLevel(): Float? {
+        val currentBatteryStatus: Intent? =
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { intentFilter ->
+                applicationContext.registerReceiver(null, intentFilter)
+            }
+        return currentBatteryStatus?.let { intent ->
+            val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            level * 100 / scale.toFloat()
+        }
+    }
+
+    ////////////////////////
+    // NETWORK STATISTICS //
+    ////////////////////////
+    /**
+     * From TelephonyManager docs:
+     * TelephonyManager is intended for use on devices that implement FEATURE_TELEPHONY. On devices
+     * that do not implement this feature, the behavior is not reliable.
+     * Requires the PackageManager#FEATURE_TELEPHONY feature which can be detected using
+     * PackageManager.hasSystemFeature(String).
+     */
+    private val telephonyManager by lazy {
+        applicationContext.packageManager.run {
+            if (!hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                throw IllegalStateException("Attempting to use TelephoneManager when device doesn't support FEATURE_TELEPHONY")
+            }
+            if (!hasSystemFeature(PackageManager.FEATURE_TELEPHONY_DATA)) {
+                throw IllegalStateException("Attempting to use TelephoneManager when device doesn't support FEATURE_TELEPHONY_DATA")
+            }
+            if (!hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) {
+                throw IllegalStateException("Attempting to use TelephoneManager when device doesn't support FEATURE_TELEPHONY_RADIO_ACCESS")
+            }
+        }
+        getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+    }
+    private val wifiManager by lazy { getSystemService(Context.WIFI_SERVICE) as WifiManager }
+    private val connectivityManager by lazy {
+        getSystemService(ConnectivityManager::class.java) as ConnectivityManager
+    }
+
+    private val networkRequest by lazy {
+        NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .build()
+    }
+    private val networkCallback by lazy {
+        object : ConnectivityManager.NetworkCallback() {
+            // network is available for use
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
+                if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+                    Log.w(TAG, "Network available! Now on WiFi.")
+                } else if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true) {
+                    Log.w(TAG, "Network available! Now on cellular.")
+                } else {
+                    Log.e(
+                        TAG,
+                        "Network available! Now on a network that is neither WiFi nor cellular."
+                    )
+                }
+            }
+
+            // Network capabilities have changed for the network
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities
+            ) {
+                super.onCapabilitiesChanged(network, networkCapabilities)
+                if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                    Log.w(TAG, "NetworkCapabilities changed! Now on WiFi.")
+                } else if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                    Log.w(TAG, "NetworkCapabilities changed! Now on cellular.")
+                } else {
+                    Log.e(
+                        TAG,
+                        "NetworkCapabilities changed! Now on a network that is neither WiFi nor cellular."
+                    )
+                }
+            }
+
+            // lost network connection
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
+                if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+                    Log.e(TAG, "Network lost! Previous on WiFi.")
+                } else if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true) {
+                    Log.e(TAG, "Network lost! Previous on cellular.")
+                } else {
+                    Log.e(
+                        TAG,
+                        "Network lost! Previous on a network that is neither WiFi nor cellular."
+                    )
+                }
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun logNetworkStatistics() {
+        val activeNetworkCapabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+
+        if (activeNetworkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+            val transportInfo = activeNetworkCapabilities.transportInfo as WifiInfo
+
+            val wifiStandard = when (val ws = transportInfo.wifiStandard) {
+                ScanResult.WIFI_STANDARD_UNKNOWN -> "unknown"
+                ScanResult.WIFI_STANDARD_LEGACY -> "802.11a/b/g"
+                ScanResult.WIFI_STANDARD_11N -> "802.11n"
+                ScanResult.WIFI_STANDARD_11AC -> "802.11ac"
+                ScanResult.WIFI_STANDARD_11AX -> "802.11ax"
+                ScanResult.WIFI_STANDARD_11AD -> "802.11ad"
+                ScanResult.WIFI_STANDARD_11BE -> "802.11be"
+                else -> throw IllegalStateException("Impossible Wifi Standard found: $ws (int value)")
+            }
+            val linkSpeedMbps = transportInfo.linkSpeed
+            val rxLinkSpeedMbps = transportInfo.rxLinkSpeedMbps
+            val txLinkSpeedMbps = transportInfo.txLinkSpeedMbps
+            val dBmRssi = transportInfo.rssi  // raw RSSI in dBm
+            // the RSSI signal quality rating, in the range [0, getMaxSignalLevel()], where 0 is the lowest (worst signal) RSSI rating and getMaxSignalLevel() is the highest (best signal) RSSI rating. Value is 0 or greater
+            val signalLevel = wifiManager.calculateSignalLevel(dBmRssi)
+            val maxSignalLevel = wifiManager.maxSignalLevel
+            Log.i(
+                TAG,
+                "Network Statistic (WiFi) | standard=$wifiStandard lsMbps=$linkSpeedMbps rxLsMbps=$rxLinkSpeedMbps txLsMbps=$txLinkSpeedMbps dBmRssi=$dBmRssi signalLevel=$signalLevel maxSignalLevel=$maxSignalLevel"
+            )
+        } else if (activeNetworkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true) {
+            val dataState = when (val ds = telephonyManager.dataState) {
+                TelephonyManager.DATA_DISCONNECTED -> "disconnected"
+                TelephonyManager.DATA_CONNECTING -> "connecting"
+                TelephonyManager.DATA_CONNECTED -> "connected"
+                TelephonyManager.DATA_SUSPENDED -> "suspended"
+                TelephonyManager.DATA_DISCONNECTING -> "disconnecting"
+                TelephonyManager.DATA_HANDOVER_IN_PROGRESS -> "handover_in_progress"
+                else -> throw IllegalStateException("Impossible telephony data state found: $ds (int value)")
+            }
+            val dataNetworkType = when (val dnt = telephonyManager.dataNetworkType) {
+                TelephonyManager.NETWORK_TYPE_UNKNOWN -> "unknown"
+                TelephonyManager.NETWORK_TYPE_GPRS -> "GPRS"
+                TelephonyManager.NETWORK_TYPE_EDGE -> "EDGE"
+                TelephonyManager.NETWORK_TYPE_UMTS -> "UMTS"
+                TelephonyManager.NETWORK_TYPE_HSDPA -> "HSDPA"
+                TelephonyManager.NETWORK_TYPE_HSUPA -> "HSUPA"
+                TelephonyManager.NETWORK_TYPE_HSPA -> "HSPA"
+                TelephonyManager.NETWORK_TYPE_CDMA -> "CDMA:IS95A/IS95B"
+                TelephonyManager.NETWORK_TYPE_EVDO_0 -> "EVDOrev0"
+                TelephonyManager.NETWORK_TYPE_EVDO_A -> "EDVOrevA"
+                TelephonyManager.NETWORK_TYPE_EVDO_B -> "EDVOrevB"
+                TelephonyManager.NETWORK_TYPE_1xRTT -> "1xRTT"
+                TelephonyManager.NETWORK_TYPE_IDEN -> "iDen"
+                TelephonyManager.NETWORK_TYPE_LTE -> "LTE/5G:NSA"
+                TelephonyManager.NETWORK_TYPE_EHRPD -> "eHRPD"
+                TelephonyManager.NETWORK_TYPE_HSPAP -> "HSPA+"
+                TelephonyManager.NETWORK_TYPE_NR -> "5G:SA"
+                else -> throw IllegalStateException("Impossible telephony data network type found: $dnt (int value)")
+            }
+            Log.i(
+                TAG,
+                "Network Statistic (cellular 1/2) | dataState=$dataState dataNetworkType=$dataNetworkType"
+            )
+
+            // signalStength(): Due to power saving this information may not always be current.
+            val signalStrengths = telephonyManager.signalStrength?.cellSignalStrengths
+            if (signalStrengths != null) {
+                for (signalStrength in signalStrengths) {
+                    when (signalStrength) {
+                        is CellSignalStrengthCdma -> {
+                            // Signal strength related information.
+                            Log.i(
+                                TAG,
+                                // NB
+                                "Network Statistic (cellular 2*/2) | type=CDMA dBm=${signalStrength.dbm}"
+                            )
+                        }
+                        is CellSignalStrengthGsm -> {
+                            // GSM signal strength related information.
+                            Log.i(
+                                TAG,
+                                // NB
+                                "Network Statistic (cellular 2*/2) | type=Gsm dBm=${signalStrength.dbm}"
+                            )
+                        }
+                        is CellSignalStrengthLte -> {
+                            // LTE signal strength related information.
+                            Log.i(
+                                TAG,
+                                // NB
+                                "Network Statistic (cellular 2*/2) | type=LTE dBm=${signalStrength.dbm}"
+                            )
+                        }
+                        is CellSignalStrengthNr -> {
+                            // 5G NR signal strength related information.
+                            Log.i(
+                                TAG,
+                                // NB
+                                "Network Statistic (cellular 2*/2) | type=5G:NR dBm=${signalStrength.dbm}"
+                            )
+                        }
+                        is CellSignalStrengthTdscdma -> {
+                            // Tdscdma signal strength related information.
+                            Log.i(
+                                TAG,
+                                // NB
+                                "Network Statistic (cellular 2*/2) | type=Tdscdma dBm=${signalStrength.dbm}"
+                            )
+                        }
+                        is CellSignalStrengthWcdma -> {
+                            // Wcdma signal strength related information.
+                            Log.i(
+                                TAG,
+                                // NB
+                                "Network Statistic (cellular 2*/2) | type=Wcdma dBm=${signalStrength.dbm}"
+                            )
+                        }
+                        else -> throw IllegalStateException("Impossible signal strength type found")
+                    }
+                }
+            }
+
+
+        } else {
+            Log.e(TAG, "Device on neither WiFi or cellular network.")
+        }
+    }
+
+
     ///////////////////////////////////
     // METHODS CALLED ONLY FROM RUST //
     ///////////////////////////////////
@@ -207,7 +453,23 @@ class NymRunForegroundService : Service() {
                                 RUNNING_CLIENT_ADDRESS_KSVP_KEY
                             )!!
                         val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
-                        Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
+
+                        // From docs:
+                        // Generally speaking, the impact of constantly monitoring the battery level has a greater impact
+                        // on the battery than your app's normal behavior, so it's good practice to only monitor significant
+                        // changes in battery level—specifically when the device enters or exits a low battery state.
+                        if (messageLogId.rem(60U) == 0UL) {
+                            Log.i(
+                                TAG,
+                                "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId b=${getCurrentBatteryLevel()}%"
+                            )
+                        } else {
+                            Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
+                        }
+                        // Network changes should be detected early, so logging a bit more aggressive here
+                        if (messageLogId.rem(10U) == 0UL) {
+                            logNetworkStatistics()
+                        }
                         messageRepository.sendMessageFromSelectedClient(
                             selectedClientAddress,
                             messageLogId.toString()
