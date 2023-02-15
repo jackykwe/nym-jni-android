@@ -60,6 +60,10 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
 //    }
 
     // Always up-to-date values in the database; hot flow
+    // https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow
+    // The Flow.stateIn() pattern is an alternative to the default pattern described in the link
+    // above, as mentioned here:
+    // https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-state-flow/
     internal val clientInfoScreenUIState = keyStringValuePairRepository.get(
         listOf(
             NYM_RUN_STATE_KSVP_KEY,

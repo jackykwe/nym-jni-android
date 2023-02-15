@@ -42,8 +42,11 @@ class NymRunForegroundService : Service() {
     }
 
     // These flows are hot and fire on every change
-    private lateinit var _nymRunStateTearDownWatcher: StateFlow<NymRunState>  // current value is current state
-    private lateinit var _sendEarliestPendingSendMessageIfExistsWatcher: StateFlow<Unit>
+    private val nymRunState by lazy {
+        keyStringValuePairRepository.get(NYM_RUN_STATE_KSVP_KEY).map {
+            NymRunState.valueOf(it ?: NymRunState.IDLE.name)
+        }.stateIn(serviceIOScope, SharingStarted.Eagerly, NymRunState.IDLE)
+    }
 
     // DONE (clarify): Will this leak memory if the service is destroyed?
     // Nope. When this service is destroyed, the process ends and its resources are all relinquished.
@@ -56,16 +59,13 @@ class NymRunForegroundService : Service() {
      */
     override fun onCreate() {
         Log.w(TAG, "NymRunForegroundService created with pid ${Process.myPid()}")
-        _nymRunStateTearDownWatcher =
-            keyStringValuePairRepository.get(NYM_RUN_STATE_KSVP_KEY).map {
-                val currentNymRunState = NymRunState.valueOf(it ?: NymRunState.IDLE.name)
-
-                if (currentNymRunState == NymRunState.TEARING_DOWN) {
+        serviceIOScope.launch {
+            nymRunState.collect {
+                if (it == NymRunState.TEARING_DOWN) {
                     Process.sendSignal(Process.myPid(), 2)
                 }
-
-                currentNymRunState
-            }.stateIn(serviceIOScope, SharingStarted.Eagerly, NymRunState.IDLE)
+            }
+        }
     }
 
 
@@ -177,26 +177,26 @@ class NymRunForegroundService : Service() {
                         )
                     )
 
-                    _sendEarliestPendingSendMessageIfExistsWatcher =
-                        messageRepository.getEarliestPendingSendFromSelectedClient().map {
-                            // Only does work if the current NymRunState is SOCKET_OPEN, and is cancelled when
-                            // serviceScope is stopped (when supervisorJob is cancelled in onDestroy())
-                            // TODO (clarify): Will the previous invocation of this function be cancelled if the flow changes value?
-                            if (_nymRunStateTearDownWatcher.value == NymRunState.SOCKET_OPEN && it != null) {
-                                // successfully enqueued into web socket outgoing queue
-                                val successfullyEnqueued =
-                                    nymWebSocketClient.sendMessageThroughWebSocket(
-                                        messageLogId = it.message,
-                                        message = "${it.message}${
-                                            NymMessageToSend.from(it).encodeToString()
-                                        }"
-                                    )
-                                if (successfullyEnqueued) {
-                                    // prepare to send next pending-send message
-                                    messageRepository.updateEarliestPendingSendById(it.id)
-                                }
+                    messageRepository.getEarliestPendingSendFromSelectedClient().collect {
+                        // Only does work if the current NymRunState is SOCKET_OPEN, and is cancelled when
+                        // serviceScope is stopped (when supervisorJob is cancelled in onDestroy())
+                        // Done: Observe hot flow instead of doing map; map should be pure function.
+                        // Done (clarify): Will the previous invocation of this function be cancelled if the flow changes value? Nope. If want that behaviour, use collectLatest().
+                        if (nymRunState.value == NymRunState.SOCKET_OPEN && it != null) {
+                            // successfully enqueued into web socket outgoing queue
+                            val successfullyEnqueued =
+                                nymWebSocketClient.sendMessageThroughWebSocket(
+                                    messageLogId = it.message,
+                                    message = "${it.message}${
+                                        NymMessageToSend.from(it).encodeToString()
+                                    }"
+                                )
+                            if (successfullyEnqueued) {
+                                // prepare to send next pending-send message
+                                messageRepository.updateEarliestPendingSendById(it.id)
                             }
-                        }.stateIn(serviceIOScope, SharingStarted.Eagerly, Unit)
+                        }
+                    }
                 }
 
                 serviceIOScope.launch(Dispatchers.IO) {
