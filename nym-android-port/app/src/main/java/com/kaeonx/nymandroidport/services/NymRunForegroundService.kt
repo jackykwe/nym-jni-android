@@ -186,7 +186,10 @@ class NymRunForegroundService : Service() {
                             // successfully enqueued into web socket outgoing queue
                             val successfullyEnqueued =
                                 nymWebSocketClient.sendMessageThroughWebSocket(
-                                    message = NymMessageToSend.from(it).encodeToString()
+                                    messageLogId = it.message,
+                                    message = "${it.message}${
+                                        NymMessageToSend.from(it).encodeToString()
+                                    }"
                                 )
                             if (successfullyEnqueued) {
                                 // prepare to send next pending-send message

@@ -1,5 +1,6 @@
 package com.kaeonx.nymandroidport.services
 
+import android.os.SystemClock
 import android.util.Log
 import com.kaeonx.nymandroidport.utils.NymBinaryMessageReceived
 import com.kaeonx.nymandroidport.utils.NymTextMessageReceived
@@ -59,29 +60,29 @@ class NymWebSocketClient private constructor() {
                 // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s)); Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary) / text(0x1: text) messages
                 // DONE (clarify): There is a first 10 bytes of "garbage", what are these?; Nym-side bug
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-//                    val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+                    val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
                     val message = bytes.substring(10).utf8()  // just <recipientAddress>|<mId>
 
                     NymBinaryMessageReceived
                         .from(message)
-//                        .also {
-//                            Log.i(TAG, "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}")
-//                        }
+                        .also {
+                            Log.i(TAG, "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}")
+                        }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
                 // DONE (clarify): Why is this sometimes called? (esp. first (few) message(s));
                 // Nym-side bug: Nym changes type of websocket enum when sending ping (0x2: binary ) / text(0x1: text) messages
                 override fun onMessage(webSocket: WebSocket, text: String) {
-//                    val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+                    val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
                     val tW = System.currentTimeMillis()  // Wall
 
                     NymTextMessageReceived
                         .from(text)
-//                        .also {
-//                            Log.i(TAG, "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}")
-//                        }
+                        .also {
+                            Log.i(TAG, "tK=8 l=KotlinArrived tM=$tM mId=${it.trueMessage}")
+                        }
                         .let { onReceiveMessage(it.senderAddress, it.trueMessage, tW) }
                 }
 
@@ -151,17 +152,16 @@ class NymWebSocketClient private constructor() {
      *
      * > This method returns immediately.
      */
-    internal fun sendMessageThroughWebSocket(message: String): Boolean {
-//        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+    internal fun sendMessageThroughWebSocket(messageLogId: String, message: String): Boolean {
+        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
 //        val tW = System.currentTimeMillis()  // Wall
-//        val successfullyEnqueued = webSocketInstance.send(message)
-//        if (successfullyEnqueued) {
-//            Log.i(TAG, "tK=1 l=KotlinLeaving tM=$tM mId=$messageLogId")
-//        } else {
-//            Log.e(TAG, "tK=1 l=KotlinLeaveFail tM=$tM mId=$messageLogId")
-//        }
-//        return successfullyEnqueued
-        return webSocketInstance.send(message)
+        val successfullyEnqueued = webSocketInstance.send(message)
+        if (successfullyEnqueued) {
+            Log.i(TAG, "tK=1 l=KotlinLeaving tM=$tM mId=$messageLogId")
+        } else {
+            Log.e(TAG, "tK=1 l=KotlinLeaveFail tM=$tM mId=$messageLogId")
+        }
+        return successfullyEnqueued
     }
 
     companion object {
