@@ -1,0 +1,22 @@
+[package]
+name = "nym-pc"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nym-client = { path = "../nym/clients/native" }
+futures = "0.3" # bunch of futures stuff, however, now that I think about it, it could perhaps be completely removed
+# the AsyncRead, AsyncWrite, Stream, Sink, etc. traits could be used from tokio
+# channels should really be replaced with crossbeam due to that implementation being more efficient
+# and the single instance of abortable we have should really be refactored anyway
+log = "0.4" # self explanatory
+pretty_env_logger = "0.4" # for formatting log messages
+rand = { version = "0.7.3", features = ["wasm-bindgen"] } # rng-related traits + some rng implementation to use
+# serde = { version = "1.0.104", features = ["derive"] } # for config serialization/deserialization
+serde_json = "1.0"
+tokio = { version = "1.21.2", features = ["rt-multi-thread", "net", "signal", "time"] } # async runtime
+tokio-tungstenite = "0.14" # websocket
+
+nix = {version = "0.26.2", default-features = false, features = ["time"]}
