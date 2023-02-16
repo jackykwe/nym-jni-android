@@ -11,9 +11,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.net.wifi.ScanResult
 import android.net.wifi.WifiInfo
-import android.net.wifi.WifiManager
 import android.os.*
 import android.telephony.*
 import android.util.Log
@@ -209,7 +207,7 @@ class NymRunForegroundService : Service() {
         }
         getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
     }
-    private val wifiManager by lazy { getSystemService(Context.WIFI_SERVICE) as WifiManager }
+//    private val wifiManager by lazy { getSystemService(Context.WIFI_SERVICE) as WifiManager }
     private val connectivityManager by lazy {
         getSystemService(ConnectivityManager::class.java) as ConnectivityManager
     }
@@ -276,34 +274,34 @@ class NymRunForegroundService : Service() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun logNetworkStatistics() {
+    private fun getNetworkStatistics(): String {
         val activeNetworkCapabilities =
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
 
-        if (activeNetworkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+        return if (activeNetworkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
             val transportInfo = activeNetworkCapabilities.transportInfo as WifiInfo
 
-            val wifiStandard = when (val ws = transportInfo.wifiStandard) {
-                ScanResult.WIFI_STANDARD_UNKNOWN -> "unknown"
-                ScanResult.WIFI_STANDARD_LEGACY -> "802.11a/b/g"
-                ScanResult.WIFI_STANDARD_11N -> "802.11n"
-                ScanResult.WIFI_STANDARD_11AC -> "802.11ac"
-                ScanResult.WIFI_STANDARD_11AX -> "802.11ax"
-                ScanResult.WIFI_STANDARD_11AD -> "802.11ad"
-                ScanResult.WIFI_STANDARD_11BE -> "802.11be"
-                else -> throw IllegalStateException("Impossible Wifi Standard found: $ws (int value)")
-            }
-            val linkSpeedMbps = transportInfo.linkSpeed
+            val ssid = transportInfo.ssid
+//            val wifiStandard = when (val ws = transportInfo.wifiStandard) {
+//                ScanResult.WIFI_STANDARD_UNKNOWN -> "unknown"
+//                ScanResult.WIFI_STANDARD_LEGACY -> "802.11a/b/g"
+//                ScanResult.WIFI_STANDARD_11N -> "802.11n"
+//                ScanResult.WIFI_STANDARD_11AC -> "802.11ac"
+//                ScanResult.WIFI_STANDARD_11AX -> "802.11ax"
+//                ScanResult.WIFI_STANDARD_11AD -> "802.11ad"
+//                ScanResult.WIFI_STANDARD_11BE -> "802.11be"
+//                else -> throw IllegalStateException("Impossible Wifi Standard found: $ws (int value)")
+//            }
+//            val linkSpeedMbps = transportInfo.linkSpeed
             val rxLinkSpeedMbps = transportInfo.rxLinkSpeedMbps
             val txLinkSpeedMbps = transportInfo.txLinkSpeedMbps
             val dBmRssi = transportInfo.rssi  // raw RSSI in dBm
-            // the RSSI signal quality rating, in the range [0, getMaxSignalLevel()], where 0 is the lowest (worst signal) RSSI rating and getMaxSignalLevel() is the highest (best signal) RSSI rating. Value is 0 or greater
-            val signalLevel = wifiManager.calculateSignalLevel(dBmRssi)
-            val maxSignalLevel = wifiManager.maxSignalLevel
-            Log.i(
-                TAG,
-                "Network Statistic (WiFi) | standard=$wifiStandard lsMbps=$linkSpeedMbps rxLsMbps=$rxLinkSpeedMbps txLsMbps=$txLinkSpeedMbps dBmRssi=$dBmRssi signalLevel=$signalLevel maxSignalLevel=$maxSignalLevel"
-            )
+//            // the RSSI signal quality rating, in the range [0, getMaxSignalLevel()], where 0 is the lowest (worst signal) RSSI rating and getMaxSignalLevel() is the highest (best signal) RSSI rating. Value is 0 or greater
+//            val signalLevel = wifiManager.calculateSignalLevel(dBmRssi)
+//            val maxSignalLevel = wifiManager.maxSignalLevel
+
+//            "Network Statistic (WiFi) | ssid='$ssid' standard=$wifiStandard lsMbps=$linkSpeedMbps rxLsMbps=$rxLinkSpeedMbps txLsMbps=$txLinkSpeedMbps dBmRssi=$dBmRssi signalLevel=$signalLevel maxSignalLevel=$maxSignalLevel"
+            "Network Statistic (WiFi) | ssid='$ssid' rxLsMbps=$rxLinkSpeedMbps txLsMbps=$txLinkSpeedMbps dBmRssi=$dBmRssi"
         } else if (activeNetworkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true) {
             val dataState = when (val ds = telephonyManager.dataState) {
                 TelephonyManager.DATA_DISCONNECTED -> "disconnected"
@@ -334,72 +332,48 @@ class NymRunForegroundService : Service() {
                 TelephonyManager.NETWORK_TYPE_NR -> "5G:SA"
                 else -> throw IllegalStateException("Impossible telephony data network type found: $dnt (int value)")
             }
-            Log.i(
-                TAG,
-                "Network Statistic (cellular 1/2) | dataState=$dataState dataNetworkType=$dataNetworkType"
-            )
 
             // signalStength(): Due to power saving this information may not always be current.
+            val logFragments = ArrayList<String>()
             val signalStrengths = telephonyManager.signalStrength?.cellSignalStrengths
             if (signalStrengths != null) {
                 for (signalStrength in signalStrengths) {
                     when (signalStrength) {
                         is CellSignalStrengthCdma -> {
                             // Signal strength related information.
-                            Log.i(
-                                TAG,
-                                // NB
-                                "Network Statistic (cellular 2*/2) | type=CDMA dBm=${signalStrength.dbm}"
-                            )
+                            logFragments.add("CDMA_dBm=${signalStrength.dbm}")
                         }
                         is CellSignalStrengthGsm -> {
                             // GSM signal strength related information.
-                            Log.i(
-                                TAG,
-                                // NB
-                                "Network Statistic (cellular 2*/2) | type=Gsm dBm=${signalStrength.dbm}"
-                            )
+                            logFragments.add("Gsm_dBm=${signalStrength.dbm}")
                         }
                         is CellSignalStrengthLte -> {
                             // LTE signal strength related information.
-                            Log.i(
-                                TAG,
-                                // NB
-                                "Network Statistic (cellular 2*/2) | type=LTE dBm=${signalStrength.dbm}"
-                            )
+                            logFragments.add("LTE_dBm=${signalStrength.dbm}")
                         }
                         is CellSignalStrengthNr -> {
                             // 5G NR signal strength related information.
-                            Log.i(
-                                TAG,
-                                // NB
-                                "Network Statistic (cellular 2*/2) | type=5G:NR dBm=${signalStrength.dbm}"
-                            )
+                            logFragments.add("5G:NR_dBm=${signalStrength.dbm}")
                         }
                         is CellSignalStrengthTdscdma -> {
                             // Tdscdma signal strength related information.
-                            Log.i(
-                                TAG,
-                                // NB
-                                "Network Statistic (cellular 2*/2) | type=Tdscdma dBm=${signalStrength.dbm}"
-                            )
+                            logFragments.add("Tdscdma_dBm=${signalStrength.dbm}")
                         }
                         is CellSignalStrengthWcdma -> {
                             // Wcdma signal strength related information.
-                            Log.i(
-                                TAG,
-                                // NB
-                                "Network Statistic (cellular 2*/2) | type=Wcdma dBm=${signalStrength.dbm}"
-                            )
+                            logFragments.add("Wcdma_dBm=${signalStrength.dbm}")
                         }
                         else -> throw IllegalStateException("Impossible signal strength type found")
                     }
                 }
             }
-
-
+            "Network Statistic (Cellular) | dataState=$dataState dataNetworkType=$dataNetworkType |* ${
+                logFragments.joinToString(
+                    " "
+                )
+            }"
         } else {
-            Log.e(TAG, "Device on neither WiFi or cellular network.")
+            "Network Statistic (Cellular) | Device on neither WiFi or cellular network."
         }
     }
 
@@ -435,7 +409,9 @@ class NymRunForegroundService : Service() {
                                     messageLogId = it.message,
                                     message = "${it.message}${
                                         NymMessageToSend.from(it).encodeToString()
-                                    }"
+                                    }",
+                                    getCurrentBatteryLevel = { getCurrentBatteryLevel() },
+                                    getNetworkStatistics = { getNetworkStatistics() }
                                 )
                             if (successfullyEnqueued) {
                                 // prepare to send next pending-send message
@@ -453,23 +429,8 @@ class NymRunForegroundService : Service() {
                                 RUNNING_CLIENT_ADDRESS_KSVP_KEY
                             )!!
                         val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+                        Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
 
-                        // From docs:
-                        // Generally speaking, the impact of constantly monitoring the battery level has a greater impact
-                        // on the battery than your app's normal behavior, so it's good practice to only monitor significant
-                        // changes in battery level—specifically when the device enters or exits a low battery state.
-                        if (messageLogId.rem(60U) == 0UL) {
-                            Log.i(
-                                TAG,
-                                "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId b=${getCurrentBatteryLevel()}%"
-                            )
-                        } else {
-                            Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
-                        }
-                        // Network changes should be detected early, so logging a bit more aggressive here
-                        if (messageLogId.rem(10U) == 0UL) {
-                            logNetworkStatistics()
-                        }
                         messageRepository.sendMessageFromSelectedClient(
                             selectedClientAddress,
                             messageLogId.toString()
@@ -543,8 +504,10 @@ class NymRunForegroundService : Service() {
 
         return Notification.Builder(applicationContext, channelId)
             .setContentTitle(notificationTitle).setTicker(notificationTitle)
-            .setContentText(notificationText).setSmallIcon(R.drawable.ic_baseline_cloud_sync_24)
-            .setOngoing(ongoing).setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE).build()
+            .setContentText(notificationText)
+            .setSmallIcon(R.drawable.ic_baseline_cloud_sync_24)
+            .setOngoing(ongoing).setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE)
+            .build()
         // TODO: Is non-deterministic behaviour of notifications still present?
         // DONE (Clarify): Non-deterministic behaviour, notification doesn't always show up:
         // Could be because I'm sending notifications too frequently, sometimes I see

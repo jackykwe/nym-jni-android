@@ -152,7 +152,12 @@ class NymWebSocketClient private constructor() {
      *
      * > This method returns immediately.
      */
-    internal fun sendMessageThroughWebSocket(messageLogId: String, message: String): Boolean {
+    internal fun sendMessageThroughWebSocket(
+        messageLogId: String,
+        message: String,
+        getCurrentBatteryLevel: () -> Float?,
+        getNetworkStatistics: () -> String
+    ): Boolean {
         val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
 //        val tW = System.currentTimeMillis()  // Wall
         val successfullyEnqueued = webSocketInstance.send(message)
@@ -161,6 +166,27 @@ class NymWebSocketClient private constructor() {
         } else {
             Log.e(TAG, "tK=1 l=KotlinLeaveFail tM=$tM mId=$messageLogId")
         }
+
+        // From docs:
+        // Generally speaking, the impact of constantly monitoring the battery level has a greater impact
+        // on the battery than your app's normal behavior, so it's good practice to only monitor significant
+        // changes in battery level—specifically when the device enters or exits a low battery state.
+
+        val messageLogIdULong = messageLogId.toULong()
+        if (messageLogIdULong.rem(60U) == 0UL) {
+            Log.i(
+                TAG,
+                "tK=1EB l=Extra tM=$tM mId=$messageLogId b=${getCurrentBatteryLevel()}%"
+            )
+        }
+        // Network changes should be detected early, so logging a bit more aggressive here
+        if (messageLogIdULong.rem(10U) == 0UL) {
+            Log.i(
+                TAG,
+                "tK=1EN l=Extra tM=$tM mId=$messageLogId n='${getNetworkStatistics()}'"
+            )
+        }
+
         return successfullyEnqueued
     }
 
