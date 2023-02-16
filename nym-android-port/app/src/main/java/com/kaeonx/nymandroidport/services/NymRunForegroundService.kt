@@ -206,8 +206,8 @@ class NymRunForegroundService : Service() {
                             keyStringValuePairRepository.getLatest(
                                 RUNNING_CLIENT_ADDRESS_KSVP_KEY
                             )!!
-                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
-                        Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
+//                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+//                        Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
                         messageRepository.sendMessageFromSelectedClient(
                             selectedClientAddress,
                             messageLogId.toString()
@@ -231,8 +231,8 @@ class NymRunForegroundService : Service() {
                                 message = "$message.$recvTs"
                             )
                         }
-                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
-                        Log.i(TAG, "tK=9 l=KotlinDelivered tM=$tM mId=$message")
+//                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+//                        Log.i(TAG, "tK=9 l=KotlinDelivered tM=$tM mId=$message")
                     }
                 }
             },
