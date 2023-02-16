@@ -11,53 +11,53 @@ use tokio_tungstenite::{
 
 // Adapted from example code in the Nym codebase
 
-fn get_current_battery_level() -> String {
-    std::fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
-        .expect("unable to read system battery level")
-        .trim()
-        .to_string()
-}
+// fn get_current_battery_level() -> String {
+//     std::fs::read_to_string("/sys/class/power_supply/BAT0/capacity")
+//         .expect("unable to read system battery level")
+//         .trim()
+//         .to_string()
+// }
 
-fn get_network_statistics() -> String {
-    let output = std::process::Command::new("/usr/bin/iw")
-        .arg("dev")
-        .arg("wlp0s20f3")
-        .arg("link")
-        .output()
-        .expect("failed to execute process")
-        .stdout;
-    let output = String::from_utf8_lossy(&output);
-    let lines = output.split('\n').collect::<Vec<_>>();
-    if lines[0].trim() == "Not connected." {
-        return String::from("Not connected to WiFi.");
-    }
-    let ssid = lines[1].trim().strip_prefix("SSID: ").unwrap();
-    let dbm_rssi = lines[5]
-        .trim()
-        .strip_prefix("signal: ")
-        .unwrap()
-        .strip_suffix(" dBm")
-        .unwrap();
-    let rx_link_speed_mbps = lines[6]
-        .trim()
-        .strip_prefix("rx bitrate: ")
-        .unwrap()
-        .chars()
-        .take_while(|c| c.ne(&' '))
-        .collect::<String>();
-    let tx_link_speed_mbps = lines[7]
-        .trim()
-        .strip_prefix("tx bitrate: ")
-        .unwrap()
-        .chars()
-        .take_while(|c| c.ne(&' '))
-        .collect::<String>();
+// fn get_network_statistics() -> String {
+//     let output = std::process::Command::new("/usr/bin/iw")
+//         .arg("dev")
+//         .arg("wlp0s20f3")
+//         .arg("link")
+//         .output()
+//         .expect("failed to execute process")
+//         .stdout;
+//     let output = String::from_utf8_lossy(&output);
+//     let lines = output.split('\n').collect::<Vec<_>>();
+//     if lines[0].trim() == "Not connected." {
+//         return String::from("Not connected to WiFi.");
+//     }
+//     let ssid = lines[1].trim().strip_prefix("SSID: ").unwrap();
+//     let dbm_rssi = lines[5]
+//         .trim()
+//         .strip_prefix("signal: ")
+//         .unwrap()
+//         .strip_suffix(" dBm")
+//         .unwrap();
+//     let rx_link_speed_mbps = lines[6]
+//         .trim()
+//         .strip_prefix("rx bitrate: ")
+//         .unwrap()
+//         .chars()
+//         .take_while(|c| c.ne(&' '))
+//         .collect::<String>();
+//     let tx_link_speed_mbps = lines[7]
+//         .trim()
+//         .strip_prefix("tx bitrate: ")
+//         .unwrap()
+//         .chars()
+//         .take_while(|c| c.ne(&' '))
+//         .collect::<String>();
 
-    format!(
-        "Network Statistic (WiFi) | ssid={} rxLsMbps={} txLsMbps={} dBmRssi={}",
-        ssid, rx_link_speed_mbps, tx_link_speed_mbps, dbm_rssi
-    )
-}
+//     format!(
+//         "Network Statistic (WiFi) | ssid={} rxLsMbps={} txLsMbps={} dBmRssi={}",
+//         ssid, rx_link_speed_mbps, tx_link_speed_mbps, dbm_rssi
+//     )
+// }
 
 fn prepare_message(log_message_id: u64, from_address: &String) -> String {
     let mut message = log_message_id.to_string();
@@ -117,24 +117,24 @@ async fn producer(
             log_message_id
         );
 
-        // Frequency of reading battery matches nym-android-port implementation
-        if log_message_id % 60 == 0 {
-            log::info!(
-                "tK=1EB l=Extra tM={} mId={} b={}%",
-                log_send_nanos,
-                log_message_id,
-                get_current_battery_level()
-            );
-        }
-        // Frequency of logging network statistics matches nym-android-port implementation
-        if log_message_id % 10 == 0 {
-            log::info!(
-                "tK=1EN l=Extra tM={} mId{} n='{}'",
-                log_send_nanos,
-                log_message_id,
-                get_network_statistics()
-            )
-        }
+        // // Frequency of reading battery matches nym-android-port implementation
+        // if log_message_id % 60 == 0 {
+        //     log::info!(
+        //         "tK=1EB l=Extra tM={} mId={} b={}%",
+        //         log_send_nanos,
+        //         log_message_id,
+        //         get_current_battery_level()
+        //     );
+        // }
+        // // Frequency of logging network statistics matches nym-android-port implementation
+        // if log_message_id % 10 == 0 {
+        //     log::info!(
+        //         "tK=1EN l=Extra tM={} mId{} n='{}'",
+        //         log_send_nanos,
+        //         log_message_id,
+        //         get_network_statistics()
+        //     )
+        // }
 
         log_message_id += 1;
     }
