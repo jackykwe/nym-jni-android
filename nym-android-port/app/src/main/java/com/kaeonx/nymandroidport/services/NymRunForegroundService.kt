@@ -15,6 +15,7 @@ import android.net.wifi.WifiInfo
 import android.os.*
 import android.telephony.*
 import android.util.Log
+import androidx.annotation.Keep
 import androidx.room.withTransaction
 import com.kaeonx.nymandroidport.R
 import com.kaeonx.nymandroidport.database.AppDatabase
@@ -385,6 +386,7 @@ class NymRunForegroundService : Service() {
     // Still accessible from Rust via JNI, despite private
     // Named as such because it makes sense to the programmer on the Rust side
     @Suppress("unused")
+    @Keep  // prevents minify from modifying function name and breaking JNI
     private fun afterSocketOpenedCalledFromRust() {
         Log.i(TAG, "afterSocketOpenedCalledFromRust() successfully called from Rust")
 
@@ -472,6 +474,7 @@ class NymRunForegroundService : Service() {
 
     // Still accessible from Rust via JNI, despite private
     @Suppress("unused")
+    @Keep  // prevents minify from modifying function name and breaking JNI
     private fun beforeSocketClosedCalledFromRust() {
         Log.w(TAG, "beforeSocketClosedCalledFromRust() successfully called from Rust")
         nymWebSocketClient.close()

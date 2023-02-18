@@ -6,7 +6,25 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'  // for JSON serialisation
 }
 
+// Create a variable called keystorePropertiesFile, and initialize it to your
+// keystore.properties file, in the rootProject folder.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+
+// Initialize a new Properties() object called keystoreProperties.
+def keystoreProperties = new Properties()
+
+// Load your keystore.properties file into the keystoreProperties object.
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
     namespace 'com.kaeonx.nymandroidport'
     compileSdk 33
     ndkVersion '25.1.8937393'  // This is how the NDK is detected
@@ -20,12 +38,25 @@ android {
         versionName '1.0'
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        signingConfig signingConfigs.release
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            debuggable true
+
+            // Enables code shrinking, obfuscation, and optimization for only
+            // your project's release build type.
+            minifyEnabled true
+
+            // Enables resource shrinking, which is performed by the
+            // Android Gradle plugin.
+            shrinkResources true
+
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
         }
     }
     compileOptions {
@@ -46,7 +77,6 @@ android {
 dependencies {
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.activity:activity-compose:1.6.1'
-    implementation 'androidx.work:work-multiprocess:2.7.1'  // for RemoteCoroutineWorker
 
     // For permissions
     implementation 'com.google.accompanist:accompanist-permissions:0.28.0'
@@ -77,16 +107,13 @@ dependencies {
     // Navigation
     implementation 'androidx.navigation:navigation-compose:2.5.3'
 
-    // WorkManager
-    implementation 'androidx.work:work-runtime-ktx:2.7.1'
-
     // Room
-    implementation 'androidx.room:room-runtime:2.4.3'
-    annotationProcessor 'androidx.room:room-compiler:2.4.3'
+    implementation 'androidx.room:room-runtime:2.5.0'
+    annotationProcessor 'androidx.room:room-compiler:2.5.0'
     // To use Kotlin annotation processing tool (kapt)
-    kapt 'androidx.room:room-compiler:2.4.3'
+    kapt 'androidx.room:room-compiler:2.5.0'
     // optional - Kotlin Extensions and Coroutines support for Room
-    implementation 'androidx.room:room-ktx:2.4.3'
+    implementation 'androidx.room:room-ktx:2.5.0'
 //    // optional - Paging 3 Integration
 //    implementation 'androidx.room:room-paging:2.4.3'
 
