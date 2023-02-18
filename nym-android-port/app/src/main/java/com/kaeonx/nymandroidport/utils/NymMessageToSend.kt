@@ -1,11 +1,13 @@
 package com.kaeonx.nymandroidport.utils
 
+import androidx.annotation.Keep
 import com.kaeonx.nymandroidport.database.Message
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-@Suppress("unused")
 @kotlinx.serialization.Serializable
+@Keep
+@Suppress("unused")
 internal class NymMessageToSend private constructor(
     internal val type: String,
     internal val message: String,
