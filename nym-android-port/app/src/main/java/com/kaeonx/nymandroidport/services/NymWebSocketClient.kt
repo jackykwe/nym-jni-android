@@ -155,7 +155,7 @@ class NymWebSocketClient private constructor() {
     internal fun sendMessageThroughWebSocket(
         messageLogId: String,
         message: String,
-        getCurrentBatteryLevel: () -> Float?,
+        getBatteryStatistics: () -> String,
         getNetworkStatistics: () -> String
     ): Boolean {
         val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
@@ -176,7 +176,7 @@ class NymWebSocketClient private constructor() {
         if (messageLogIdULong.rem(60U) == 0UL) {
             Log.i(
                 TAG,
-                "tK=1EB l=Extra tM=$tM mId=$messageLogId b=${getCurrentBatteryLevel()}%"
+                "tK=1EB l=Extra tM=$tM mId=$messageLogId b='${getBatteryStatistics()}'"
             )
         }
         // Network changes should be detected early, so logging a bit more aggressive here

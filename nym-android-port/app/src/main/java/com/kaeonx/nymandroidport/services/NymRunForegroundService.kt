@@ -172,16 +172,52 @@ class NymRunForegroundService : Service() {
     ////////////////////////
     // BATTERY STATISTICS //
     ////////////////////////
-    private fun getCurrentBatteryLevel(): Float? {
+    private fun getBatteryStatistics(): String {
         val currentBatteryStatus: Intent? =
             IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { intentFilter ->
                 applicationContext.registerReceiver(null, intentFilter)
             }
-        return currentBatteryStatus?.let { intent ->
+        val currentBatteryLevel = currentBatteryStatus?.let { intent ->
             val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
             level * 100 / scale.toFloat()
         }
+        val isCharging =
+            (currentBatteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1).let {
+                it == BatteryManager.BATTERY_STATUS_CHARGING || it == BatteryManager.BATTERY_STATUS_FULL
+            }
+        val chargeMethod =
+            (currentBatteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1).let {
+                when (it) {
+                    BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+                    BatteryManager.BATTERY_PLUGGED_AC -> "AC"
+                    -1 -> "not_charging"
+                    else -> "unknown"
+                }
+            }
+
+        val powerManager =
+            applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+        val isIgnoringBatteryOptimizations =
+            powerManager.isIgnoringBatteryOptimizations(applicationContext.packageName)  // the one we're interested in
+
+        val isInteractive = powerManager.isInteractive
+        val isDeviceLightIdleMode =
+            if (Build.VERSION.SDK_INT >= 33) powerManager.isDeviceLightIdleMode else null
+        val isDeviceIdleMode = powerManager.isDeviceIdleMode
+
+        val isPowerSaveMode = powerManager.isPowerSaveMode
+        val isLowPowerStandbyEnabled =
+            if (Build.VERSION.SDK_INT >= 33) powerManager.isLowPowerStandbyEnabled else null
+        val isSustainedPerformanceModeSupported =
+            powerManager.isSustainedPerformanceModeSupported  // constant per device
+
+        return "Battery Statistic" +
+                " | charge=$currentBatteryLevel% isCharging=$isCharging chargeMethod=$chargeMethod" +
+                " | isIgnoringBatteryOptimizations=$isIgnoringBatteryOptimizations" +
+                " | isInteractive=$isInteractive isDeviceLightIdleMode=$isDeviceLightIdleMode isDeviceIdleMode=$isDeviceIdleMode" +
+                " | isPowerSaveMode=$isPowerSaveMode isLowPowerStandbyEnabled=$isLowPowerStandbyEnabled isSustainedPerformanceModeSupported=$isSustainedPerformanceModeSupported"
     }
 
     ////////////////////////
@@ -412,7 +448,7 @@ class NymRunForegroundService : Service() {
                                     message = "${it.message}${
                                         NymMessageToSend.from(it).encodeToString()
                                     }",
-                                    getCurrentBatteryLevel = { getCurrentBatteryLevel() },
+                                    getBatteryStatistics = { getBatteryStatistics() },
                                     getNetworkStatistics = { getNetworkStatistics() }
                                 )
                             if (successfullyEnqueued) {

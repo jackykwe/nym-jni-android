@@ -95,7 +95,7 @@ fun ClientInfoScreen(clientInfoViewModel: ClientInfoViewModel = viewModel()) {
         ) {
             Column {
                 Text(
-                    text = "For every work that has been scheduled before, there will be one entry that shows up below. Since we are using unique work, there should be at most 1. \nStates:\n - RUNNING: in execution in the background (run forever)\n - FAILED: terminated, not running, but some error occurred (typically when stopping the client too soon after running)\n - SUCCEEDED: terminated, not running",
+                    text = "State machine states:\n - IDLE: Second process is not running.\nSETTING_UP: Nym Run is starting up on second process.\nSOCKET_OPEN: Setup successful; active communication happening on second process.\nTEARING DOWN: Second process is closing and freeing resources.",
                     style = MaterialTheme.typography.bodySmall,
                     fontStyle = FontStyle.Italic
                 )
