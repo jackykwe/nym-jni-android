@@ -466,7 +466,6 @@ dependencies = [
  "gloo-timers",
  "humantime-serde",
  "log",
- "nix",
  "nonexhaustive-delayqueue",
  "nymsphinx",
  "pemstore",
@@ -1474,7 +1473,6 @@ dependencies = [
  "getrandom 0.2.8",
  "log",
  "network-defaults",
- "nix",
  "nymsphinx",
  "pemstore",
  "rand 0.7.3",
@@ -2375,7 +2373,6 @@ dependencies = [
  "log",
  "logging",
  "network-defaults",
- "nix",
  "nymsphinx",
  "pemstore",
  "pretty_env_logger",
@@ -2523,7 +2520,6 @@ name = "nymsphinx-forwarding"
 version = "0.1.0"
 dependencies = [
  "nymsphinx-addressing",
- "nymsphinx-chunking",
  "nymsphinx-params",
  "nymsphinx-types",
 ]

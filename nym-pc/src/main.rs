@@ -60,22 +60,16 @@ use tokio_tungstenite::{
 // }
 
 fn prepare_message(log_message_id: u64, from_address: &String) -> String {
-    let mut message = log_message_id.to_string();
-    message.push_str(
-        &json!({
-            "type": "send",
-            "message": format!("{}|{}", from_address, log_message_id),
-            "recipient": from_address
-        })
-        .to_string(),
-    );
-    message
+    json!({
+        "type": "send",
+        "message": format!("{}|{}", from_address, log_message_id),
+        "recipient": from_address
+    })
+    .to_string()
 }
 
 fn prepare_self_address_message() -> String {
-    let mut message = u64::MAX.to_string(); // expected by Nym code
-    message.push_str(&json!({ "type": "selfAddress" }).to_string());
-    message
+    json!({ "type": "selfAddress" }).to_string()
 }
 
 async fn get_self_address(ws_stream: &mut WebSocketStream<MaybeTlsStream<TcpStream>>) -> String {
