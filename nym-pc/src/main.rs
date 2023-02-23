@@ -1,3 +1,4 @@
+use clap::Parser;
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -8,6 +9,13 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::{
     connect_async, tungstenite::protocol::Message, MaybeTlsStream, WebSocketStream,
 };
+
+#[derive(Parser, Debug)]
+struct Args {
+    /// Maximum number of messages to send through the mix network before terminating evaluation.
+    #[arg(short, long)]
+    max_messages: Option<u64>,
+}
 
 // Adapted from example code in the Nym codebase
 
@@ -90,11 +98,18 @@ async fn get_self_address(ws_stream: &mut WebSocketStream<MaybeTlsStream<TcpStre
 async fn producer(
     mut ws_stream: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
     from_address: String,
+    max_messages: Option<u64>,
 ) {
     let mut log_message_id: u64 = 0;
 
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
     loop {
+        if let Some(max_messages) = max_messages {
+            if log_message_id == max_messages {
+                break;
+            }
+        }
+
         interval.tick().await;
 
         let message = Message::Text(prepare_message(log_message_id, &from_address));
@@ -134,8 +149,19 @@ async fn producer(
     }
 }
 
-async fn consumer(mut ws_stream: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
+async fn consumer(
+    mut ws_stream: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+    max_messages: Option<u64>,
+) {
+    let mut received_count: u64 = 0;
+
     loop {
+        if let Some(max_messages) = max_messages {
+            if received_count == max_messages {
+                break;
+            }
+        }
+
         let raw_message = ws_stream.next().await.unwrap().unwrap();
 
         let log_recv_nanos = nix::time::clock_gettime(nix::time::ClockId::CLOCK_BOOTTIME)
@@ -156,22 +182,34 @@ async fn consumer(mut ws_stream: SplitStream<WebSocketStream<MaybeTlsStream<TcpS
             log_recv_nanos,
             log_message_id
         );
+
+        received_count += 1;
     }
 }
 
 #[tokio::main]
 async fn main() {
+    let args = Args::parse();
+
     pretty_env_logger::init();
 
     let uri = "ws://localhost:1977";
-    let (mut ws_stream, _) = connect_async(uri).await.unwrap();
+    let mut ws_stream = match connect_async(uri).await {
+        Err(e) => {
+            log::error!("{}", e);
+            std::process::exit(42);
+        }
+        Ok((stream, _)) => stream,
+    };
 
     let from_address = get_self_address(&mut ws_stream).await;
     log::info!("our full address is: {}", from_address);
 
     let (ws_sender, ws_receiver) = ws_stream.split();
 
-    let p = tokio::spawn(producer(ws_sender, from_address));
-    let c = tokio::spawn(consumer(ws_receiver));
+    let p = tokio::spawn(producer(ws_sender, from_address, args.max_messages));
+    let c = tokio::spawn(consumer(ws_receiver, args.max_messages));
     futures::future::join_all(vec![p, c]).await;
+
+    std::process::exit(0);
 }
