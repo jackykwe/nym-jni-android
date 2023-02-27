@@ -39,6 +39,13 @@
             android:description="@string/nym_run_foreground_service_description"
             android:exported="false"
             android:process="@string/nym_run_foreground_service_process_name" />
+
+        <service
+            android:name=".services.ADBForegroundService"
+            android:description="@string/nym_run_foreground_service_description"
+            android:exported="true"
+            android:process="@string/nym_run_foreground_service_process_name"
+            tools:ignore="ExportedService" />
     </application>
 
 </manifest>

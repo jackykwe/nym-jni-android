@@ -4,15 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.compositionLocalOf
-import com.kaeonx.nymandroidport.repositories.ContactRepository
 import com.kaeonx.nymandroidport.ui.NymAndroidPortTheme
 
 private const val TAG = "mainActivity"
-
-internal val LocalNymRepository = compositionLocalOf<ContactRepository> {
-    error("No NymRepository provided")
-}
 
 class MainActivity : ComponentActivity() {
 

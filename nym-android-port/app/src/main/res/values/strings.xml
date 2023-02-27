@@ -2,9 +2,15 @@
     <string name="app_name">Nym Android Port</string>
     <!--    <string name="nym_run_worker_cancel_action_text">Stop Background Execution</string>-->
     <string name="nym_run_foreground_service_notification_title">Nym Run Running…</string>
-    <string name="nym_run_foreground_service_notification_channel_id">NRWnotificationChannelId</string>
+    <string name="nym_run_foreground_service_notification_channel_id">NRFGSnotificationChannelId</string>
     <string name="nym_run_foreground_service_notification_channel_name">Nym Run Notifications</string>
-    <string name="nym_run_foreground_service_notification_channel_description">Notifications related to the Nym Run method…</string>
+    <string name="nym_run_foreground_service_notification_channel_description">Notifications related to the Nym Run method</string>
     <string name="nym_run_foreground_service_description">The Foreground Service that executes the Nym Run method. If terminated, the Nym Run method will stop executing in the background.</string>
     <string name="nym_run_foreground_service_process_name">:nymRunForegroundService</string>
+
+    <string name="adb_foreground_service_notification_title">ADB FGS Running…</string>
+    <string name="adb_foreground_service_notification_channel_id">ADBFGSnotificationChannelId</string>
+    <string name="adb_foreground_service_notification_channel_name">ADB Notifications</string>
+    <string name="adb_foreground_service_notification_channel_description">Notifications used for starting Nym Run via ADB</string>
+    <string name="adb_foreground_service_description">The Foreground Service used only during debugging (collecting data for evaluation)</string>
 </resources>
