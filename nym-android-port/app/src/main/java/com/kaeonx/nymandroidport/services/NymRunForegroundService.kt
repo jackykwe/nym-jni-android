@@ -564,10 +564,10 @@ class NymRunForegroundService : Service() {
             .setOngoing(ongoing)
             .setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE)
             .build()
-        // TODO: Is non-deterministic behaviour of notifications still present?
+        // DONE: Is non-deterministic behaviour of notifications still present? Yes, but cannot control.
         // DONE (Clarify): Non-deterministic behaviour, notification doesn't always show up:
-        // Could be because I'm sending notifications too frequently, sometimes I see
-        // "notifications silenced" (something to this effect) in Logcat. Yes indeed.
+        // It's because I'm sending notifications too frequently, sometimes I see "notifications
+        // silenced" (something to this effect) in Logcat.
     }
 
     // It's safe to call this repeatedly because creating an existing notification channel is a no-op.
