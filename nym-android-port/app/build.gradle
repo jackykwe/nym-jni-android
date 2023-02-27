@@ -125,13 +125,13 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1'
 }
 
-task beforeAppBuild(type: Exec) {
-    workingDir '../'
-    commandLine './beforeAppBuild.sh'
-}
-
-afterEvaluate {
-    tasks.named('preBuild') {
-        it.dependsOn 'beforeAppBuild'
-    }
-}
+//task beforeAppBuild(type: Exec) {
+//    workingDir '../'
+//    commandLine './beforeAppBuild.sh'
+//}
+//
+//afterEvaluate {
+//    tasks.named('preBuild') {
+//        it.dependsOn 'beforeAppBuild'
+//    }
+//}
