@@ -296,13 +296,17 @@ class NymRunForegroundService : Service() {
         createChannel()
 
         return Notification.Builder(applicationContext, channelId)
-            .setContentTitle(notificationTitle).setTicker(notificationTitle)
-            .setContentText(notificationText).setSmallIcon(R.drawable.ic_baseline_cloud_sync_24)
-            .setOngoing(ongoing).setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE).build()
-        // TODO: Is non-deterministic behaviour of notifications still present?
+            .setContentTitle(notificationTitle)
+            .setTicker(notificationTitle)
+            .setContentText(notificationText)
+            .setSmallIcon(R.drawable.ic_baseline_cloud_sync_24)
+            .setOngoing(ongoing)
+            .setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE)
+            .build()
+        // DONE: Is non-deterministic behaviour of notifications still present? Yes, but cannot control.
         // DONE (Clarify): Non-deterministic behaviour, notification doesn't always show up:
-        // Could be because I'm sending notifications too frequently, sometimes I see
-        // "notifications silenced" (something to this effect) in Logcat. Yes indeed.
+        // It's because I'm sending notifications too frequently, sometimes I see "notifications
+        // silenced" (something to this effect) in Logcat.
     }
 
     // It's safe to call this repeatedly because creating an existing notification channel is a no-op.
