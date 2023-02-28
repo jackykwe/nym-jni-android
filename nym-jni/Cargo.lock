@@ -484,6 +484,7 @@ dependencies = [
  "gloo-timers",
  "humantime-serde",
  "log",
+ "nix",
  "nonexhaustive-delayqueue",
  "nymsphinx",
  "pemstore",
@@ -1511,6 +1512,7 @@ dependencies = [
  "getrandom 0.2.8",
  "log",
  "network-defaults",
+ "nix",
  "nymsphinx",
  "pemstore",
  "rand 0.7.3",
@@ -2339,6 +2341,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfdda3d196821d6af13126e40375cdf7da646a96114af134d5f417a9a1dc8e1a"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "libc",
+ "static_assertions",
+]
+
+[[package]]
 name = "nom"
 version = "7.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2429,6 +2443,7 @@ dependencies = [
  "log",
  "logging",
  "network-defaults",
+ "nix",
  "nymsphinx",
  "pemstore",
  "pretty_env_logger",
@@ -2590,6 +2605,7 @@ name = "nymsphinx-forwarding"
 version = "0.1.0"
 dependencies = [
  "nymsphinx-addressing",
+ "nymsphinx-chunking",
  "nymsphinx-params",
  "nymsphinx-types",
 ]
