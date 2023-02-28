@@ -209,7 +209,8 @@ if [ "$probeeffect" == "true" ]; then
 else
     log_output_file_name="$log_output_file_name.txt"
 fi
-main_log_output_file_path="$(pwd)/$log_output_file_name"
+mkdir -p data_collection
+main_log_output_file_path="$(pwd)/data_collection/$log_output_file_name"
 
 echo
 echo "*** Saving output to $main_log_output_file_path ***"
@@ -337,7 +338,7 @@ adb -d shell run-as com.kaeonx.nymandroidport mkdir -p files/adbSync
 adb -d shell run-as com.kaeonx.nymandroidport cp /data/local/tmp/nymRunEvaluationRunning.txt files/adbSync/nymRunEvaluationRunning.txt
 
 adb -d shell logcat -c
-logcat_pid_on_device=$(adb -d shell "nohup logcat -f /sdcard/Documents/nym_android_port_logs/fragment_$log_output_file_name -r 65536 -n 1 nym_jni_log:I nym_jni_tracing:I *:I >/dev/null 2>&1 & echo \$!")
+logcat_pid_on_device=$(adb -d shell "nohup logcat -f /sdcard/Documents/nym_android_port_logs/fragment_$log_output_file_name -r 131072 -n 1 nym_jni_log:I nym_jni_tracing:I *:I >/dev/null 2>&1 & echo \$!")
 adb -d shell am start-foreground-service -n com.kaeonx.nymandroidport/.services.ADBForegroundService
 
 while true; do
