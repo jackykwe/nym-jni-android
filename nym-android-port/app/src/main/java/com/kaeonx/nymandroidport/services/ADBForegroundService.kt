@@ -74,6 +74,7 @@ class ADBForegroundService : Service() {
                     break
                 } catch (e: RuntimeException) {
                     e.printStackTrace()
+                    Log.i(TAG, "ADBFGS nymInit failed, backing off: backoffMillis=$backoffMillis")
                     delay(backoffMillis)
                     backoffMillis *= 2
                 }
