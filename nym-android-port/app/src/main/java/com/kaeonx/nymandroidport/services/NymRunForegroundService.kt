@@ -256,7 +256,8 @@ class NymRunForegroundService : Service() {
         }
         getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
     }
-//    private val wifiManager by lazy { getSystemService(Context.WIFI_SERVICE) as WifiManager }
+
+    //    private val wifiManager by lazy { getSystemService(Context.WIFI_SERVICE) as WifiManager }
     private val connectivityManager by lazy {
         getSystemService(ConnectivityManager::class.java) as ConnectivityManager
     }
@@ -442,6 +443,7 @@ class NymRunForegroundService : Service() {
 
         nymWebSocketClient.connectToWebSocket(
             onSuccessfulConnection = {
+                Log.i(TAG, "nymWebSocketClient.connectToWebSocket: onSuccessfulConnection")
                 serviceIOScope.launch {
                     keyStringValuePairRepository.put(
                         listOf(
@@ -453,21 +455,43 @@ class NymRunForegroundService : Service() {
                         // Only does work if the current NymRunState is SOCKET_OPEN, and is cancelled when
                         // serviceScope is stopped (when supervisorJob is cancelled in onDestroy())
                         // Done: Observe hot flow instead of doing map; map should be pure function.
-                        // Done (clarify): Will the previous invocation of this function be cancelled if the flow changes value? Nope. If want that behaviour, use collectLatest().
-                        if (nymRunState.value == NymRunState.SOCKET_OPEN && it != null) {
-                            // successfully enqueued into web socket outgoing queue
-                            val successfullyEnqueued =
-                                nymWebSocketClient.sendMessageThroughWebSocket(
-                                    messageLogId = it.message,
-                                    message = "${it.message}${
-                                        NymMessageToSend.from(it).encodeToString()
-                                    }",
-                                    getBatteryStatistics = { getBatteryStatistics() },
-                                    getNetworkStatistics = { getNetworkStatistics() }
+                        // Done (clarify): Will the previous invocation of this function be cancelled if the flow changes value?
+                        // Nope, this is verified. The previous collector runs to completion before the next one is run.
+                        // If want to cancel the previous collector, need use collectLatest().
+
+                        if (it != null) {
+                            var backoffMillis = 1L
+                            while (nymRunState.value != NymRunState.SOCKET_OPEN) {
+                                Log.i(
+                                    TAG,
+                                    "getEarliestPendingSendFromSelectedClient().collect nymRunState backing off: backoffMillis=$backoffMillis"
                                 )
-                            if (successfullyEnqueued) {
-                                // prepare to send next pending-send message
-                                messageRepository.updateEarliestPendingSendById(it.id)
+                                delay(backoffMillis)
+                                backoffMillis *= 2
+                            }
+                            backoffMillis = 1L
+                            while (true) {
+                                val successfullyEnqueued =
+                                    nymWebSocketClient.sendMessageThroughWebSocket(
+                                        messageLogId = it.message,
+                                        message = "${it.message}${
+                                            NymMessageToSend.from(it).encodeToString()
+                                        }",
+                                        getBatteryStatistics = { getBatteryStatistics() },
+                                        getNetworkStatistics = { getNetworkStatistics() }
+                                    )
+                                if (successfullyEnqueued) {
+                                    // successfully enqueued into web socket outgoing queue
+                                    // prepare to send next pending-send message
+                                    messageRepository.updateEarliestPendingSendById(it.id)
+                                    break
+                                }
+                                Log.i(
+                                    TAG,
+                                    "getEarliestPendingSendFromSelectedClient().collect sendWebSocket backing off: backoffMillis=$backoffMillis"
+                                )
+                                delay(backoffMillis)
+                                backoffMillis *= 2
                             }
                         }
                     }
@@ -495,6 +519,7 @@ class NymRunForegroundService : Service() {
             },
             onReceiveMessage =
             { senderAddress, message, recvTs ->
+                Log.i(TAG, "nymWebSocketClient.connectToWebSocket: onReceiveMessage")
                 serviceIOScope.launch {
                     appDatabaseInstance.run {
                         withTransaction {
@@ -517,6 +542,7 @@ class NymRunForegroundService : Service() {
             },
             onWebSocketUnexpectedlyClosed =
             {
+                Log.i(TAG, "nymWebSocketClient.connectToWebSocket: onWebSocketUnexpectedlyClosed")
                 serviceIOScope.launch {
                     keyStringValuePairRepository.put(
                         listOf(NYM_RUN_STATE_KSVP_KEY to NymRunState.TEARING_DOWN.name)
