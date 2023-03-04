@@ -176,6 +176,13 @@ class NymRunForegroundService : Service() {
     ///////////////////////////////////
 
     private var messagesReceived = 0UL
+    private val messagesReceivedSyncFile by lazy {
+        applicationContext.filesDir
+            .toPath()
+            .resolve("adbSync")
+            .resolve("nymRunEvaluationMessagesReceived.txt")
+            .toFile()
+    }
 
     // Still accessible from Rust via JNI, despite private
     // Named as such because it makes sense to the programmer on the Rust side
@@ -238,7 +245,7 @@ class NymRunForegroundService : Service() {
 
                 serviceIOScope.launch(Dispatchers.IO) {
                     var messageLogId = 0UL
-                    while (messageLogId < MAX_MESSAGES) {
+                    while (true) {
                         val selectedClientAddress =
                             keyStringValuePairRepository.getLatest(
                                 RUNNING_CLIENT_ADDRESS_KSVP_KEY
@@ -274,6 +281,9 @@ class NymRunForegroundService : Service() {
                         messagesReceived += 1UL
                         if (messagesReceived == MAX_MESSAGES) {
                             stopSelf()
+                        } else if (messagesReceived % 100UL == 0UL) {
+                            // The value 100 is chosen to be not too high (lack of feedback if stuck early) and not too low (too high overhead)
+                            FileWriter(messagesReceivedSyncFile).use { it.write(messagesReceived.toString()) }
                         }
                     }
                 }
