@@ -124,6 +124,9 @@ function onExit() {
         wait "$nym_client_pid"
         echo 'nym_client stopped.'
     fi
+    if [ -n "${progress_poller_pid+defined}" ]; then
+        kill "$progress_poller_pid"
+    fi
     exit 0
 }
 
@@ -195,6 +198,20 @@ else
 fi
 
 backoff_seconds=1
+
+echo 0 >nymRunEvaluationMessagesReceived.txt
+echo 'Printing received messages count every 6 min'
+messages_received_print_count=0
+while true; do
+    sleep 360
+    echo -n "#$(cat nymRunEvaluationMessagesReceived.txt) · "
+    messages_received_print_count=$((messages_received_print_count + 1))
+    if [ "$((messages_received_print_count % 10))" == '0' ]; then
+        echo
+    fi
+done &
+progress_poller_pid=$!
+
 while true; do
     if [ "$variant" = "debug" ]; then
         echo 'Compiling and starting nym-pc (debug) ... '
