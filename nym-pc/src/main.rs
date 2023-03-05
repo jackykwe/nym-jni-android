@@ -104,18 +104,11 @@ async fn get_self_address(ws_stream: &mut WebSocketStream<MaybeTlsStream<TcpStre
 async fn producer(
     mut ws_stream: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
     from_address: String,
-    max_messages: Option<u64>,
 ) {
     let mut log_message_id: u64 = 0;
 
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
     loop {
-        if let Some(max_messages) = max_messages {
-            if log_message_id == max_messages {
-                break;
-            }
-        }
-
         interval.tick().await;
 
         let message = Message::Text(prepare_message(log_message_id, &from_address));
@@ -127,7 +120,7 @@ async fn producer(
         ws_stream.send(message).await.unwrap();
 
         log::info!(
-            "tK=1 l=RustLeaving tM={} mId={}",
+            "tK=1 l=KotlinLeaving tM={} mId={}",
             log_send_nanos,
             log_message_id
         );
@@ -184,12 +177,20 @@ async fn consumer(
         let log_message_id = message.chars().skip(split_index + 1).collect::<String>();
 
         log::info!(
-            "tK=8 l=RustArrived tM={} mId={}",
+            "tK=8 l=KotlinArrived tM={} mId={}",
             log_recv_nanos,
             log_message_id
         );
 
         received_count += 1;
+        if received_count % 100 == 0 {
+            // Same frequency as in Android
+            std::fs::write(
+                "nymRunEvaluationMessagesReceived.txt",
+                received_count.to_string(),
+            )
+            .expect("Unable to write to messages received sync file");
+        }
     }
 }
 
@@ -213,9 +214,10 @@ async fn main() {
 
     let (ws_sender, ws_receiver) = ws_stream.split();
 
-    let p = tokio::spawn(producer(ws_sender, from_address, args.max_messages));
+    let p = tokio::spawn(producer(ws_sender, from_address));
     let c = tokio::spawn(consumer(ws_receiver, args.max_messages));
-    futures::future::join_all(vec![p, c]).await;
+    c.await.unwrap();
+    p.abort();
 
     std::process::exit(0);
 }
