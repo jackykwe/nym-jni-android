@@ -7,6 +7,9 @@ SCRIPT_NAME='collect_android_data_phy.sh'
 # ARGPARSE #
 ############
 
+echo "Invoked:"
+echo "$0" "$@"
+
 TEMP=$(getopt -o 'v:p:c:b:m:h' --long 'variant:,probeeffect:,connectivity:,battery-restriction:,max-messages:,help' -n "$SCRIPT_NAME" -s 'bash' -- "$@")
 
 if [ $? -ne 0 ]; then

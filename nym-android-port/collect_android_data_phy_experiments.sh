@@ -35,35 +35,35 @@ total_experiments=$((total_experiments - 1))
 # SECTION 1 #
 #===========#
 
-# experimentPrologue
-# printOrange 'Release, WiFi, Unrestricted, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v release -c wifi -b unrestricted -p false -m 3600
-# experimentEpilogue
+#experimentPrologue
+#printOrange 'Release, WiFi, Unrestricted, Full Timestamps (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v release -c wifi -b unrestricted -p false -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Release, WiFi, Optimised, Full Timestamps (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v release -c wifi -b optimised -p false -m 3600
+#experimentEpilogue
 
-# experimentPrologue
-# printOrange 'Release, WiFi, Optimised, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v release -c wifi -b optimised -p false -m 3600
-# experimentEpilogue
-
-# experimentPrologue
-# printOrange 'Release, Data, Unrestricted, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v release -c data -b unrestricted -p false -m 3600
-# experimentEpilogue
-
-# experimentPrologue
-# printOrange 'Release, Data, Optimised, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v release -c data -b optimised -p false -m 3600
-# experimentEpilogue
-
-# experimentPrologue
-# printOrange 'Debug, WiFi, Unrestricted, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v debug -c wifi -b unrestricted -p false -m 3600
-# experimentEpilogue
-
-# experimentPrologue
-# printOrange 'Debug, WiFi, Optimised, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v debug -c wifi -b optimised -p false -m 3600
-# experimentEpilogue
+#experimentPrologue
+#printOrange 'Release, Data, Unrestricted, Full Timestamps (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v release -c data -b unrestricted -p false -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Release, Data, Optimised, Full Timestamps (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v release -c data -b optimised -p false -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Debug, WiFi, Unrestricted, Full Timestamps (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v debug -c wifi -b unrestricted -p false -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Debug, WiFi, Optimised, Full Timestamps (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v debug -c wifi -b optimised -p false -m 3600
+#experimentEpilogue
 
 #===========#
 # SECTION 2 #
@@ -74,10 +74,10 @@ printOrange 'Debug, Data, Unrestricted, Full Timestamps (3600 messages, ~1h)'
 ./collect_android_data_phy.sh -v debug -c data -b unrestricted -p false -m 3600
 experimentEpilogue
 
-# experimentPrologue
-# printOrange 'Debug, Data, Optimised, Full Timestamps (3600 messages, ~1h)'
-# ./collect_android_data_phy.sh -v debug -c data -b optimised -p false -m 3600
-# experimentEpilogue
+experimentPrologue
+printOrange 'Debug, Data, Optimised, Full Timestamps (3600 messages, ~1h)'
+./collect_android_data_phy.sh -v debug -c data -b optimised -p false -m 3600
+experimentEpilogue
 
 experimentPrologue
 printOrange 'Release, WiFi, Unrestricted, Probe Effect (3600 messages, ~1h)'
@@ -98,27 +98,27 @@ experimentEpilogue
 # SECTION 3 #
 #===========#
 
-experimentPrologue
-printOrange 'Release, Data, Optimised, Probe Effect (3600 messages, ~1h)'
-./collect_android_data_phy.sh -v release -c data -b optimised -p true -m 3600
-experimentEpilogue
+#experimentPrologue
+#printOrange 'Release, Data, Optimised, Probe Effect (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v release -c data -b optimised -p true -m 3600
+#experimentEpilogue
 
-experimentPrologue
-printOrange 'Debug, WiFi, Unrestricted, Probe Effect (3600 messages, ~1h)'
-./collect_android_data_phy.sh -v debug -c wifi -b unrestricted -p true -m 3600
-experimentEpilogue
-
-experimentPrologue
-printOrange 'Debug, WiFi, Optimised, Probe Effect (3600 messages, ~1h)'
-./collect_android_data_phy.sh -v debug -c wifi -b optimised -p true -m 3600
-experimentEpilogue
-
-experimentPrologue
-printOrange 'Debug, Data, Unrestricted, Probe Effect (3600 messages, ~1h)'
-./collect_android_data_phy.sh -v debug -c data -b unrestricted -p true -m 3600
-experimentEpilogue
-
-experimentPrologue
-printOrange 'Debug, Data, Optimised, Probe Effect (3600 messages, ~1h)'
-./collect_android_data_phy.sh -v debug -c data -b optimised -p true -m 3600
-experimentEpilogue
+#experimentPrologue
+#printOrange 'Debug, WiFi, Unrestricted, Probe Effect (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v debug -c wifi -b unrestricted -p true -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Debug, WiFi, Optimised, Probe Effect (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v debug -c wifi -b optimised -p true -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Debug, Data, Unrestricted, Probe Effect (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v debug -c data -b unrestricted -p true -m 3600
+#experimentEpilogue
+#
+#experimentPrologue
+#printOrange 'Debug, Data, Optimised, Probe Effect (3600 messages, ~1h)'
+#./collect_android_data_phy.sh -v debug -c data -b optimised -p true -m 3600
+#experimentEpilogue
