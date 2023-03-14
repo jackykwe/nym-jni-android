@@ -44,7 +44,7 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible(
 
     // using tokio's block_on() instead of direct .await or futures::executor::block_on()
     // TODO: futures::executor::block_on() does not work on aarch64 (works on x86_64); not sure why
-    tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .with_context(|| "Failed to setup tokio runtime")?

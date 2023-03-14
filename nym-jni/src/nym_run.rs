@@ -37,7 +37,7 @@ pub fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible(
         no_cover: consume_kt_boolean(no_cover),
     };
 
-    tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .with_context(|| "Failed to setup tokio runtime")?
