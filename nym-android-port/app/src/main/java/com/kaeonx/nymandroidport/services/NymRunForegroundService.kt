@@ -423,7 +423,7 @@ class NymRunForegroundService : Service() {
                 )
             }"
         } else {
-            "Network Statistic (Cellular) | Device on neither WiFi or cellular network."
+            "Network Statistic (Unknown) | Device on neither WiFi or cellular network."
         }
     }
 
