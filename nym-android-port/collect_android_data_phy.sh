@@ -8,9 +8,10 @@ SCRIPT_NAME='collect_android_data_phy.sh'
 ############
 
 echo "Invoked:"
-echo "$0" "$@"
+invoked=$(echo "$0" "$@")
+echo "$invoked"
 
-TEMP=$(getopt -o 'a:d:i:v:p:c:b:s:m:h' --long 'abi:,device-name:,ip-and-port:,variant:,probeeffect:,connectivity:,battery-restriction:,power-save-mode:,max-messages:,help' -n "$SCRIPT_NAME" -s 'bash' -- "$@")
+TEMP=$(getopt -o 'a:d:i:v:p:c:b:s:m:h' --long 'abi:,device-name:,ip-and-port:,variant:,probeeffect:,connectivity:,battery-restriction:,power-save-mode:,average-packet-delay-ms:,average-ack-delay-ms:,loop-cover-traffic-average-delay-ms:,message-sending-average-delay-ms:,max-messages:,help' -n "$SCRIPT_NAME" -s 'bash' -- "$@")
 
 if [ $? -ne 0 ]; then
     echo 'Try '"'--help'"' for more information.' >&2
@@ -27,6 +28,10 @@ function help() {
     echo '                            -b unrestricted|optimised|restricted'
     echo '                            -s true|false'
     echo '                            -p true|false'
+    echo '                            --average-packet-delay-ms N'
+    echo '                            --average-ack-delay-ms N'
+    echo '                            --loop-cover-traffic-average-delay-ms N'
+    echo '                            --message-sending-average-delay-ms N'
     echo '                            [-m N]'
     echo
     echo 'Utility to create a new Nym Client, run it, and collect timestamps from it.'
@@ -62,6 +67,18 @@ function help() {
     echo '        (required) whether to run the debug or release builds of the underlying Rust '
     echo '        crates '"'nym'"' and '"'nym-pc'"'. This collects all timestamps from tK=1 to tK=8'
     echo '        inclusive.'
+    echo '--average-packet-delay-ms N'
+    echo '        (required) the average packet delay to be inserted into the Nym config file.'
+    echo '        (units: ms) Nym'"'"'s default value is 50.'
+    echo '--average-ack-delay-ms N'
+    echo '        (required) the average ack delay to be inserted into the Nym config file.'
+    echo '        (units: ms) Nym'"'"'s default value is 50.'
+    echo '--loop-cover-traffic-average-delay-ms N'
+    echo '        (required) the loop cover traffic average delay to be inserted into the Nym'
+    echo '        config file. (units: ms) Nym'"'"'s default value is 200.'
+    echo '--message-sending-average-delay-ms N'
+    echo '        (required) the message sending average delay to be inserted into the Nym config'
+    echo '        file. (units: ms) Nym'"'"'s default value is 20.'
 }
 
 # Note the quotes around "$TEMP": they are essential!
@@ -178,6 +195,62 @@ while true; do
         shift 2
         continue
         ;;
+    '--average-packet-delay-ms')
+        case "$2" in
+        # https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html
+        *[0-9])
+            average_packet_delay=$2
+            ;;
+        *)
+            echo 'Invalid argument passed to --average-packet-delay-ms. Expected a positive integer.'
+            exit 2
+            ;;
+        esac
+        shift 2
+        continue
+        ;;
+    '--average-ack-delay-ms')
+        case "$2" in
+        # https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html
+        *[0-9])
+            average_ack_delay=$2
+            ;;
+        *)
+            echo 'Invalid argument passed to --average-ack-delay-ms. Expected a positive integer.'
+            exit 2
+            ;;
+        esac
+        shift 2
+        continue
+        ;;
+    '--loop-cover-traffic-average-delay-ms')
+        case "$2" in
+        # https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html
+        *[0-9])
+            loop_cover_traffic_average_delay=$2
+            ;;
+        *)
+            echo 'Invalid argument passed to --loop-cover-traffic-average-delay-ms. Expected a positive integer.'
+            exit 2
+            ;;
+        esac
+        shift 2
+        continue
+        ;;
+    '--message-sending-average-delay-ms')
+        case "$2" in
+        # https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html
+        *[0-9])
+            message_sending_average_delay=$2
+            ;;
+        *)
+            echo 'Invalid argument passed to --message-sending-average-delay-ms. Expected a positive integer.'
+            exit 2
+            ;;
+        esac
+        shift 2
+        continue
+        ;;
     '-m' | '--max-messages')
         case "$2" in
         # https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html
@@ -237,7 +310,22 @@ if [ -z ${power_save_mode+defined} ]; then
     echo '-s/--power-save-mode is a required argument (expect '"'true'"' or '"'false'"')'
     exit 2
 fi
-
+if [ -z ${average_packet_delay+defined} ]; then
+    echo '--average-packet-delay-ms is a required argument (expect a positive integer, in ms; default is 50)'
+    exit 2
+fi
+if [ -z ${average_ack_delay+defined} ]; then
+    echo '--average-ack-delay-ms is a required argument (expect a positive integer, in ms; default is 50)'
+    exit 2
+fi
+if [ -z ${loop_cover_traffic_average_delay+defined} ]; then
+    echo '--loop-cover-traffic-average-delay-ms is a required argument (expect a positive integer, in ms; default is 200)'
+    exit 2
+fi
+if [ -z ${message_sending_average_delay+defined} ]; then
+    echo '--message-sending-average-delay-ms is a required argument (expect a positive integer, in ms; default is 20)'
+    exit 2
+fi
 
 ########
 # TRAP #
@@ -306,13 +394,14 @@ internal const val NEW_CLIENT_ID = "$new_client_id"
 EOF
 
 # Bash booleans caveats: https://stackoverflow.com/a/21210966
-log_output_file_name="${new_client_id}_android_${abi}_${device_name}_${variant}_${connectivity}_${battery_restriction}"
-if [ "$probeeffect" == 'true' ]; then
-    log_output_file_name="${log_output_file_name}_probeeffect"
-fi
+log_output_file_name="${new_client_id}_android_${device_name}_${variant}_${connectivity}_${battery_restriction}"
 if [ "$power_save_mode" == 'true' ]; then
     log_output_file_name="${log_output_file_name}_powersavemode"
 fi
+if [ "$probeeffect" == 'true' ]; then
+    log_output_file_name="${log_output_file_name}_probeeffect"
+fi
+
 log_output_file_name="$log_output_file_name.txt"
 
 mkdir -p data_collection
@@ -343,6 +432,36 @@ else
     fi
     echo "'nym' is on branch '$(git branch --show-current)'"
 fi
+
+# Set average_packet_delay, average_ack_delay, loop_cover_traffic_average_delay, message_sending_average_delay
+# for the client used during evaluation
+cat <<EOF >clients/client-core/src/config/autogenerated.rs
+// Auto-generated from a script, direct updates may be overwritten during build process
+
+use std::time::Duration;
+
+pub(crate) const THOUSAND_OVER_LAMBDA_L: Duration = Duration::from_millis($loop_cover_traffic_average_delay); // LAMBDA_L is in seconds
+pub(crate) const THOUSAND_OVER_LAMBDA_P: Duration = Duration::from_millis($message_sending_average_delay); // LAMBDA_P is in seconds
+pub(crate) const THOUSAND_OVER_MU: Duration = Duration::from_millis($average_packet_delay); // MU is in seconds
+pub(crate) const THOUSAND_OVER_MU_ACK: Duration = Duration::from_millis($average_ack_delay); // MU_ACK is in seconds
+EOF
+
+{
+    echo "[EXPERIMENT] invoked='$invoked'"
+    echo "[EXPERIMENT] abi=$abi";
+    echo '[EXPERIMENT] device=android';
+    echo "[EXPERIMENT] device_name=$device_name";
+    echo "[EXPERIMENT] adb_ip_port=$adb_ip_port";
+    echo "[EXPERIMENT] variant=$variant";
+    echo "[EXPERIMENT] connectivity=$connectivity";
+    echo "[EXPERIMENT] battery_restriction=$battery_restriction";
+    echo "[EXPERIMENT] power_save_mode=$power_save_mode";
+    echo "[EXPERIMENT] probeeffect=$probeeffect";
+    echo "[EXPERIMENT] average_packet_delay=$average_packet_delay";
+    echo "[EXPERIMENT] average_ack_delay=$average_ack_delay";
+    echo "[EXPERIMENT] loop_cover_traffic_average_delay=$loop_cover_traffic_average_delay";
+    echo "[EXPERIMENT] message_sending_average_delay=$message_sending_average_delay";
+} >>"$main_log_output_file_path"
 
 cd ../nym-jni || exit 3
 
