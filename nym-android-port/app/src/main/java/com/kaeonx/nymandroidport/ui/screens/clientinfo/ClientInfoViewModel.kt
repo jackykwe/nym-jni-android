@@ -2,6 +2,7 @@ package com.kaeonx.nymandroidport.ui.screens.clientinfo
 
 import android.app.Application
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 private const val TAG = "clientInfoViewModel"
@@ -33,9 +35,7 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
 
     // DONE: Other fields store reference to this leakable object; It's OK, lasts till END of app. Problem is with activityContext.
     private val applicationContext = application
-    private fun getClientsDir() = applicationContext.filesDir
-        .toPath().resolve(".nym").resolve("clients")
-        .toFile()
+    private fun getClientsDir() = applicationContext.filesDir.resolve(".nym").resolve("clients")
 
     ////////////////////////////////////////////////
     // REPOSITORIES, FOREGROUND SERVICE AND FLOWS //
@@ -52,12 +52,12 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
         AppDatabase.getInstance(applicationContext).keyStringValuePairDao()
     )
 
-//    // For debugging only: if state machine misbehaves
-//    init {
-//        runBlocking {
-//            keyStringValuePairRepository.put(listOf(NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name))
-//        }
-//    }
+    // For debugging only: if state machine misbehaves
+    init {
+        runBlocking {
+            keyStringValuePairRepository.put(listOf(NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name))
+        }
+    }
 
     // Always up-to-date values in the database; hot flow
     // https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow
@@ -149,17 +149,31 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }
 
-            applicationContext.startForegroundService(
-                Intent(
-                    applicationContext,
-                    NymRunForegroundService::class.java
-                ).apply {
-                    putExtra(
-                        NYMRUN_FOREGROUND_SERVICE_CLIENT_ID_EXTRA_KEY,
-                        clientInfoScreenUIState.value.selectedClientId!!
-                    )
-                }
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                applicationContext.startForegroundService(
+                    Intent(
+                        applicationContext,
+                        NymRunForegroundService::class.java
+                    ).apply {
+                        putExtra(
+                            NYMRUN_FOREGROUND_SERVICE_CLIENT_ID_EXTRA_KEY,
+                            clientInfoScreenUIState.value.selectedClientId!!
+                        )
+                    }
+                )
+            } else {
+                applicationContext.startService(
+                    Intent(
+                        applicationContext,
+                        NymRunForegroundService::class.java
+                    ).apply {
+                        putExtra(
+                            NYMRUN_FOREGROUND_SERVICE_CLIENT_ID_EXTRA_KEY,
+                            clientInfoScreenUIState.value.selectedClientId!!
+                        )
+                    }
+                )
+            }
         }
     }
 

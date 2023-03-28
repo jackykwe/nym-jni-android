@@ -27,12 +27,13 @@ android {
     }
     namespace 'com.kaeonx.nymandroidport'
     compileSdk 33
-    ndkVersion '25.1.8937393'  // This is how the NDK is detected
+//    ndkVersion '25.1.8937393'  // This is how the NDK is detected
 
     defaultConfig {
         applicationId 'com.kaeonx.nymandroidport'
-        minSdk 31
+        minSdk 21
         // Why 31 is chosen: https://developer.android.com/google/play/requirements/target-sdk
+        // Why 21 is chosen: minimum SDK for Compose framework
         targetSdk 33
         versionCode 1
         versionName '1.0'
