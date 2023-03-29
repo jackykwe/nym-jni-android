@@ -576,43 +576,23 @@ esac
 # - https://developer.android.com/topic/performance/background-optimization#further-optimization
 # - https://source.android.com/docs/core/power/app_mgmt#testing-app-restrictions
 # WARN: DEVICE SPECIFIC. Need to experiment and figure out what works for your device.
-case "$device_name" in
-'pixel')
-    case "$battery_restriction" in
-    'unrestricted')
-        adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND allow
-        adb -s "$adb_ip_port" shell cmd deviceidle whitelist +com.kaeonx.nymandroidport
-        ;;
-    'optimised')
-        adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND deny
-        adb -s "$adb_ip_port" shell cmd deviceidle whitelist -com.kaeonx.nymandroidport
-        ;;
-    'restricted')
-        adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND ignore
-        adb -s "$adb_ip_port" shell cmd deviceidle whitelist -com.kaeonx.nymandroidport
-        ;;
-    esac
+# For Moto, changes effected via ADB are not shown in the Battery Optimisation settings UI.
+# Need to close and re-open the App Info. (took so long to figure this out; undocumented...)
+# The following works for both device_name in {pixel, moto}.
+case "$battery_restriction" in
+'unrestricted')
+    adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND allow
+    adb -s "$adb_ip_port" shell cmd deviceidle whitelist +com.kaeonx.nymandroidport
     ;;
-'moto')
-    # For Moto, changes effected via ADB are not shown in the Battery Optimisation settings UI.
-    # Need to close and re-open the App Info. (took so long to figure this out; undocumented...)
-    case "$battery_restriction" in
-    'unrestricted')
-        adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND allow
-        adb -s "$adb_ip_port" shell cmd deviceidle whitelist +com.kaeonx.nymandroidport
-        ;;
-    'optimised')
-        adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND allow  # NB different from Pixel
-        adb -s "$adb_ip_port" shell cmd deviceidle whitelist -com.kaeonx.nymandroidport
-        ;;
-    'restricted')
-        adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND ignore
-        adb -s "$adb_ip_port" shell cmd deviceidle whitelist -com.kaeonx.nymandroidport
-        ;;
-    esac
+'optimised')
+    adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND allow
+    adb -s "$adb_ip_port" shell cmd deviceidle whitelist -com.kaeonx.nymandroidport
+    ;;
+'restricted')
+    adb -s "$adb_ip_port" shell cmd appops set com.kaeonx.nymandroidport RUN_ANY_IN_BACKGROUND ignore
+    adb -s "$adb_ip_port" shell cmd deviceidle whitelist -com.kaeonx.nymandroidport
     ;;
 esac
-
 
 # Commands for setting Power Save Mode (PSM) (battery saver) from:
 # https://developer.android.com/topic/performance/power/test-power#adb-battery
