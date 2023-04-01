@@ -62,7 +62,7 @@ struct Args {
 //         .collect::<String>();
 
 //     format!(
-//         "Network Statistic (WiFi) | ssid={} rxLsMbps={} txLsMbps={} dBmRssi={}",
+//         "Network Statistic (WiFi) | ssid='{}' rxLsMbps={} txLsMbps={} dBmRssi={}",
 //         ssid, rx_link_speed_mbps, tx_link_speed_mbps, dbm_rssi
 //     )
 // }
