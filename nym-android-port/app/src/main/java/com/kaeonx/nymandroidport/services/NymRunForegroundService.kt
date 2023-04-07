@@ -221,8 +221,11 @@ class NymRunForegroundService : Service() {
             }  // the one we're interested in
 
         val isInteractive = powerManager.isInteractive
-        val isDeviceLightIdleMode =
-            if (Build.VERSION.SDK_INT >= 33) powerManager.isDeviceLightIdleMode else null
+        val isDeviceLightIdleMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            powerManager.isDeviceLightIdleMode.toString()
+        } else {
+            "SDK<${Build.VERSION_CODES.TIRAMISU}"
+        }
         val isDeviceIdleMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             powerManager.isDeviceIdleMode.toString()
         } else {
@@ -230,8 +233,11 @@ class NymRunForegroundService : Service() {
         }
 
         val isPowerSaveMode = powerManager.isPowerSaveMode
-        val isLowPowerStandbyEnabled =
-            if (Build.VERSION.SDK_INT >= 33) powerManager.isLowPowerStandbyEnabled else null
+        val isLowPowerStandbyEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            powerManager.isLowPowerStandbyEnabled.toString()
+        } else {
+            "SDK<${Build.VERSION_CODES.TIRAMISU}"
+        }
         val isSustainedPerformanceModeSupported =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 powerManager.isSustainedPerformanceModeSupported.toString()
