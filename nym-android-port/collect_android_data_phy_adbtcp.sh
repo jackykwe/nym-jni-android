@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export RUST_BACKTRACE=1
-SCRIPT_NAME='collect_android_data_phy.sh'
+SCRIPT_NAME='collect_android_data_phy_adbtcp.sh'
 
 ############
 # ARGPARSE #
@@ -20,19 +20,19 @@ fi
 
 function help() {
     echo 'Usage:'
-    echo 'collect_android_data_phy.sh -a arm64-v8a|armeabi-v7a'
-    echo '                            -d DEVICE_NAME'
-    echo '                            -i IP:PORT'
-    echo '                            -v debug|release'
-    echo '                            -c data|wifi'
-    echo '                            -b unrestricted|optimised|restricted'
-    echo '                            -s true|false'
-    echo '                            -p true|false'
-    echo '                            --average-packet-delay-ms N'
-    echo '                            --average-ack-delay-ms N'
-    echo '                            --loop-cover-traffic-average-delay-ms N'
-    echo '                            --message-sending-average-delay-ms N'
-    echo '                            [-m N]'
+    echo 'collect_android_data_phy_adbtcp.sh -a arm64-v8a|armeabi-v7a'
+    echo '                                   -d DEVICE_NAME'
+    echo '                                   -i IP:PORT'
+    echo '                                   -v debug|release'
+    echo '                                   -c data|wifi'
+    echo '                                   -b unrestricted|optimised|restricted'
+    echo '                                   -s true|false'
+    echo '                                   -p true|false'
+    echo '                                   --average-packet-delay-ms N'
+    echo '                                   --average-ack-delay-ms N'
+    echo '                                   --loop-cover-traffic-average-delay-ms N'
+    echo '                                   --message-sending-average-delay-ms N'
+    echo '                                   [-m N]'
     echo
     echo 'Utility to create a new Nym Client, run it, and collect timestamps from it.'
     echo 'The timestamps are saved into a new text file in the current working '

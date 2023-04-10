@@ -14,7 +14,7 @@ interface MessageDAO {
         "SELECT * FROM message " +
                 "WHERE (fromAddress = :contactAddress AND toAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey)) " +
                 "OR (fromAddress = (SELECT `value` FROM keystringvaluepair WHERE `key` = :selectedClientAddressKey) AND toAddress = :contactAddress) " +
-                "ORDER BY id;"
+                "ORDER BY id DESC;"
     )
     fun getAllWithSelectedClient(
         contactAddress: String,
