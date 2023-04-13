@@ -83,6 +83,7 @@ class NymRunForegroundService : Service() {
         connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
     }
 
+    private var wakeLock: PowerManager.WakeLock? = null
 
     // Called on Service's main thread (NB: this service resides in a separate process)
     // Leave the main thread free to handle incoming onStartCommands (to handle the unlikely case
@@ -112,11 +113,21 @@ class NymRunForegroundService : Service() {
         )
 
         nymRunExecutingThread = object : Thread() {
+            @SuppressLint("WakelockTimeout")
             override fun run() {
                 // NB: When in a separate process, applicationContext is a different instance! (Clarified: Yes)
 
                 if (intent == null) {
                     throw IllegalStateException("Started NymRunForegroundService without any intent")
+                }
+
+                wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+                    newWakeLock(
+                        PowerManager.PARTIAL_WAKE_LOCK,
+                        "NymAndroidPort::MainWakeLock"
+                    ).apply {
+                        acquire()
+                    }
                 }
 
                 val clientId =
@@ -178,6 +189,9 @@ class NymRunForegroundService : Service() {
             )
             delay(1000L)  // Hack to let state propagate through and by caught by Main UI Thread (necessary for Moto)
         }
+
+        wakeLock?.release()
+
         Log.w(TAG, "Exiting NymRunForegroundService process")
         exitProcess(0)
     }
