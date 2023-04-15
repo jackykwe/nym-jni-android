@@ -26,26 +26,26 @@ tokio-tungstenite = "0.14" # websocket
 
 # TODO: Check that all numerical versions are correct
 # Internal (to nym crate)
-network-defaults = { path = "../nym/common/network-defaults" }
+network-defaults = { path = "../../nym/common/network-defaults" }
 
 ## clients_native_src::client::mod
-credential-storage = { path = "../nym/common/credential-storage" }
+credential-storage = { path = "../../nym/common/credential-storage" }
 futures = "0.3" # WARN: listed under "dependencies to review" in nym crate
-gateway-client = { path = "../nym/common/client-libs/gateway-client" }
-nymsphinx = { path = "../nym/common/nymsphinx" }
-nym-client = { path = "../nym/clients/native" }
-task = { path = "../nym/common/task" }
+gateway-client = { path = "../../nym/common/client-libs/gateway-client" }
+nymsphinx = { path = "../../nym/common/nymsphinx" }
+nym-client = { path = "../../nym/clients/native" }
+task = { path = "../../nym/common/task" }
 
 ## clients_native_src::client::config::mod
-client-core = { path = "../nym/clients/client-core" }
-config = { path = "../nym/common/config" }
+client-core = { path = "../../nym/clients/client-core" }
+config = { path = "../../nym/common/config" }
 
 ## clients_native_src::commands::run
-version-checker = { path = "../nym/common/version-checker" }
+version-checker = { path = "../../nym/common/version-checker" }
 
 ## clients_native_src::websocket::handler
-client-connections = { path = "../nym/common/client-connections" }
-websocket-requests = { path = "../nym/clients/native/websocket-requests" }
+client-connections = { path = "../../nym/common/client-connections" }
+websocket-requests = { path = "../../nym/clients/native/websocket-requests" }
 
 # # Internal (to nym crate)
 # network-defaults = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }

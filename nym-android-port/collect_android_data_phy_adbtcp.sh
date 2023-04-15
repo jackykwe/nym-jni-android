@@ -350,7 +350,7 @@ function onExit() {
     #    fi
 
     adb -s "$adb_ip_port" shell settings put global low_power 0
-    adb -s "$adb_ip_port" shell dumpsys battery reset  # Reset Power Save Mode (PSM) to default
+    adb -s "$adb_ip_port" shell dumpsys battery reset # Reset Power Save Mode (PSM) to default
     adb disconnect "$adb_ip_port"
     exit 0
 }
@@ -365,12 +365,12 @@ trap onExit INT TERM
 adb_connect_output=$(adb connect "$adb_ip_port")
 echo "$adb_connect_output"
 if [ "$adb_connect_output" == "already connected to $adb_ip_port" ]; then
-    :  # Bash no-op
+    : # Bash no-op
 elif [ "$adb_connect_output" == "connected to $adb_ip_port" ]; then
-    :  # Bash no-op
+    : # Bash no-op
 else
     echo "Couldn't establish ADB connection to $adb_ip_port. Exiting..."
-    exit 10;
+    exit 10
 fi
 
 mkdir -p app/src/main/jniLibs/arm64-v8a
@@ -411,7 +411,7 @@ echo
 echo "*** Saving output to $main_log_output_file_path ***"
 echo
 
-cd ../nym || exit 3
+cd ../../nym || exit 3
 
 if [ "$probeeffect" == 'true' ]; then
     current_branch_check=$(git describe --tags 2>/dev/null || echo NA) # returns NA if no tags exist in repo; some other tag that's not probe-effect-evaluation (probe-effect-evalation is only returned if on the exact commit)
@@ -448,42 +448,44 @@ EOF
 
 {
     echo "[EXPERIMENT] invoked='$invoked'"
-    echo "[EXPERIMENT] abi=$abi";
-    echo '[EXPERIMENT] device=android';
-    echo "[EXPERIMENT] device_name=$device_name";
-    echo "[EXPERIMENT] adb_ip_port=$adb_ip_port";
-    echo "[EXPERIMENT] variant=$variant";
-    echo "[EXPERIMENT] connectivity=$connectivity";
-    echo "[EXPERIMENT] battery_restriction=$battery_restriction";
-    echo "[EXPERIMENT] power_save_mode=$power_save_mode";
-    echo "[EXPERIMENT] probeeffect=$probeeffect";
-    echo "[EXPERIMENT] average_packet_delay=$average_packet_delay";
-    echo "[EXPERIMENT] average_ack_delay=$average_ack_delay";
-    echo "[EXPERIMENT] loop_cover_traffic_average_delay=$loop_cover_traffic_average_delay";
-    echo "[EXPERIMENT] message_sending_average_delay=$message_sending_average_delay";
+    echo "[EXPERIMENT] abi=$abi"
+    echo '[EXPERIMENT] device=android'
+    echo "[EXPERIMENT] device_name=$device_name"
+    echo "[EXPERIMENT] adb_ip_port=$adb_ip_port"
+    echo "[EXPERIMENT] variant=$variant"
+    echo "[EXPERIMENT] connectivity=$connectivity"
+    echo "[EXPERIMENT] battery_restriction=$battery_restriction"
+    echo "[EXPERIMENT] power_save_mode=$power_save_mode"
+    echo "[EXPERIMENT] probeeffect=$probeeffect"
+    echo "[EXPERIMENT] average_packet_delay=$average_packet_delay"
+    echo "[EXPERIMENT] average_ack_delay=$average_ack_delay"
+    echo "[EXPERIMENT] loop_cover_traffic_average_delay=$loop_cover_traffic_average_delay"
+    echo "[EXPERIMENT] message_sending_average_delay=$message_sending_average_delay"
 } >>"$main_log_output_file_path"
 
-cd ../nym-jni || exit 3
+cd ../nym-jni-android || exit 3
 
 if [ "$probeeffect" == 'true' ]; then
     current_branch_check=$(git branch --show-current)
     if [ "$current_branch_check" != 'probe-effect-evaluation' ]; then
         git checkout -q probe-effect-evaluation || (
-            echo 'Failed to ensure "nym-jni" is on branch "probe-effect-evaluation"'
+            echo 'Failed to ensure "nym-jni-android" is on branch "probe-effect-evaluation"'
             exit 8
         )
     fi
-    echo "'nym-jni' is on branch $(git branch --show-current)"
+    echo "'nym-jni-android' is on branch $(git branch --show-current)"
 else
     current_branch_check=$(git branch --show-current)
     if [ "$current_branch_check" != 'main' ]; then
         git checkout -q main || (
-            echo 'Failed to ensure "nym-jni" is on branch "main"'
+            echo 'Failed to ensure "nym-jni-android" is on branch "main"'
             exit 8
         )
     fi
-    echo "'nym-jni' is on branch $(git branch --show-current)"
+    echo "'nym-jni-android' is on branch $(git branch --show-current)"
 fi
+
+cd nym-jni || exit 3
 
 case "$variant" in
 'debug')
@@ -492,11 +494,11 @@ case "$variant" in
     'armeabi-v7a')
         cargo build --target armv7-linux-androideabi >>"$main_log_output_file_path" 2>&1 || exit 4
         cp -u target/armv7-linux-androideabi/debug/libnym_jni.so ../nym-android-port/app/src/main/jniLibs/armeabi-v7a || exit 5
-    ;;
+        ;;
     'arm64-v8a')
         cargo build --target aarch64-linux-android >>"$main_log_output_file_path" 2>&1 || exit 4
         cp -u target/aarch64-linux-android/debug/libnym_jni.so ../nym-android-port/app/src/main/jniLibs/arm64-v8a || exit 5
-    ;;
+        ;;
     esac
     ;;
 'release')
@@ -505,36 +507,16 @@ case "$variant" in
     'armeabi-v7a')
         cargo build --target armv7-linux-androideabi --release >>"$main_log_output_file_path" 2>&1 || exit 4
         cp -u target/armv7-linux-androideabi/release/libnym_jni.so ../nym-android-port/app/src/main/jniLibs/armeabi-v7a || exit 5
-    ;;
+        ;;
     'arm64-v8a')
         cargo build --target aarch64-linux-android --release >>"$main_log_output_file_path" 2>&1 || exit 4
         cp -u target/aarch64-linux-android/release/libnym_jni.so ../nym-android-port/app/src/main/jniLibs/arm64-v8a || exit 5
-    ;;
+        ;;
     esac
     ;;
 esac
 
 cd ../nym-android-port || exit 3
-
-if [ "$probeeffect" == 'true' ]; then
-    current_branch_check=$(git branch --show-current)
-    if [ "$current_branch_check" != 'probe-effect-evaluation' ]; then
-        git checkout -q probe-effect-evaluation || (
-            echo 'Failed to ensure "nym-android-port" is on branch "probe-effect-evaluation"'
-            exit 8
-        )
-    fi
-    echo "'nym-android-port' is on branch '$(git branch --show-current)'"
-else
-    current_branch_check=$(git branch --show-current)
-    if [ "$current_branch_check" != 'main' ]; then
-        git checkout -q main || (
-            echo 'Failed to ensure "nym-android-port" is on branch "main"'
-            exit 8
-        )
-    fi
-    echo "'nym-android-port' is on branch '$(git branch --show-current)'"
-fi
 
 case "$variant" in
 'debug')
@@ -639,7 +621,7 @@ while true; do
         adb -s "$adb_ip_port" shell run-as com.kaeonx.nymandroidport cp files/adbSync/nymRunEvaluationMessagesReceived.txt /data/local/tmp/nymRunEvaluationMessagesReceived.txt
         nymRunEvaluationMessagesReceived=$(adb -s "$adb_ip_port" shell cat /data/local/tmp/nymRunEvaluationMessagesReceived.txt)
         echo -n "#$nymRunEvaluationMessagesReceived · " # (*)
-        messages_received_print_count=$((messages_received_print_count+1))
+        messages_received_print_count=$((messages_received_print_count + 1))
         if [ "$((messages_received_print_count % 10))" == '0' ]; then
             echo
         fi
