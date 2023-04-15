@@ -1,0 +1,77 @@
+[package]
+name = "nym-jni"
+version = "1.1.4"  # must match nym's version, otherwise run method fails local version check
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+# Logging
+log = "0.4.17"
+android_logger = "=0.11.1"  # 0.11.3 is broken
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
+tracing-android = "0.2.0"  # provides a tracing layer that can connect to Android Studio's logcat
+
+# External
+anyhow = "1.0.68"
+jni = "0.20.0"
+# https://stackoverflow.com/a/72187658: Non-vendored version depends on local installation of
+# OpenSSL, which is not suitable for cross-compilation.
+openssl = { version = "0.10.45", features = ["vendored"] }
+serde = "1.0.151"
+tokio = { version = "1.23.0", features = ["rt"] }  # necessary for async functions to execute properly on aarch64
+tokio-tungstenite = "0.14" # websocket
+
+# Logging
+nix = {version = "0.26.2", default-features = false, features = ["time"]}
+
+# TODO: Check that all numerical versions are correct
+# Internal (to nym crate)
+network-defaults = { path = "../nym/common/network-defaults" }
+
+## clients_native_src::client::mod
+credential-storage = { path = "../nym/common/credential-storage" }
+futures = "0.3" # WARN: listed under "dependencies to review" in nym crate
+gateway-client = { path = "../nym/common/client-libs/gateway-client" }
+nymsphinx = { path = "../nym/common/nymsphinx" }
+nym-client = { path = "../nym/clients/native" }
+task = { path = "../nym/common/task" }
+
+## clients_native_src::client::config::mod
+client-core = { path = "../nym/clients/client-core" }
+config = { path = "../nym/common/config" }
+
+## clients_native_src::commands::run
+version-checker = { path = "../nym/common/version-checker" }
+
+## clients_native_src::websocket::handler
+client-connections = { path = "../nym/common/client-connections" }
+websocket-requests = { path = "../nym/clients/native/websocket-requests" }
+
+# # Internal (to nym crate)
+# network-defaults = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+
+# ## clients_native_src::client::mod
+# credential-storage = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+# futures = "0.3" # WARN: listed under "dependencies to review" in nym crate
+# gateway-client = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+# nymsphinx = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+# nym-client = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+# task = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+
+# ## clients_native_src::client::config::mod
+# client-core = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+# config = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+
+# ## clients_native_src::commands::run
+# version-checker = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+
+# ## clients_native_src::websocket::handler
+# client-connections = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+# websocket-requests = { git = "https://github.com/jackykwe/nym", rev = "d92d687" }
+
+
+[lib]
+crate_type = ["cdylib"]
