@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nym-client = { path = "../nym/clients/native" }
+nym-client = { path = "../../nym/clients/native" }
 futures = "0.3" # bunch of futures stuff, however, now that I think about it, it could perhaps be completely removed
 # the AsyncRead, AsyncWrite, Stream, Sink, etc. traits could be used from tokio
 # channels should really be replaced with crossbeam due to that implementation being more efficient
