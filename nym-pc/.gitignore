@@ -1,0 +1,5 @@
+/target
+
+# Ignore log files
+*_pc_*.txt
+nymRunEvaluationMessagesReceived.txt
