@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 private const val TAG = "clientInfoViewModel"
@@ -53,11 +52,11 @@ class ClientInfoViewModel(application: Application) : AndroidViewModel(applicati
     )
 
     // For debugging only: if state machine misbehaves
-    init {
-        runBlocking {
-            keyStringValuePairRepository.put(listOf(NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name))
-        }
-    }
+//    init {
+//        runBlocking {
+//            keyStringValuePairRepository.put(listOf(NYM_RUN_STATE_KSVP_KEY to NymRunState.IDLE.name))
+//        }
+//    }
 
     // Always up-to-date values in the database; hot flow
     // https://developer.android.com/kotlin/flow/stateflow-and-sharedflow#stateflow
