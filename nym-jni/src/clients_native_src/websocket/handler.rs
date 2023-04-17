@@ -1,7 +1,7 @@
 /*
  * nym/clients/native/src/websocket/handler.rs
  *
- * Adapted from the above file (from the nym crate) to fit Android ecosystem.
+ * Essentially the same as the above file (from the nym crate).
  *
  * This file is copied over and adapted because in the nym crate, it is not publicly visible (due to
  * `pub(crate)` in ./mod.rs), thus it cannot be accessed from nym_jni.
@@ -10,6 +10,7 @@
 // I avoid reformatting nym code as far as possible
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::default_trait_access)]
+#![allow(clippy::derivable_impls)]
 #![allow(clippy::expect_used)]
 #![allow(clippy::large_types_passed_by_value)]
 #![allow(clippy::semicolon_if_nothing_returned)]
@@ -55,8 +56,8 @@ impl Default for ReceivedResponseType {
     }
 }
 
-// ? Copied wholesale, except `pub(crate)` -> `pub`
-pub struct Handler {
+// ? Copied wholesale
+pub(crate) struct Handler {
     msg_input: InputMessageSender,
     client_connection_tx: ConnectionCommandSender,
     buffer_requester: ReceivedBufferRequestSender,

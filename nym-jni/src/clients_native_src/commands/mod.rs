@@ -2,7 +2,7 @@
  * nym/clients/native/src/commands/mod.rs
  *
  * Essentially the same as the above file (from the nym crate), minus some minor adjustments to make
- * it fit into nym_jni.
+ * it fit into nym_jni. Some lines were not copied over as they are not used on Android.
  *
  * This file is copied over and adapted because in the nym crate, it hides the init and run modules
  * with `pub(crate)`, thus they cannot be accessed from nym_jni. Also, we need to adapt
@@ -12,17 +12,22 @@
 // I avoid reformatting nym code as far as possible
 #![allow(clippy::expect_used)]
 
-// ? Changed from `pub(crate)` -> `pub`
-pub mod init;
-pub mod run;
+// Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
+// SPDX-License-Identifier: Apache-2.0
 
+// ? Modified to use this crate's structs
+use crate::clients_native_src::client::config::{ConfigAndroid, SocketType};
+
+// ? To fit Android ecosystem: custom implementation
 use anyhow::Context;
 
-use crate::clients_native_src::client::config::{ConfigAndroid, SocketType};
+// ? Copied wholesale
+pub(crate) mod init;
+pub(crate) mod run;
 
 // ? Copied wholesale
 // Configuration that can be overridden.
-pub struct OverrideConfig {
+pub(crate) struct OverrideConfig {
     nymd_validators: Option<String>,
     api_validators: Option<String>,
     disable_socket: bool,
@@ -37,7 +42,7 @@ pub struct OverrideConfig {
 // ? - returns `Result<ConfigAndroid, _>` instead of `ConfigAndroid`
 // ? - uses anyhow's with_context() (allows for graceful failure in nym_jni) instead of expect
 // ?   (which crashes the program)
-pub fn override_config(
+pub(crate) fn override_config(
     mut config: ConfigAndroid,
     args: OverrideConfig,
 ) -> Result<ConfigAndroid, anyhow::Error> {

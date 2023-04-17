@@ -113,7 +113,7 @@ fn Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_topLevelInitImpl_fallible(
         // another form of arguments to functions, so I'm using that facility to pass this value to
         // the default_root_directory() function at runtime. This line must be executed before
         // creation of any AndroidConfig structs.
-        std::env::set_var(STORAGE_ABS_PATH_ENVVARKEY, &storage_abs_path);
+        std::env::set_var(STORAGE_ABS_PATH_ENVVARKEY, storage_abs_path);
 
         std::env::set_var(SET_GLOBAL_DEFAULT_DONE_ENVVARKEY, "y");
     }

@@ -9,50 +9,54 @@
 
 // I avoid reformatting nym code as far as possible
 #![allow(clippy::wildcard_imports)]
+#![allow(dead_code)]
 
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-use config::NymConfig;
-use jni::objects::JObject;
-use jni::JNIEnv;
-use log::*;
+// ? Modified to use this crate's structs
+use crate::clients_native_src::{
+    client::{config::ConfigAndroid, SocketClientAndroid},
+    commands::{override_config, OverrideConfig},
+};
 use nym_client::error::ClientError;
+
+use config::NymConfig;
+use log::*;
 use version_checker::is_minor_version_compatible;
 
-use crate::clients_native_src::client::config::ConfigAndroid;
-use crate::clients_native_src::client::SocketClientAndroid;
-use crate::clients_native_src::commands::{override_config, OverrideConfig};
+// ? To fit Android ecosystem: custom implementation
+use jni::objects::JObject;
+use jni::JNIEnv;
 
-// ? Copied wholesale, except removal of `#[clap]` macros, `pub(crate)` -> `pub` and making all
-// ? fields `pub`
+// ? Copied wholesale, except removal of `#[clap]` macros, making all fields `pub(crate)`
 #[derive(Clone)]
-pub struct Run {
+pub(crate) struct Run {
     /// Id of the nym-mixnet-client we want to run.
-    pub id: String,
+    pub(crate) id: String,
 
     /// Comma separated list of rest endpoints of the nymd validators
-    pub nymd_validators: Option<String>,
+    pub(crate) nymd_validators: Option<String>,
 
     /// Comma separated list of rest endpoints of the API validators
-    pub api_validators: Option<String>,
+    pub(crate) api_validators: Option<String>,
 
     /// Id of the gateway we want to connect to. If overridden, it is user's responsibility to
     /// ensure prior registration happened
-    pub gateway: Option<String>,
+    pub(crate) gateway: Option<String>,
 
     /// Whether to not start the websocket
-    pub disable_socket: bool,
+    pub(crate) disable_socket: bool,
 
     /// Port for the socket to listen on
-    pub port: Option<u16>,
+    pub(crate) port: Option<u16>,
 
     /// Mostly debug-related option to increase default traffic rate so that you would not need to
     /// modify config post init
-    pub fastmode: bool,
+    pub(crate) fastmode: bool,
 
     /// Disable loop cover traffic and the Poisson rate limiter (for debugging only)
-    pub no_cover: bool,
+    pub(crate) no_cover: bool,
     // Set this client to work in a enabled credentials mode that would attempt to use gateway
     // with bandwidth credential requirement.
     // #[cfg(feature = "coconut")]
@@ -96,11 +100,12 @@ fn version_check(cfg: &ConfigAndroid) -> bool {
 }
 
 // ? Copied wholesale, except:
-// ? - `pub(crate)` -> `pub`
 // ? - returns Result<_, anyhow::Error> instead of Result<_, ClientError>
+// ? - Accepts a JNIEnv and JObject (NymRunForegroundService) to enable synchronisation with Android
+// ?   application during setup and teardown
 // ? - `Config` -> `ConfigAndroid`
 // ? - uses `anyhow::bail!` to return early with an Err (for context: <https://stackoverflow.com/q/67656431>)
-pub async fn execute(
+pub(crate) async fn execute(
     args: &Run,
     env: JNIEnv<'_>,
     nym_run_foreground_service: JObject<'_>,
