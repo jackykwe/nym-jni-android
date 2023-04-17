@@ -14,54 +14,58 @@
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Context;
-use client_core::client::replies::reply_storage::fs_backend::Backend;
+// ? Modified to use this crate's structs
+use crate::clients_native_src::{
+    client::config::ConfigAndroid,
+    commands::{override_config, OverrideConfig},
+};
+
 use config::NymConfig;
 use nymsphinx::addressing::clients::Recipient;
 use serde::Serialize;
 use std::fmt::Display;
 
-use crate::clients_native_src::client::config::ConfigAndroid;
-use crate::clients_native_src::commands::{override_config, OverrideConfig};
+// ? To fit Android ecosystem: custom implementation
+use anyhow::Context;
+use client_core::client::replies::reply_storage::fs_backend::Backend;
 
-// ? Copied wholesale, except removal of `#[clap]` macros, `pub(crate)` -> `pub` and making all
-// ? fields `pub`
+// ? Copied wholesale, except removal of `#[clap]` macros and making all fields `pub(crate)`
 #[derive(Clone)]
-pub struct Init {
+pub(crate) struct Init {
     /// Id of the nym-mixnet-client we want to create config for.
-    pub id: String,
+    pub(crate) id: String,
 
     /// Id of the gateway we are going to connect to.
-    pub gateway: Option<String>,
+    pub(crate) gateway: Option<String>,
 
     /// Force register gateway. WARNING: this will overwrite any existing keys for the given id,
     /// potentially causing loss of access.
-    pub force_register_gateway: bool,
+    pub(crate) force_register_gateway: bool,
 
     /// Comma separated list of rest endpoints of the nymd validators
-    pub nymd_validators: Option<String>,
+    pub(crate) nymd_validators: Option<String>,
 
     /// Comma separated list of rest endpoints of the API validators
-    pub api_validators: Option<String>,
+    pub(crate) api_validators: Option<String>,
 
     /// Whether to not start the websocket
-    pub disable_socket: bool,
+    pub(crate) disable_socket: bool,
 
     /// Port for the socket (if applicable) to listen on in all subsequent runs
-    pub port: Option<u16>,
+    pub(crate) port: Option<u16>,
 
     /// Mostly debug-related option to increase default traffic rate so that you would not need to
     /// modify config post init
-    pub fastmode: bool,
+    pub(crate) fastmode: bool,
 
     /// Disable loop cover traffic and the Poisson rate limiter (for debugging only)
-    pub no_cover: bool,
+    pub(crate) no_cover: bool,
     // Set this client to work in a enabled credentials mode that would attempt to use gateway
     // with bandwidth credential requirement.
     // #[cfg(feature = "coconut")]
-    // pub enabled_credentials_mode: bool,
+    // pub(crate) enabled_credentials_mode: bool,
     /// Save a summary of the initialization to a json file
-    pub output_json: bool,
+    pub(crate) output_json: bool,
 }
 
 // ? Copied wholesale
@@ -109,11 +113,10 @@ impl Display for InitResults {
 // ? Copied wholesale, except:
 // ? - returns Result<_, anyhow::Error> instead of Result<_, ClientError>
 // ? - uses anyhow's with_context() instead of tap::TapFallible
-// ? - `pub(crate)` -> `pub`.
 // ? - `Config` -> `ConfigAndroid`
 // ? - `println!` -> `log::info!`
 // ? - and some modifications to specific lines
-pub async fn execute(args: &Init) -> Result<(), anyhow::Error> {
+pub(crate) async fn execute(args: &Init) -> Result<(), anyhow::Error> {
     log::info!("Initialising client...");
 
     let id = &args.id;

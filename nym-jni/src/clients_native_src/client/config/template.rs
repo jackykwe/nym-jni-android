@@ -1,7 +1,7 @@
 /*
  * nym/clients/native/src/client/config/template.rs
  *
- * Adapted from the above file (from the nym crate) to fit Android ecosystem.
+ * Essentially the same as the above file (from the nym crate).
  *
  * This file is copied over and adapted because in the nym crate, ./mod.rs is not publicly visible
  * (due to `pub(crate)` in ../mod.rs), thus the config_template() function cannot be accessed from

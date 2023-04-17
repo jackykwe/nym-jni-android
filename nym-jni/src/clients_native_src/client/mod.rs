@@ -15,6 +15,8 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::wildcard_imports)]
 
+use crate::clients_native_src::client::config::ConfigAndroid;
+use crate::clients_native_src::websocket;
 use client_connections::TransmissionLane;
 use client_core::client::base_client::{
     non_wasm_helpers, BaseClientBuilder, ClientInput, ClientOutput,
@@ -25,9 +27,6 @@ use client_core::client::received_buffer::{ReceivedBufferMessage, ReconstructedM
 use client_core::config::persistence::key_pathfinder::ClientKeyPathfinder;
 use futures::channel::mpsc;
 use gateway_client::bandwidth::BandwidthController;
-use jni::objects::JObject;
-use jni::signature::Primitive;
-use jni::JNIEnv;
 use log::*;
 use nym_client::error::ClientError;
 use nymsphinx::addressing::clients::Recipient;
@@ -35,11 +34,13 @@ use nymsphinx::anonymous_replies::requests::AnonymousSenderTag;
 use nymsphinx::receiver::ReconstructedMessage;
 use task::{wait_for_signal, ShutdownNotifier};
 
-use crate::clients_native_src::client::config::ConfigAndroid;
-use crate::clients_native_src::websocket;
+// ? To fit Android ecosystem: custom implementation
+use jni::objects::JObject;
+use jni::signature::Primitive;
+use jni::JNIEnv;
 
-// ? Changed from `pub(crate)` -> `pub`
-pub mod config;
+// ? Copied wholesale
+pub(crate) mod config;
 
 // ? Copied wholesale, except:
 // ? - `NymSocket` -> `SocketClientAndroid`
@@ -249,16 +250,16 @@ impl SocketClientAndroid {
     }
 }
 
-// ? Copied wholesale, except making all fields `pub`
+// ? Copied wholesale
 pub struct DirectClient {
-    pub client_input: ClientInput,
-    pub reconstructed_receiver: ReconstructedMessagesReceiver,
+    client_input: ClientInput,
+    reconstructed_receiver: ReconstructedMessagesReceiver,
 
     // we need to keep reference to this guy otherwise things will start dropping
-    pub _shutdown_notifier: ShutdownNotifier,
+    _shutdown_notifier: ShutdownNotifier,
 }
 
-// ? Copied wholesale,
+// ? Copied wholesale
 impl DirectClient {
     /// EXPERIMENTAL DIRECT RUST API
     /// It's untested and there are absolutely no guarantees about it (but seems to have worked

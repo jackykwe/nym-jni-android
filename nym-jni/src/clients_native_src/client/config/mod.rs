@@ -16,6 +16,8 @@
 // Copyright 2021 - Nym Technologies SA <contact@nymtech.net>
 // SPDX-License-Identifier: Apache-2.0
 
+// ? Modified to use this crate's structs
+use crate::clients_native_src::client::config::template::config_template;
 use client_core::config::{ClientCoreConfigTrait, Config as BaseConfig, DebugConfig};
 use config::{defaults::DEFAULT_WEBSOCKET_LISTENING_PORT, NymConfig};
 use serde::{Deserialize, Serialize};
@@ -23,8 +25,7 @@ use std::path::PathBuf;
 
 mod template;
 
-use crate::clients_native_src::client::config::template::config_template;
-
+// ? To fit Android ecosystem: custom implementation
 // Value (environment variable key) follows the impl block below
 pub const STORAGE_ABS_PATH_ENVVARKEY: &str = "IMPL_NYMCONFIG_FOR_CONFIGANDROID_STORAGE_ABS_PATH";
 

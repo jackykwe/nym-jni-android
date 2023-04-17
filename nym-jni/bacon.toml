@@ -22,7 +22,8 @@ command = [
     "-W", "clippy::pedantic",
     # "-W", "clippy::nursery",  // disabled because it's too aggressive and sometimes unhelpful
     "-W", "clippy::unwrap_used",
-    "-W", "clippy::expect_used"
+    "-W", "clippy::expect_used",
+    "-A", "clippy::uninlined-format-args"
 ]
 need_stdout = false
 
