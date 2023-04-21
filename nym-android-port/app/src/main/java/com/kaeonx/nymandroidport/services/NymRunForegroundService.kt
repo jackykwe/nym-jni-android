@@ -167,12 +167,12 @@ class NymRunForegroundService : Service() {
     override fun onDestroy() {
         supervisorJob.cancel()  // NB: Doesn't wait for completion of its child jobs.
 
-        // Used only if running the app from ADB
-        val syncFile = applicationContext.filesDir
-            .resolve("adbSync")
-            .resolve("nymRunEvaluationRunning.txt")
-        // Try-with-resources in Kotlin
-        FileWriter(syncFile).use { it.write("0") }
+//        // Used only if running the app from ADB
+//        val syncFile = applicationContext.filesDir
+//            .resolve("adbSync")
+//            .resolve("nymRunEvaluationRunning.txt")
+//        // Try-with-resources in Kotlin
+//        FileWriter(syncFile).use { it.write("0") }
 
         runBlocking {
             keyStringValuePairRepository.put(
@@ -191,12 +191,12 @@ class NymRunForegroundService : Service() {
     // METHODS CALLED ONLY FROM RUST //
     ///////////////////////////////////
 
-    private var messagesReceived = 0UL
-    private val messagesReceivedSyncFile by lazy {
-        applicationContext.filesDir
-            .resolve("adbSync")
-            .resolve("nymRunEvaluationMessagesReceived.txt")
-    }
+//    private var messagesReceived = 0UL
+//    private val messagesReceivedSyncFile by lazy {
+//        applicationContext.filesDir
+//            .resolve("adbSync")
+//            .resolve("nymRunEvaluationMessagesReceived.txt")
+//    }
 
     // Still accessible from Rust via JNI, despite private
     // Named as such because it makes sense to the programmer on the Rust side
@@ -257,24 +257,24 @@ class NymRunForegroundService : Service() {
                     }
                 }
 
-                serviceIOScope.launch(Dispatchers.IO) {
-                    var messageLogId = 0UL
-                    while (true) {
-                        val selectedClientAddress =
-                            keyStringValuePairRepository.getLatest(
-                                RUNNING_CLIENT_ADDRESS_KSVP_KEY
-                            )!!
-//                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
-//                        Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
-                        messageRepository.sendMessageFromSelectedClient(
-                            selectedClientAddress,
-                            messageLogId.toString()
-//                            System.currentTimeMillis().toString()
-                        )
-                        messageLogId += 1UL
-                        delay(1_000L)
-                    }
-                }
+//                serviceIOScope.launch(Dispatchers.IO) {
+//                    var messageLogId = 0UL
+//                    while (true) {
+//                        val selectedClientAddress =
+//                            keyStringValuePairRepository.getLatest(
+//                                RUNNING_CLIENT_ADDRESS_KSVP_KEY
+//                            )!!
+////                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
+////                        Log.i(TAG, "tK=0 l=KotlinCreation tM=$tM mId=$messageLogId")
+//                        messageRepository.sendMessageFromSelectedClient(
+//                            selectedClientAddress,
+//                            messageLogId.toString()
+////                            System.currentTimeMillis().toString()
+//                        )
+//                        messageLogId += 1UL
+//                        delay(1_000L)
+//                    }
+//                }
             },
             onReceiveMessage =
             { senderAddress, message, recvTs ->
@@ -287,18 +287,19 @@ class NymRunForegroundService : Service() {
                             )
                             messageDao().insertToSelectedClient(
                                 fromAddress = senderAddress,
-                                message = "$message.$recvTs"
+//                                message = "$message.$recvTs"
+                                message = message
                             )
                         }
 //                        val tM = SystemClock.elapsedRealtimeNanos()  // Monotonic
 //                        Log.i(TAG, "tK=9 l=KotlinDelivered tM=$tM mId=$message")
-                        messagesReceived += 1UL
-                        if (messagesReceived == MAX_MESSAGES) {
-                            stopSelf()
-                        } else if (messagesReceived % 100UL == 0UL) {
-                            // The value 100 is chosen to be not too high (lack of feedback if stuck early) and not too low (too high overhead)
-                            FileWriter(messagesReceivedSyncFile).use { it.write(messagesReceived.toString()) }
-                        }
+//                        messagesReceived += 1UL
+//                        if (messagesReceived == MAX_MESSAGES) {
+//                            stopSelf()
+//                        } else if (messagesReceived % 100UL == 0UL) {
+//                            // The value 100 is chosen to be not too high (lack of feedback if stuck early) and not too low (too high overhead)
+//                            FileWriter(messagesReceivedSyncFile).use { it.write(messagesReceived.toString()) }
+//                        }
                     }
                 }
             },
