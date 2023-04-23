@@ -167,6 +167,8 @@ echo
 echo "*** Saving output to $main_log_output_file_path ***"
 echo
 
+sleep 10
+
 if [ "$variant" == "debug" ]; then
     echo 'Compiling and starting nym-client (debug)...'
     RUST_LOG=INFO cargo run --bin nym-client init --id "$new_client_id" >>"$main_log_output_file_path" 2>&1
@@ -196,6 +198,8 @@ else
     fi
     echo "'nym-pc' is on branch '$(git branch --show-current)'"
 fi
+
+sleep 10
 
 backoff_seconds=1
 
