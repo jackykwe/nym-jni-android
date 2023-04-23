@@ -31,10 +31,10 @@ total_experiments=$((total_experiments - 2))
 # Avoid using loops here: the number of experiment-prologues in code is counted to determine total number of experiments
 # (for pretty printing purposes)
 
-# experimentPrologue
-# printOrange 'Release, Full Timestamps (3600 messages, ~1h)'
-# ./collect_pc_data.sh -v release -p false -m 3600
-# experimentEpilogue
+experimentPrologue
+printOrange 'Release, Full Timestamps (3600 messages, ~1h)'
+./collect_pc_data.sh -v release -p false -m 3600
+experimentEpilogue
 
 experimentPrologue
 printOrange 'Release, Probe Effect (3600 messages, ~1h)'
