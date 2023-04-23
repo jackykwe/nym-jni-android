@@ -28,64 +28,31 @@ total_experiments=$((total_experiments - 1))
 # Avoid using loops here: the number of experiment-prologues in code is counted to determine total number of experiments
 # (for pretty printing purposes)
 
-
 experimentPrologue
-./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 20000 --message-sending-average-delay-ms 2000 -m 3600
+./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v debug -c data -b optimised -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 experimentEpilogue
 
 experimentPrologue
-./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b optimised -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 20000 --message-sending-average-delay-ms 2000 -m 3600
+./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c data -b optimised -s false -p true --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 experimentEpilogue
 
-experimentPrologue
-./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c data -b unrestricted -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 20000 --message-sending-average-delay-ms 2000 -m 3600
-experimentEpilogue
-
-experimentPrologue
-./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c data -b optimised -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 20000 --message-sending-average-delay-ms 2000 -m 3600
-experimentEpilogue
 #experimentPrologue
-#./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b optimised -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 20000 --message-sending-average-delay-ms 2000 -m 3600
-#experimentEpilogue
-#
-#experimentPrologue
-#./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c data -b optimised -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 20000 --message-sending-average-delay-ms 2000 -m 3600
-#experimentEpilogue
-#
-#experimentPrologue
-#./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 2000 --message-sending-average-delay-ms 200 -m 3600
-#experimentEpilogue
-#
-#experimentPrologue
-#./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 2000 --message-sending-average-delay-ms 200 -m 3600
-#experimentEpilogue
-#
-#experimentPrologue
-#./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 2000 --message-sending-average-delay-ms 200 -m 3600
-#experimentEpilogue
-#
-#experimentPrologue
-#./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 2000 --message-sending-average-delay-ms 200 -m 3600
-#experimentEpilogue
-
-
-#experimentPrologue
-##./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.201:5555 -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
+#./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.83:5555 -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #experimentEpilogue
 #
 #experimentPrologue
-##./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.201:5555 -v release -c wifi -b optimised -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
+#./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.83:5555 -v release -c wifi -b optimised -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b optimised -s false -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #experimentEpilogue
 #
 #experimentPrologue
-##./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.201:5555 -v release -c wifi -b unrestricted -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
+#./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.83:5555 -v release -c wifi -b unrestricted -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b unrestricted -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #experimentEpilogue
 #
 #experimentPrologue
-##./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.201:5555 -v release -c wifi -b optimised -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
+#./collect_android_data_phy_adbtcp.sh -a armeabi-v7a -d moto -i 192.168.0.83:5555 -v release -c wifi -b optimised -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b optimised -s true -p false --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20 -m 3600
 #experimentEpilogue
 
