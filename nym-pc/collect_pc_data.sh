@@ -147,7 +147,7 @@ else
 fi
 main_log_output_file_path="$(pwd)/$log_output_file_name"
 
-cd ../nym || exit 3
+cd ../../nym || exit 3
 
 if [ "$probeeffect" == "true" ]; then
     current_branch_check=$(git describe --tags 2>/dev/null || echo NA) # returns NA if no tags exist in repo; some other tag that's not probe-effect-evaluation (probe-effect-evalation is only returned if on the exact commit)
@@ -181,7 +181,7 @@ else
     echo "Running nym-client (release) in PID $nym_client_pid"
 fi
 
-cd ../nym-pc || exit 3
+cd ../nym-jni-android/nym-pc || exit 3
 
 if [ "$probeeffect" == "true" ]; then
     current_branch_check=$(git branch --show-current)
