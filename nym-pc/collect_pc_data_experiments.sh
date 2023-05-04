@@ -22,8 +22,8 @@ experimentEpilogue() {
 }
 
 experiment_counter=0
-total_experiments=$(cat collect_pc_data_experiments.sh | grep -c 'experimentPrologue')
-total_experiments=$((total_experiments - 2))
+total_experiments=$(cat collect_pc_data_experiments.sh | grep -Ec '^experimentPrologue')
+total_experiments=$((total_experiments - 1))
 
 ######################
 # DEFINE EXPERIMENTS #
@@ -36,17 +36,37 @@ printOrange 'Release, Full Timestamps (3600 messages, ~1h)'
 ./collect_pc_data.sh -v release -p false -m 3600
 experimentEpilogue
 
-experimentPrologue
-printOrange 'Release, Probe Effect (3600 messages, ~1h)'
-./collect_pc_data.sh -v release -p true -m 3600
-experimentEpilogue
+# experimentPrologue
+# printOrange 'Release, Probe Effect (3600 messages, ~1h)'
+# ./collect_pc_data.sh -v release -p true -m 3600
+# experimentEpilogue
 
 experimentPrologue
 printOrange 'Debug, Full Timestamps (3600 messages, ~1h)'
 ./collect_pc_data.sh -v debug -p false -m 3600
 experimentEpilogue
 
+# experimentPrologue
+# printOrange 'Debug, Probe Effect (3600 messages, ~1h)'
+# ./collect_pc_data.sh -v debug -p true -m 3600
+# experimentEpilogue
+
 experimentPrologue
-printOrange 'Debug, Probe Effect (3600 messages, ~1h)'
-./collect_pc_data.sh -v debug -p true -m 3600
+printOrange 'Release, Full Timestamps (3600 messages, ~1h)'
+./collect_pc_data.sh -v release -p false -m 3600
 experimentEpilogue
+
+# experimentPrologue
+# printOrange 'Release, Probe Effect (3600 messages, ~1h)'
+# ./collect_pc_data.sh -v release -p true -m 3600
+# experimentEpilogue
+
+experimentPrologue
+printOrange 'Debug, Full Timestamps (3600 messages, ~1h)'
+./collect_pc_data.sh -v debug -p false -m 3600
+experimentEpilogue
+
+# experimentPrologue
+# printOrange 'Debug, Probe Effect (3600 messages, ~1h)'
+# ./collect_pc_data.sh -v debug -p true -m 3600
+# experimentEpilogue
