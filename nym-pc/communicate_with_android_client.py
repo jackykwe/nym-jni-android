@@ -2,23 +2,30 @@
 
 import asyncio
 import json
+import sys
 
-import aioconsole
 import websockets
 
 self_address_request = json.dumps({
     "type": "selfAddress"
 })
 
-RECIPIENT = "ECiRjCAyCfhS8zyoHGvEtSxW3v6r43r3TrW8PfY3YULn.DLjhDuekdENHq8Mpdp355UH94usQtpZNjHK2ibPGf4BU@GL5wESoz4oSbpBaTki9qB9213FGUQXCiRjbzDkhWwoBC"
+RECIPIENT = "DSria8x4ytjKMLdbyYqCNsGfD5hdavucdSNZwhR8Gqmg.6d9ftsLkL9VY4yz7hudtQn6o8SseDMG1zrcw1Qv1NyVN@2TqMTwmE7dfdvG1YGWny4Ddd3ZaJB5F76vA6rx1kr3Wr"
+
+# Courtesy of https://stackoverflow.com/a/76183977
+async def ainput() -> str:
+    return (await asyncio.to_thread(sys.stdin.readline)).rstrip('\n')
+
 
 # Adapted from send_text_without_reply()
 async def read_from_stdin_and_send_text_without_reply(websocket):
     await websocket.send(self_address_request)
     self_address = json.loads(await websocket.recv())
     print("our address is: {}".format(self_address["address"]))
+    print()
     while True:
-        message = await aioconsole.ainput("Enter message to send to contact: ")
+        print("Enter message to send to contact: ", end="", flush=True)
+        message = await ainput()
         text_send = json.dumps({
             "type": "send",
             "message": f"{self_address['address']}|{message}",
