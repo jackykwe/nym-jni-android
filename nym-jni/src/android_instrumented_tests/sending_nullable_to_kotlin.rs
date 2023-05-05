@@ -11,7 +11,7 @@ use jni::{
 
 use crate::{
     call_fallible_or_else,
-    utils::{
+    jvm_kotlin_typing::{
         produce_kt_nullable_boolean, produce_kt_nullable_byte, produce_kt_nullable_double,
         produce_kt_nullable_float, produce_kt_nullable_int, produce_kt_nullable_long,
         produce_kt_nullable_short, produce_kt_nullable_string, produce_kt_nullable_ubyte,

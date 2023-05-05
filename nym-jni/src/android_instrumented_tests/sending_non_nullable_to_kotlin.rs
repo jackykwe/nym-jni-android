@@ -6,7 +6,7 @@ use jni::{
     JNIEnv,
 };
 
-use crate::utils::{
+use crate::jvm_kotlin_typing::{
     produce_kt_boolean, produce_kt_byte, produce_kt_double, produce_kt_float, produce_kt_int,
     produce_kt_long, produce_kt_short, produce_kt_ubyte, produce_kt_uint, produce_kt_ulong,
     produce_kt_ushort,
