@@ -22,7 +22,9 @@ This was the setup used in very-early phases of the project, and is not recommen
    These are left commented by default because the building of the `nym-jni` crate and copying over the resultant `libnym_jni.so` file is done via another mechanism (shell scripts) as described in the next section. If those shell scripts are not used, then we rely on the simpler `beforeAppBuild.sh`.
 2. In `beforeAppBuild.sh`, ensure the 3 checks are done.
 3. In `beforeAppBuild.sh`, uncomment only the relevant lines at the bottom.
-4. In the `nym` fork, ensure that the branch name is the same as in this repository (either `main` or `probe-effect-evaluation`). A mismatch may still result in successful compilation, but the runtime behaviour will be unexpected.
+4. In the `nym` fork, ensure that the branch name is the same as in this repository. A mismatch may still result in successful compilation, but the runtime behaviour will be unexpected.
+   - If this repository is in the `main` branch, ensure that `nym` is on the `nym-binaries-v1.1.4-logging-dev` branch.
+   - If this repository is in the `probe-effect-evaluation` branch, ensure that `nym` is on the commit tagged with `probe-effect-evaluation`
 5. Press the run (Shift+F10) button in Android Studio.
 
 ## Usage of data collection scripts (automatic)
