@@ -10,19 +10,19 @@ use jni::{
     sys::{jboolean, jstring},
     JNIEnv,
 };
+use jvm_kotlin_typing::{consume_kt_string, produce_kt_string};
 use network_defaults::setup_env;
 use nym_client::error::ClientError;
 use tracing_subscriber::layer::SubscriberExt;
-use utils::{consume_kt_string, produce_kt_string};
 mod android_instrumented_tests;
 mod clients_native_src;
+mod jvm_kotlin_typing;
 mod nym_init;
 mod nym_run;
-mod utils;
 
+use crate::jvm_kotlin_typing::consume_kt_nullable_string;
 use crate::nym_init::Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymInitImpl_fallible;
 use crate::nym_run::Java_com_kaeonx_nymandroidport_jni_NymHandlerKt_nymRunImpl_fallible;
-use crate::utils::consume_kt_nullable_string;
 
 pub const SET_GLOBAL_DEFAULT_DONE_ENVVARKEY: &str = "TOPLEVELINITIMPL_SET_GLOBAL_DEFAULT_DONE";
 

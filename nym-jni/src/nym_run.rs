@@ -6,7 +6,7 @@ use jni::{
 };
 
 use crate::clients_native_src::commands::run::{execute, Run};
-use crate::utils::{
+use crate::jvm_kotlin_typing::{
     consume_kt_boolean, consume_kt_nullable_string, consume_kt_nullable_ushort, consume_kt_string,
 };
 
