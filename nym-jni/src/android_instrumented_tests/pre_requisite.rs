@@ -4,7 +4,7 @@ use std::ptr::null_mut;
 
 use jni::{errors::Error as JNIError, objects::JClass, sys::jstring, JNIEnv};
 
-use crate::{call_fallible_or_else, utils::produce_kt_string};
+use crate::{call_fallible_or_else, jvm_kotlin_typing::produce_kt_string};
 
 const PRE_DETERMINED_STRING: &str = "the brown fox jumps over the lazy dog";
 
