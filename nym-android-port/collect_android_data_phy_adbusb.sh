@@ -390,14 +390,8 @@ if [ "$probeeffect" == 'true' ]; then
     fi
     echo "'nym' is on tag 'tag/$(git describe --tags 2>/dev/null || echo NA)'"
 else
-    current_branch_check=$(git branch --show-current) # if still on tag/probe-effect-evaluation (detached HEAD), this returns empty
-    if [ "$current_branch_check" != 'nym-binaries-v1.1.4-logging-dev' ]; then
-        git checkout -q nym-binaries-v1.1.4-logging-dev || (
-            echo 'Failed to ensure "nym" is on branch "nym-binaries-v1.1.4-logging-dev"'
-            exit 8
-        )
-    fi
-    echo "'nym' is on branch '$(git branch --show-current)'"
+    echo 'For demonstration purposes, -p must be true.'
+    exit 9
 fi
 
 sleep 10
@@ -436,21 +430,16 @@ cd ../nym-jni-android || exit 3
 
 current_branch_check=$(git branch --show-current)
 if [ "$probeeffect" == 'true' ]; then
-    if [ "$current_branch_check" != 'probe-effect-evaluation' ]; then
-        git checkout -q probe-effect-evaluation || (
-            echo 'Failed to ensure "nym-jni-android" is on branch "probe-effect-evaluation"'
+    if [ "$current_branch_check" != 'communicate-with-pc-demo' ]; then
+        git checkout -q communicate-with-pc-demo || (
+            echo 'Failed to ensure "nym-jni-android" is on branch "communicate-with-pc-demo"'
             exit 8
         )
     fi
     echo "'nym-jni-android' is on branch $(git branch --show-current)"
 else
-    if [ "$current_branch_check" != 'main' ]; then
-        git checkout -q main || (
-            echo 'Failed to ensure "nym-jni-android" is on branch "main"'
-            exit 8
-        )
-    fi
-    echo "'nym-jni-android' is on branch $(git branch --show-current)"
+    echo 'For demonstration purposes, -p must be true.'
+    exit 9
 fi
 
 sleep 10
@@ -554,47 +543,47 @@ else
     adb -d shell settings put global low_power 0
 fi
 
-echo "Waiting for 10s for connectivity ($connectivity) to establish itself"
-sleep 10
-
-# Courtesy of https://stackoverflow.com/a/59556001
-adb -d shell 'echo 1 > /data/local/tmp/nymRunEvaluationRunning.txt'
-adb -d shell 'echo 0 > /data/local/tmp/nymRunEvaluationMessagesReceived.txt'
-adb -d shell run-as com.kaeonx.nymandroidport mkdir -p files/adbSync
-adb -d shell run-as com.kaeonx.nymandroidport cp /data/local/tmp/nymRunEvaluationRunning.txt files/adbSync/nymRunEvaluationRunning.txt
-adb -d shell run-as com.kaeonx.nymandroidport cp /data/local/tmp/nymRunEvaluationMessagesReceived.txt files/adbSync/nymRunEvaluationMessagesReceived.txt
-
-adb -d shell logcat -c
-adb -d shell mkdir -p /sdcard/Documents/nym_android_port_logs
-logcat_pid_on_device=$(adb -d shell "nohup logcat -f /sdcard/Documents/nym_android_port_logs/fragment_$log_output_file_name -r 131072 -n 1 nym_jni_log:I nym_jni_tracing:I *:I >/dev/null 2>&1 & echo \$!")
-adb -d shell am start-foreground-service -n com.kaeonx.nymandroidport/.services.ADBForegroundService
-
-messages_check_once_every_minutes=6
-echo "Printing received messages count every $messages_check_once_every_minutes min"
-minutes_slept=0
-messages_received_print_count=0
-while true; do
-    sleep 60
-    adb -d shell run-as com.kaeonx.nymandroidport cp files/adbSync/nymRunEvaluationRunning.txt /data/local/tmp/nymRunEvaluationRunning.txt
-    nymRunEvaluationRunning=$(adb -d shell cat /data/local/tmp/nymRunEvaluationRunning.txt)
-    if [ "$nymRunEvaluationRunning" == '0' ]; then
-        # The NymRunForegroundService already terminated by this point
-        adb -d shell kill "$logcat_pid_on_device"
-        adb -d pull "/sdcard/Documents/nym_android_port_logs/fragment_$log_output_file_name" "fragment_$log_output_file_name"
-        cat "fragment_$log_output_file_name" >>"$main_log_output_file_path"
-        rm "fragment_$log_output_file_name"
-        break
-    fi
-    minutes_slept=$((minutes_slept + 1))
-    if [ "$((minutes_slept % messages_check_once_every_minutes))" == '0' ]; then # every 6 minutes, check number of messages received. Expect to receive 360 messages every 5min. Every 100 messages received, Android writes to disk.
-        # Potentially expensive operation, trying to minimise (once every 6 min only)
-        adb -d shell run-as com.kaeonx.nymandroidport cp files/adbSync/nymRunEvaluationMessagesReceived.txt /data/local/tmp/nymRunEvaluationMessagesReceived.txt
-        nymRunEvaluationMessagesReceived=$(adb -d shell cat /data/local/tmp/nymRunEvaluationMessagesReceived.txt)
-        echo -n "#$nymRunEvaluationMessagesReceived · " # (*)
-        messages_received_print_count=$((messages_received_print_count + 1))
-        if [ "$((messages_received_print_count % 10))" == '0' ]; then
-            echo
-        fi
-    fi
-done
-echo # see (*)
+#echo "Waiting for 10s for connectivity ($connectivity) to establish itself"
+#sleep 10
+#
+## Courtesy of https://stackoverflow.com/a/59556001
+#adb -d shell 'echo 1 > /data/local/tmp/nymRunEvaluationRunning.txt'
+#adb -d shell 'echo 0 > /data/local/tmp/nymRunEvaluationMessagesReceived.txt'
+#adb -d shell run-as com.kaeonx.nymandroidport mkdir -p files/adbSync
+#adb -d shell run-as com.kaeonx.nymandroidport cp /data/local/tmp/nymRunEvaluationRunning.txt files/adbSync/nymRunEvaluationRunning.txt
+#adb -d shell run-as com.kaeonx.nymandroidport cp /data/local/tmp/nymRunEvaluationMessagesReceived.txt files/adbSync/nymRunEvaluationMessagesReceived.txt
+#
+#adb -d shell logcat -c
+#adb -d shell mkdir -p /sdcard/Documents/nym_android_port_logs
+#logcat_pid_on_device=$(adb -d shell "nohup logcat -f /sdcard/Documents/nym_android_port_logs/fragment_$log_output_file_name -r 131072 -n 1 nym_jni_log:I nym_jni_tracing:I *:I >/dev/null 2>&1 & echo \$!")
+#adb -d shell am start-foreground-service -n com.kaeonx.nymandroidport/.services.ADBForegroundService
+#
+#messages_check_once_every_minutes=6
+#echo "Printing received messages count every $messages_check_once_every_minutes min"
+#minutes_slept=0
+#messages_received_print_count=0
+#while true; do
+#    sleep 60
+#    adb -d shell run-as com.kaeonx.nymandroidport cp files/adbSync/nymRunEvaluationRunning.txt /data/local/tmp/nymRunEvaluationRunning.txt
+#    nymRunEvaluationRunning=$(adb -d shell cat /data/local/tmp/nymRunEvaluationRunning.txt)
+#    if [ "$nymRunEvaluationRunning" == '0' ]; then
+#        # The NymRunForegroundService already terminated by this point
+#        adb -d shell kill "$logcat_pid_on_device"
+#        adb -d pull "/sdcard/Documents/nym_android_port_logs/fragment_$log_output_file_name" "fragment_$log_output_file_name"
+#        cat "fragment_$log_output_file_name" >>"$main_log_output_file_path"
+#        rm "fragment_$log_output_file_name"
+#        break
+#    fi
+#    minutes_slept=$((minutes_slept + 1))
+#    if [ "$((minutes_slept % messages_check_once_every_minutes))" == '0' ]; then # every 6 minutes, check number of messages received. Expect to receive 360 messages every 5min. Every 100 messages received, Android writes to disk.
+#        # Potentially expensive operation, trying to minimise (once every 6 min only)
+#        adb -d shell run-as com.kaeonx.nymandroidport cp files/adbSync/nymRunEvaluationMessagesReceived.txt /data/local/tmp/nymRunEvaluationMessagesReceived.txt
+#        nymRunEvaluationMessagesReceived=$(adb -d shell cat /data/local/tmp/nymRunEvaluationMessagesReceived.txt)
+#        echo -n "#$nymRunEvaluationMessagesReceived · " # (*)
+#        messages_received_print_count=$((messages_received_print_count + 1))
+#        if [ "$((messages_received_print_count % 10))" == '0' ]; then
+#            echo
+#        fi
+#    fi
+#done
+#echo # see (*)

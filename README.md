@@ -3,7 +3,7 @@
 ## Phase 1A: Setup Android Client
 
 1. (from this repository) `cd nym-android-port; ./collect_android_data_phy_adbusb.sh -a arm64-v8a -d pixel -v release -c wifi -b optimised -s false -p true --average-packet-delay-ms 50 --average-ack-delay-ms 50 --loop-cover-traffic-average-delay-ms 200 --message-sending-average-delay-ms 20`\
-   The script can be terminated once you see the line `"Printing received messages count every X min"`.
+   Run the script until completion. The option `-d` is not inconsequential for a demonstration (it's used for some conditional statements during data analysis) but needs to be specified. All other arguments are important as they affect compilation and installation.
 
 ## Phase 1B: Setup PC Client
 
